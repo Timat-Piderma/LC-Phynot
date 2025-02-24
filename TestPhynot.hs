@@ -18,23 +18,25 @@ import System.Environment ( getArgs )
 import System.Exit        ( exitFailure )
 import Control.Monad      ( when )
 
-import AbsPhynot   ()
-import LexPhynot   ( Token, mkPosToken )
-import ParPhynot   ( pProgram, myLexer )
-import PrintPhynot ( Print, printTree )
-import SkelPhynot  ()
+--import TAC
+import AbsPhynot   
+import LexPhynot 
+import ParPhynot
+import PrintPhynot 
+import SkelPhynot
 
-type Err        = Either String
-type ParseFun a = [Token] -> Err a
+import ErrM
+
+type ParseFun a = [Token] -> ErrM.Err a
 type Verbosity  = Int
 
 putStrV :: Verbosity -> String -> IO ()
 putStrV v s = when (v > 1) $ putStrLn s
 
-runFile :: (Print a, Show a) => Verbosity -> ParseFun a -> FilePath -> IO ()
+runFile ::  Verbosity -> ParseFun ParPhynot.Result -> FilePath -> IO ()
 runFile v p f = putStrLn f >> readFile f >>= run v p
 
-run :: (Print a, Show a) => Verbosity -> ParseFun a -> String -> IO ()
+run :: Verbosity -> ParseFun ParPhynot.Result -> String -> IO ()
 run v p s =
   case p ts of
     Left err -> do
@@ -43,9 +45,12 @@ run v p s =
       mapM_ (putStrV v . showPosToken . mkPosToken) ts
       putStrLn err
       exitFailure
-    Right tree -> do
+    --Right (Result prog errs tac) -> do
+    Right (Result prog errs) -> do
       putStrLn "\nParse Successful!"
-      showTree v tree
+      showTree v prog
+      showErrors v errs
+      --showTAC v tac
   where
   ts = myLexer s
   showPosToken ((l,c),t) = concat [ show l, ":", show c, "\t", show t ]
@@ -54,6 +59,15 @@ showTree :: (Show a, Print a) => Int -> a -> IO ()
 showTree v tree = do
   putStrV v $ "\n[Abstract Syntax]\n\n" ++ show tree
   putStrV v $ "\n[Linearized tree]\n\n" ++ printTree tree
+
+showErrors :: (Show a, Print a) => Int -> a -> IO ()
+showErrors v tree = do
+  putStrV v $ "\n[Errors]\n\n" ++ show tree
+
+--showTAC :: Int -> [TACInstruction] -> IO ()
+--showTAC v tac = do
+  --putStrV v $ "\n[TAC]\n\n"
+  --mapM_ (putStrV v . show) tac
 
 usage :: IO ()
 usage = do
@@ -73,4 +87,3 @@ main = do
     []         -> getContents >>= run 2 pProgram
     "-s":fs    -> mapM_ (runFile 0 pProgram) fs
     fs         -> mapM_ (runFile 2 pProgram) fs
-
