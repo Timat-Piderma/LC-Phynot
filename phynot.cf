@@ -6,7 +6,7 @@ comment "/#" "#/";
 
 -- Types
 
-rules BasicType             ::= "int" | "float" | "char" | "String" | Boolean;
+rules BasicType             ::= "int" | "float" | "char" | "String" | "bool";
 rules Boolean               ::= "True" | "False";
 
 
