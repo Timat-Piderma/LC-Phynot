@@ -1,0 +1,69 @@
+ProgramStart.               Program ::= [Stm];
+terminator nonempty Stm ";";
+
+rules BasicType             ::= "int" | "float" | "char" | "String" | Boolean;
+rules Boolean               ::= "True" | "False";
+rules CompositeType         ::= "Array" BasicType | "Pointer" BasicType;
+
+Declaration.                Stm ::= Decl;
+
+VarDeclaration.             Decl ::= BasicType Ident "=" RExp;
+ArrayDeclaration.           Decl ::= BasicType Ident "[" RExp "]";
+PointerDeclaration.         Decl ::= "&" BasicType Ident;
+FunctionDeclaration.        Decl ::= "def" BasicType Ident "(" [Param] ")" "{" [Stm] "}";
+ProcedureDeclaration.       Decl ::= "def" "None" Ident "(" [Param] ")" "{" [Stm] "}";
+separator Param ",";
+Parameter.                  Param ::= BasicType Ident;
+Return.                     Stm ::= "return" RExp;
+
+DefaultFunction.            Stm ::= Func;
+
+WriteInt.                   Func ::= "writeInt" "(" ")";  
+WriteFloat.                 Func ::= "writeFloat" "(" ")";
+WriteChar.                  Func ::= "writeChar" "(" ")";
+WriteString.                Func ::= "writeString" "(" ")";
+ReadInt.                    Func ::= "readInt" "()";
+ReadFloat.                  Func ::= "readFloat" "()";
+ReadChar.                   Func ::= "readChar" "()";
+ReadString.                 Func ::= "readString" "()";
+
+SequenceControl.            Stm ::= Seq;
+
+IfThen.                     Seq ::= "if"  RExp "{" [Stm] "}";
+IfThenElse.                 Seq ::= "if"  RExp "{" [Stm] "}" "else" "{" [Stm] "}";
+WhileDo.                    Seq ::= "while" RExp  "{" [Stm] "}";
+
+Break.                      Stm ::= "break";
+Continue.                   Stm ::= "continue";
+Pass.                       Stm ::= "pass";
+
+Assignment.                 Stm ::= Ident "=" RExp;
+
+Or.                         RExp ::= RExp "or" RExp2;
+And.                        RExp ::= RExp "and" RExp2;
+Not.                        RExp ::= "not" RExp2;
+
+Eq.                         RExp2 ::= RExp2 "==" RExp3;
+Neq.                        RExp2 ::= RExp2 "!=" RExp3;
+Lt.                         RExp2 ::= RExp2 "<" RExp3;
+Gt.                         RExp2 ::= RExp2 ">" RExp3;
+Le.                         RExp2 ::= RExp2 "<=" RExp3;
+Ge.                         RExp2 ::= RExp2 ">=" RExp3;
+
+Add.                        RExp3 ::= RExp3 "+" RExp4;
+Sub.                        RExp3 ::= RExp3 "-" RExp4;
+Mul.                        RExp3 ::= RExp3 "*" RExp4;
+Div.                        RExp3 ::= RExp3 "/" RExp4;
+Mod.                        RExp3 ::= RExp3 "%" RExp4;
+
+IntValue.                   RExp4 ::= Integer;
+FloatValue.                 RExp4 ::= Double;
+StringValue.                RExp4 ::= String;
+CharValue.                  RExp4 ::= Char;
+BooleanValue.               RExp4 ::= Boolean;
+VarValue.                   RExp4 ::= Ident;
+
+FuncCall.                   RExp4 ::= Ident "(" [RExp] ")";
+separator RExp ",";
+
+coercions RExp 4;
