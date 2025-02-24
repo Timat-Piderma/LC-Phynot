@@ -8,11 +8,10 @@
 !LexPhynot.hs
 !LexPhynot.x
 !Makefile
-!ParPhynot.hs
 !ParPhynot.y
 !PrintPhynot.hs
 !SkelPhynot.hs
 !TestPhynot.hs
 !phynot.cf
 !TypeSystem.hs
-!Errs.hs
+!ErrorsBuilder.hs
