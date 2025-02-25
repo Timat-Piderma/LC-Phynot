@@ -3,7 +3,7 @@ module TypeSystem where
 data BasicType = ERROR String | INT | FLOAT | BOOL | CHAR | STRING | NONE
   deriving (Eq, Show, Read)
 
-data Type = Base BasicType | ARRAY Type Type | POINTER Type
+data Type = Base BasicType | ARRAY Type | POINTER Type | ADDRESS Type
   deriving (Eq, Show, Read)
 
 -- Given two Types, returns the superior one, ERROR if not compatible
@@ -23,15 +23,25 @@ sup (Base CHAR) (Base STRING)     = Base STRING
 sup (Base INT) (Base CHAR)        = Base INT
 sup (Base CHAR) (Base INT)        = Base INT
 
-sup (ARRAY _ t1) (ARRAY _ t2) = 
+sup (ARRAY t1) (ARRAY t2) = 
   if t1 == t2 
-    then ARRAY (Base INT) t1 
+    then ARRAY t1 
   else Base (ERROR ("Array types "++ typeToString t1 ++ " and " ++ typeToString t2 ++ " do not match"))
 
 sup (POINTER t1) (POINTER t2) =
   if t1 == t2
     then POINTER t1
   else Base (ERROR ("Pointer types "++ typeToString t1 ++ " and " ++ typeToString t2 ++ " do not match"))
+
+sup (ADDRESS t1) (POINTER t2)  =  
+  if t1 == t2
+    then POINTER t1
+  else Base (ERROR ("Pointer of Type "++ typeToString t2 ++ " is pointing to an Address of Type " ++ typeToString t1))
+
+sup (POINTER t1) (ADDRESS t2) =
+  if t1 == t2
+    then POINTER t1
+  else Base (ERROR ("Pointer of Type "++ typeToString t1 ++ " is pointing to an Address of Type " ++ typeToString t2))
 
 sup (Base (ERROR s)) _            = Base (ERROR s)
 sup _ (Base (ERROR s))            = Base (ERROR s)
@@ -46,10 +56,10 @@ typeToString (Base FLOAT)  = "Double"
 typeToString (Base BOOL)   = "Boolean"
 typeToString (Base CHAR)   = "Character"
 typeToString (Base STRING) = "String"
-
-typeToString (ARRAY t1 t2) = "Array of " ++ typeToString t2;
-
+typeToString (Base NONE)   = "None"
+typeToString (ARRAY t2) = "Array of " ++ typeToString t2;
 typeToString (POINTER t) = "Pointer to " ++ typeToString t;
+typeToString (ADDRESS t) = "Address of " ++ typeToString t;
 
 -- Given a type, returns the basic arithmetic type
 mathtype :: BasicType -> BasicType
@@ -69,6 +79,11 @@ rel x y = case sup x y of
 isBoolean :: Type -> Type
 isBoolean (Base BOOL) = Base BOOL
 isBoolean _ = Base (ERROR "Error: not a boolean")
+
+-- Checks if a value is INT
+isInt :: Type -> Type
+isInt (Base INT) = Base INT
+isInt _ = Base (ERROR "Error: not an integer")
 
 -- Checks if a value is an ERROR
 isERROR :: Type -> Bool
