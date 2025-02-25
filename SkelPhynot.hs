@@ -50,6 +50,7 @@ transStm x = case x of
   AbsPhynot.ProcedureCall ident rexps -> failure x
   AbsPhynot.ProcedureCallNoParam ident -> failure x
   AbsPhynot.Return rexp -> failure x
+  AbsPhynot.ReturnNone -> failure x
   AbsPhynot.Assignment lexp rexp -> failure x
   AbsPhynot.WriteInt rexp -> failure x
   AbsPhynot.WriteFloat rexp -> failure x

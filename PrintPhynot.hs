@@ -175,6 +175,7 @@ instance Print AbsPhynot.Stm where
     AbsPhynot.ProcedureCall id_ rexps -> prPrec i 0 (concatD [prt 0 id_, doc (showString "("), prt 0 rexps, doc (showString ")")])
     AbsPhynot.ProcedureCallNoParam id_ -> prPrec i 0 (concatD [prt 0 id_, doc (showString "()")])
     AbsPhynot.Return rexp -> prPrec i 0 (concatD [doc (showString "return"), prt 0 rexp])
+    AbsPhynot.ReturnNone -> prPrec i 0 (concatD [doc (showString "return")])
     AbsPhynot.Assignment lexp rexp -> prPrec i 0 (concatD [prt 0 lexp, doc (showString "="), prt 0 rexp])
     AbsPhynot.WriteInt rexp -> prPrec i 0 (concatD [doc (showString "writeInt"), doc (showString "("), prt 0 rexp, doc (showString ")")])
     AbsPhynot.WriteFloat rexp -> prPrec i 0 (concatD [doc (showString "writeFloat"), doc (showString "("), prt 0 rexp, doc (showString ")")])

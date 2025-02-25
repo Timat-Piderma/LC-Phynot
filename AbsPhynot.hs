@@ -37,6 +37,7 @@ data Stm
     | ProcedureCall Ident [RExp]
     | ProcedureCallNoParam Ident
     | Return RExp
+    | ReturnNone
     | Assignment LExp RExp
     | WriteInt RExp
     | WriteFloat RExp

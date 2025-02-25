@@ -30,6 +30,7 @@ Parameter.                      Param ::= BasicType Ident;
 ProcedureCall.                  Stm ::= Ident "(" [RExp] ")";
 ProcedureCallNoParam.           Stm ::= Ident "()";
 Return.                         Stm ::= "return" RExp;
+ReturnNone.                     Stm ::= "return";
 
 
 -- Assignment   

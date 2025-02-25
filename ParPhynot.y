@@ -328,7 +328,26 @@ Stm: BasicType Ident
   
   $$.err = (Err.mkProcedureCallErrs $1.ident [] $$.env (posLineCol $1.pos));
 }
-  | 'return' RExp {  }
+  | 'return' RExp 
+{  
+  $$.attr = Abs.Return $2.attr;
+  $$.btype = $2.btype;
+  $2.env = $$.env;
+  $$.modifiedEnv = $$.env;
+
+  $$.err = (Err.mkReturnErrs $$.env $2.btype ( posLineCol $$.pos)) ++ $2.err;
+
+  $$.pos = (tokenPosn $1);
+}
+  | 'return' 
+{ 
+  $$.attr = Abs.ReturnNone;
+  $$.btype = (TS.Base TS.NONE);
+  $$.modifiedEnv = $$.env;
+
+  $$.err = (Err.mkReturnErrs $$.env $$.btype ( posLineCol $$.pos));
+  $$.pos = (tokenPosn $1);
+}
 
 ----------------
 -- Assignment --
@@ -359,7 +378,13 @@ Stm: BasicType Ident
   | 'while' RExp '{' ListStm '}' {   }
   | 'break' {   }
   | 'continue' {   }
-  | 'pass' {   }
+  | 'pass' 
+{  
+  $$.attr = Abs.Pass;
+  $$.modifiedEnv = $$.env;
+  $$.err = [];
+  $$.pos = (tokenPosn $1);
+}
 
 ListParam: {- empty -} 
 { 
