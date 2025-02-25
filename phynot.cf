@@ -21,10 +21,10 @@ PointerDeclarationInit.         Stm ::= BasicType "*" Ident "=" RExp;
 
 -- Functions
 
-FunctionDeclaration.            Stm ::= "def" BasicType Ident "(" [Param] ")" "{" [Stm] "}";
-FunctionNoParamDeclaration.     Stm ::= "def" BasicType Ident "()" "{" [Stm] "}";
-ProcedureDeclaration.           Stm ::= "def" "None" Ident "(" [Param] ")" "{" [Stm] "}";
-ProcedureNoParamDeclaration.    Stm ::= "def" "None" Ident "()" "{" [Stm] "}";
+FunctionDeclaration.            Stm ::= "def" BasicType Ident "(" [Param] ")" ":" [Stm];
+FunctionNoParamDeclaration.     Stm ::= "def" BasicType Ident "()" ":" [Stm];
+ProcedureDeclaration.           Stm ::= "def" "None" Ident "(" [Param] ")" ":" [Stm];
+ProcedureNoParamDeclaration.    Stm ::= "def" "None" Ident "()" ":" [Stm];
 separator Param ",";
 Parameter.                      Param ::= BasicType Ident;
 ProcedureCall.                  Stm ::= Ident "(" [RExp] ")";
@@ -52,9 +52,9 @@ ReadString.                     Stm ::= "readString" "()";
 
 -- Sequence Control 
 
-IfThen.                         Stm ::= "if"  RExp "{" [Stm] "}";
-IfThenElse.                     Stm ::= "if"  RExp "{" [Stm] "}" "else" "{" [Stm] "}";
-WhileDo.                        Stm ::= "while" RExp  "{" [Stm] "}";
+IfThen.                         Stm ::= "if"  RExp ":" [Stm];
+IfThenElse.                     Stm ::= "if"  RExp ":" [Stm] "else" ":" [Stm];
+WhileDo.                        Stm ::= "while" RExp ":" [Stm];
 
 Break.                          Stm ::= "break";
 Continue.                       Stm ::= "continue";
