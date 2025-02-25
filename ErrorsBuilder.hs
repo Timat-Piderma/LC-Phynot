@@ -27,19 +27,25 @@ mkDeclErrs env varName pos
     | otherwise = []
 
 mkDeclInitErrs :: Type -> Type -> EnvT -> String -> (Int, Int) -> [String]
-mkDeclInitErrs t1 t2 env varName pos
+mkDeclInitErrs varType initType env varName pos
     | containsEntry varName env = [mkSerr (Base (ERROR ("Variable '" ++ varName ++ "' already declared at: " ++ show (getVarPos varName env)))) pos] 
-    | isERROR t1 && isERROR t2 = [ mkSerr t1 pos , mkSerr t2 pos]
-    | isERROR t1 = [ mkSerr t1 pos]
-    | isERROR t2 = [ mkSerr t2 pos]
-    | sup t1 t2 == t1 = []
-    | otherwise = [ mkSerr (Base (ERROR ("Type mismatch: can't convert " ++ typeToString t2 ++ " to " ++ typeToString t1))) pos]
+    | isERROR varType && isERROR initType = [ mkSerr varType pos , mkSerr initType pos]
+    | isERROR varType = [ mkSerr varType pos]
+    | isERROR initType = [ mkSerr initType pos]
+    | sup varType initType == varType = []
+    | otherwise = [ mkSerr (Base (ERROR ("Type mismatch: can't convert " ++ typeToString varType ++ " to " ++ typeToString initType))) pos]
 
 mkArrayDeclErrs :: Type -> EnvT -> String -> (Int, Int) -> [String]
 mkArrayDeclErrs indexType env varName pos
     | containsEntry varName env = [mkSerr (Base (ERROR ("Variable '" ++ varName ++ "' already declared at: " ++ show (getVarPos varName env)))) pos]
     | sup indexType (Base INT) /= Base INT = [ mkSerr (Base (ERROR "Error: array index must be an integer")) pos]
     | otherwise = [] 
+
+mkPointerDeclInitErrs :: Type -> Type -> EnvT -> String -> (Int, Int) -> [String]
+mkPointerDeclInitErrs pointerType initType env varName pos
+    | containsEntry varName env = [mkSerr (Base (ERROR ("Variable '" ++ varName ++ "' already declared at: " ++ show (getVarPos varName env)))) pos]
+    | isERROR (sup pointerType initType) = [ mkSerr (sup pointerType initType) pos]
+    | otherwise = []
 
 mkParamErrs :: String -> String -> EnvT -> (Int, Int) -> [String]
 mkParamErrs parName funcName env pos
@@ -64,12 +70,20 @@ mkReturnErrs env retType pos
 mkFuncCallErrs :: String -> [Type] -> EnvT -> (Int, Int) -> [String]
 mkFuncCallErrs funcName params env pos
     | containsEntry funcName env && (params == getFuncParams funcName env) = []
-    | containsEntry funcName env && (length params /=  length (getFuncParams funcName env)) = [mkSerr (Base (ERROR ("Error: function '" ++ funcName ++ "' expects " ++ show (length (getFuncParams funcName env)) ++ " parameters"))) pos]
+    | containsEntry funcName env && (length params /=  length (getFuncParams funcName env)) = [mkSerr (Base (ERROR ("Error: function '" ++ funcName ++ "' expects " ++ show (length (getFuncParams funcName env)) ++ " parameters, found: " ++ show (length params)))) pos]
     | containsEntry funcName env = mkFuncCallParamErrs funcName params (getFuncParams funcName env) pos
-    | otherwise = [] -- If the function has not been declared it will be caught by the type checker
+    | otherwise = []
 
 mkFuncCallParamErrs :: String -> [Type] -> [Type] -> (Int, Int) -> [String]
 mkFuncCallParamErrs _ [] [] _= []
 mkFuncCallParamErrs funcName (x:xs) (y:ys) pos
     | x == y    = mkFuncCallParamErrs funcName xs ys pos
     | otherwise = mkSerr (Base (ERROR ("Error: can't match " ++ typeToString x ++ " with expected type " ++ typeToString y ++ " in function '" ++ funcName ++ "' call"))) pos : mkFuncCallParamErrs funcName xs ys pos
+
+mkProcedureCallErrs :: String -> [Type] -> EnvT -> (Int, Int) -> [String]
+mkProcedureCallErrs procName params env pos
+    | containsEntry procName env && (params == getFuncParams procName env) = []
+    | containsEntry procName env && (length params /=  length (getFuncParams procName env)) = [mkSerr (Base (ERROR ("Error: function '" ++ procName ++ "' expects " ++ show (length (getFuncParams procName env)) ++ " parameters, found: " ++ show (length params)))) pos]
+    | containsEntry procName env = mkFuncCallParamErrs procName params (getFuncParams procName env) pos
+    | not (containsEntry procName env) = [mkSerr (Base (ERROR ("Error: function '" ++ procName ++ "' not declared"))) pos]
+    | otherwise = []
