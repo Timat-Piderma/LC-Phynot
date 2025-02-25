@@ -33,7 +33,7 @@ mkDeclInitErrs varType initType env varName pos
     | isERROR varType = [ mkSerr varType pos]
     | isERROR initType = [ mkSerr initType pos]
     | sup varType initType == varType = []
-    | otherwise = [ mkSerr (Base (ERROR ("Type mismatch: can't convert " ++ typeToString varType ++ " to " ++ typeToString initType))) pos]
+    | otherwise = [ mkSerr (Base (ERROR ("Type mismatch: can't convert " ++ typeToString initType ++ " to " ++ typeToString varType))) pos]
 
 mkArrayDeclErrs :: Type -> EnvT -> String -> (Int, Int) -> [String]
 mkArrayDeclErrs indexType env varName pos
