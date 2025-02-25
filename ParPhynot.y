@@ -5,31 +5,14 @@
 {-# OPTIONS_GHC -fno-warn-incomplete-patterns -fno-warn-overlapping-patterns #-}
 {-# LANGUAGE PatternSynonyms #-}
 
-module ParPhynot
-  ( happyError
-  , myLexer
-  , pProgram
-  , pListStm
-  , pBasicType
-  , pBoolean
-  , pStm
-  , pListParam
-  , pParam
-  , pLExp
-  , pDim
-  , pListDim
-  , pRExp
-  , pRExp2
-  , pRExp3
-  , pRExp4
-  , pRExp5
-  , pListRExp
-  , pRExp1
-  ) where
+module ParPhynot where
 
 import Prelude
 
-import qualified AbsPhynot
+import qualified Env as E
+import qualified TypeSystem as TS
+import qualified ErrorsBuilder as Err
+import qualified AbsPhynot as Abs
 import LexPhynot
 
 }
@@ -104,144 +87,519 @@ import LexPhynot
   'writeString' { PT _ (TS _ 47) }
   '{'           { PT _ (TS _ 48) }
   '}'           { PT _ (TS _ 49) }
-  L_Ident       { PT _ (TV $$)   }
+  L_Ident       { PT _ (TV _)    }
   L_charac      { PT _ (TC $$)   }
   L_doubl       { PT _ (TD $$)   }
   L_integ       { PT _ (TI $$)   }
   L_quoted      { PT _ (TL $$)   }
 
+%attributetype {Attr a}
+%attribute res { Result }
+%attribute attr { a }
+%attribute err { [String] }
+%attribute env { E.EnvT }
+%attribute modifiedEnv { E.EnvT }
+%attribute ident { String }
+%attribute pos { Posn }
+%attribute btype { TS.Type }
+%attribute funcName { String }
+%attribute paramTypes { [TS.Type] }
+
 %%
 
-Ident :: { AbsPhynot.Ident }
-Ident  : L_Ident { AbsPhynot.Ident $1 }
+------------------
+-- Basic Types  --
+------------------
 
-Char    :: { Char }
-Char     : L_charac { (read $1) :: Char }
+Ident  : L_Ident 
+{ 
+  $$.attr = Abs.Ident (tokenText $1);
+  $$.ident = (tokenText $1);
+  $$.err = [];
+  $$.pos = (tokenPosn $1);
+}
 
-Double  :: { Double }
-Double   : L_doubl  { (read $1) :: Double }
+Char     : L_charac 
+{ 
+  $$.attr =  (read $1) :: Char;
+  $$.err = [];
+  $$.btype = (TS.Base TS.CHAR);
+ }
 
-Integer :: { Integer }
-Integer  : L_integ  { (read $1) :: Integer }
+Double   : L_doubl  
+{ 
+  $$.attr = (read $1) :: Double;
+  $$.err = [];
+  $$.btype = (TS.Base TS.FLOAT);
+}
 
-String  :: { String }
-String   : L_quoted { $1 }
+Integer  : L_integ  
+{ 
+  $$.attr = (read $1) :: Integer;
+  $$.err = [];
+  $$.btype = (TS.Base TS.INT);
+}
 
-Program :: { AbsPhynot.Program }
-Program : ListStm { AbsPhynot.ProgramStart $1 }
+String   : L_quoted 
+{
+  $$.attr =  $1;
+  $$.err = [];
+  $$.btype = (TS.Base TS.STRING);
+}
 
-ListStm :: { [AbsPhynot.Stm] }
-ListStm : Stm ';' { (:[]) $1 } | Stm ';' ListStm { (:) $1 $3 }
+Boolean   : 'True' 
+{ 
+  $$.attr = Abs.Boolean_True;
+  $$.err = [];
+  $$.btype = (TS.Base TS.BOOL);
+}
+| 'False' 
+{ 
+  $$.attr = Abs.Boolean_False;
+  $$.err = [];
+  $$.btype = (TS.Base TS.BOOL);
+}
 
-BasicType :: { AbsPhynot.BasicType }
-BasicType
-  : 'int' { AbsPhynot.BasicType_int }
-  | 'float' { AbsPhynot.BasicType_float }
-  | 'char' { AbsPhynot.BasicType_char }
-  | 'String' { AbsPhynot.BasicType_String }
-  | 'bool' { AbsPhynot.BasicType_bool }
+BasicType: 'int' 
+{ 
+  $$.attr = Abs.BasicType_int;
+  $$.btype = TS.Base TS.INT;
+}
+| 'float'   
+{ 
+  $$.attr = Abs.BasicType_float;
+  $$.btype = TS.Base TS.FLOAT;
+}
+| 'char'   
+{ 
+  $$.attr = Abs.BasicType_char;
+  $$.btype = TS.Base TS.CHAR;
+}
+| 'String'   
+{ 
+  $$.attr = Abs.BasicType_String;
+  $$.btype = TS.Base TS.STRING;
+}
+| 'bool'  
+{ 
+  $$.attr = Abs.BasicType_bool;
+  $$.btype = TS.Base TS.BOOL;
+}
 
-Boolean :: { AbsPhynot.Boolean }
-Boolean
-  : 'True' { AbsPhynot.Boolean_True }
-  | 'False' { AbsPhynot.Boolean_False }
+-------------------
+-- Program Start --
+-------------------
 
-Stm :: { AbsPhynot.Stm }
-Stm
-  : BasicType Ident { AbsPhynot.VarDeclaration $1 $2 }
-  | BasicType Ident '=' RExp { AbsPhynot.VarDeclarationInit $1 $2 $4 }
-  | BasicType Ident ListDim { AbsPhynot.ArrayDeclaration $1 $2 $3 }
-  | BasicType '*' Ident { AbsPhynot.PointerDeclaration $1 $3 }
-  | BasicType '*' Ident '=' RExp { AbsPhynot.PointerDeclarationInit $1 $3 $5 }
-  | 'def' BasicType Ident '(' ListParam ')' '{' ListStm '}' { AbsPhynot.FunctionDeclaration $2 $3 $5 $8 }
-  | 'def' 'None' Ident '(' ListParam ')' '{' ListStm '}' { AbsPhynot.ProcedureDeclaration $3 $5 $8 }
-  | 'return' RExp { AbsPhynot.Return $2 }
-  | LExp '=' RExp { AbsPhynot.Assignment $1 $3 }
-  | 'writeInt' '(' ')' { AbsPhynot.WriteInt }
-  | 'writeFloat' '(' ')' { AbsPhynot.WriteFloat }
-  | 'writeChar' '(' ')' { AbsPhynot.WriteChar }
-  | 'writeString' '(' ')' { AbsPhynot.WriteString }
-  | 'readInt' '()' { AbsPhynot.ReadInt }
-  | 'readFloat' '()' { AbsPhynot.ReadFloat }
-  | 'readChar' '()' { AbsPhynot.ReadChar }
-  | 'readString' '()' { AbsPhynot.ReadString }
-  | 'if' RExp '{' ListStm '}' { AbsPhynot.IfThen $2 $4 }
-  | 'if' RExp '{' ListStm '}' 'else' '{' ListStm '}' { AbsPhynot.IfThenElse $2 $4 $8 }
-  | 'while' RExp '{' ListStm '}' { AbsPhynot.WhileDo $2 $4 }
-  | 'break' { AbsPhynot.Break }
-  | 'continue' { AbsPhynot.Continue }
-  | 'pass' { AbsPhynot.Pass }
+Program : ListStm 
+{ 
+  $$.res = Result (Abs.ProgramStart $1.attr) $1.err;
+  $1.env = E.emptyEnv;
+}
 
-ListParam :: { [AbsPhynot.Param] }
-ListParam
-  : {- empty -} { [] }
-  | Param { (:[]) $1 }
-  | Param ',' ListParam { (:) $1 $3 }
+ListStm : Stm ';' 
+{ 
+  $$.attr = (:[]) $1.attr;
+  $1.env = $$.env;
+  $$.err = $1.err;
+} 
+| Stm ';' ListStm 
+{ 
+  $$.attr = (:) $1.attr $3.attr;
+  $1.env = $$.env;
+  $3.env = $1.modifiedEnv;
+  $$.err = $1.err ++ $3.err;
+}
+------------------
+-- Declarations --
+------------------
 
-Param :: { AbsPhynot.Param }
-Param : BasicType Ident { AbsPhynot.Parameter $1 $2 }
+-- Variable Declaration
+Stm: BasicType Ident 
+{ 
+  $$.attr = Abs.VarDeclaration $1.attr $2.attr;
+  $$.modifiedEnv = E.insertVar $2.ident (posLineCol $$.pos) $$.btype $$.env;
+  $$.err = Err.mkDeclErrs $$.env $2.ident (posLineCol $$.pos); 
+  $$.ident = $2.ident;
+  $$.pos = $2.pos;
+  $$.btype = $1.btype;
+}
+  | BasicType Ident '=' RExp 
+{ 
+  $$.attr = Abs.VarDeclarationInit $1.attr $2.attr $4.attr;
+  $$.modifiedEnv = E.insertVar $2.ident (posLineCol $$.pos) $$.btype $$.env;
+  $$.err = Err.mkDeclInitErrs $$.btype $4.btype $$.env $2.ident (posLineCol $$.pos) ++ $4.err; 
+  $$.ident = $2.ident;
+  $$.pos = $2.pos;
+  $$.btype = $1.btype;
+  $4.env = $$.env; 
+}
+  | BasicType Ident ListDim 
+{  
+  $$.attr = Abs.ArrayDeclaration $1.attr $2.attr $3.attr;
+  $$.modifiedEnv = E.insertVar $2.ident (posLineCol $$.pos) $$.btype $$.env;
+  $$.err = Err.mkArrayDeclErrs $3.btype $$.env $2.ident (posLineCol $$.pos) ++ $3.err;
+  $$.ident = $2.ident;
+  $$.pos = $2.pos;
+  $$.btype = (TS.ARRAY $1.btype);
+  $3.env = $$.env;  
+}
+  | BasicType '*' Ident 
+{  
+  $$.attr = Abs.PointerDeclaration $1.attr $3.attr;
+  $$.modifiedEnv = E.insertVar $3.ident (posLineCol $$.pos) $$.btype $$.env;
+  $$.err = Err.mkDeclErrs $$.env $3.ident (posLineCol $$.pos); 
+  $$.ident = $3.ident;
+  $$.pos = $3.pos;
+  $$.btype = (TS.POINTER $1.btype);
+}
+  | BasicType '*' Ident '=' RExp 
+{  
+  $$.attr = Abs.PointerDeclarationInit $1.attr $3.attr $5.attr;
+  $$.modifiedEnv = E.insertVar $3.ident (posLineCol $$.pos) $$.btype $$.env;
+  $$.err = Err.mkPointerDeclInitErrs $$.btype $5.btype $$.env $3.ident (posLineCol $$.pos) ++ $5.err; 
+  $$.ident = $3.ident;
+  $$.pos = $3.pos;
+  $$.btype = (TS.POINTER $1.btype) ;
+  $5.env = $$.env; 
+}
 
-LExp :: { AbsPhynot.LExp }
+---------------
+-- Functions --
+---------------
+
+  | 'def' BasicType Ident '(' ListParam ')' '{' ListStm '}' 
+{  
+  $$.attr = Abs.FunctionDeclaration $2.attr $3.attr $5.attr $8.attr; 
+
+  $$.modifiedEnv = E.insertFunc $3.ident (posLineCol $3.pos) $2.btype $5.paramTypes $$.env;
+  $8.env = $5.modifiedEnv;
+  $5.env = E.insertFunc $3.ident (posLineCol $$.pos) $2.btype $5.paramTypes (E.insertVar "return" (posLineCol ($3.pos)) ($$.btype) E.emptyEnv);
+
+  $5.funcName = $3.ident;
+  $$.btype = $2.btype;
+
+  $$.err = $5.err ++ (Err.mkFuncDeclErrs $2.btype $$.env $3.ident $5.paramTypes (posLineCol ($3.pos))) ++ (Err.prettyFuncErr $8.err $3.ident);
+}
+  | 'def' BasicType Ident '()' '{' ListStm '}' 
+{  
+  $$.attr = Abs.FunctionNoParamDeclaration $2.attr $3.attr $6.attr; 
+
+  $$.modifiedEnv = E.insertFunc $3.ident (posLineCol $3.pos) $2.btype [] $$.env;
+  $6.env = E.insertFunc $3.ident (posLineCol $$.pos) $2.btype [] (E.insertVar "return" (posLineCol ($3.pos)) ($$.btype) E.emptyEnv);
+
+  $$.btype = $2.btype;
+
+  $$.err = (Err.mkFuncDeclErrs $2.btype $$.env $3.ident [] (posLineCol ($3.pos))) ++ (Err.prettyFuncErr $6.err $3.ident);
+}
+  | 'def' 'None' Ident '(' ListParam ')' '{' ListStm '}' 
+{  
+  $$.attr = Abs.ProcedureDeclaration $3.attr $5.attr $8.attr; 
+
+  $$.modifiedEnv = E.insertFunc $3.ident (posLineCol $3.pos) (TS.Base TS.NONE) $5.paramTypes $$.env;
+  $8.env = $5.modifiedEnv;
+  $5.env = E.insertFunc $3.ident (posLineCol $$.pos) (TS.Base TS.NONE) $5.paramTypes (E.insertVar "return" (posLineCol ($3.pos)) ($$.btype) E.emptyEnv);
+
+  $5.funcName = $3.ident;
+  $$.btype = (TS.Base TS.NONE);
+
+  $$.err = $5.err ++ (Err.mkFuncDeclErrs (TS.Base TS.NONE) $$.env $3.ident $5.paramTypes (posLineCol ($3.pos))) ++ (Err.prettyFuncErr $8.err $3.ident);
+}
+  | 'def' 'None' Ident '()' '{' ListStm '}' 
+{ 
+  $$.attr = Abs.ProcedureNoParamDeclaration $3.attr $6.attr; 
+
+  $$.modifiedEnv = E.insertFunc $3.ident (posLineCol $3.pos) (TS.Base TS.NONE) [] $$.env;
+  $6.env = E.insertFunc $3.ident (posLineCol $$.pos) (TS.Base TS.NONE) [] (E.insertVar "return" (posLineCol ($3.pos)) ($$.btype) E.emptyEnv);
+
+  $$.btype = (TS.Base TS.NONE);
+
+  $$.err = (Err.mkFuncDeclErrs (TS.Base TS.NONE) $$.env $3.ident [] (posLineCol ($3.pos))) ++ (Err.prettyFuncErr $6.err $3.ident);
+}
+  | Ident '(' ListRExp ')' 
+{ 
+  $$.attr = Abs.ProcedureCall $1.attr $3.attr;
+  $3.env = $$.env;
+
+  $$.err = (Err.mkProcedureCallErrs $1.ident $3.paramTypes $$.env (posLineCol $1.pos)) ++ $3.err;
+}
+  | Ident '()' 
+{ 
+  $$.attr = Abs.ProcedureCallNoParam $1.attr;
+  
+  $$.err = (Err.mkProcedureCallErrs $1.ident [] $$.env (posLineCol $1.pos));
+}
+  | 'return' RExp {  }
+
+----------------
+-- Assignment --
+----------------
+
+  | LExp '=' RExp {  }
+
+-----------------------
+-- Default Functions --
+-----------------------
+
+  | 'writeInt' '(' ')' {  }
+  | 'writeFloat' '(' ')' {  }
+  | 'writeChar' '(' ')' {   }
+  | 'writeString' '(' ')' {   }
+  | 'readInt' '()' {  }
+  | 'readFloat' '()' {  }
+  | 'readChar' '()' {  }
+  | 'readString' '()' { }
+
+
+----------------------
+-- Sequence Control --
+----------------------
+
+  | 'if' RExp '{' ListStm '}' {   }
+  | 'if' RExp '{' ListStm '}' 'else' '{' ListStm '}' {       }
+  | 'while' RExp '{' ListStm '}' {   }
+  | 'break' {   }
+  | 'continue' {   }
+  | 'pass' {   }
+
+ListParam: {- empty -} 
+{ 
+  $$.attr = []; 
+  $$.modifiedEnv = $$.env;
+  $$.err = [];
+
+  $$.paramTypes = [];
+}
+  | Param 
+{  
+  $$.attr = (:[]) $1.attr; 
+  $1.env = $$.env;
+  $$.modifiedEnv = $1.modifiedEnv;
+  $1.funcName = $$.funcName;
+  $$.err = $1.err;
+
+  $$.paramTypes = [$1.btype]; 
+}
+  | Param ',' ListParam 
+{  
+  $$.attr = (:) $1.attr $3.attr; 
+
+  $1.env = $$.env;
+  $3.env = $1.modifiedEnv;
+  $$.modifiedEnv = $3.modifiedEnv;
+  $1.funcName = $$.funcName;
+  $3.funcName = $$.funcName;
+
+  $$.err = $1.err ++ $3.err;
+
+  $$.paramTypes = $1.btype : $3.paramTypes;
+}
+
+Param : BasicType Ident 
+{  
+  $$.attr = Abs.Parameter $1.attr $2.attr; 
+
+  $$.modifiedEnv = E.insertVar $2.ident (posLineCol $$.pos) $1.btype $$.env;
+  $$.pos = $2.pos;
+
+  $$.err = Err.mkParamErrs $2.ident $$.funcName $$.env (posLineCol $$.pos);
+
+  $$.btype = $1.btype;
+}
+
+Dim : '[' RExp ']' 
+{   
+  $$.attr = Abs.ArrayDimension $2.attr; 
+  $1.env = $$.env;
+
+  $$.err = $2.err;
+  $$.btype = $2.btype;
+}
+
+ListDim : Dim 
+{  
+  $$.attr = (:[]) $1.attr;
+  $1.env = $$.env;
+
+  $$.err = $1.err;
+  $$.btype = $1.btype;
+} 
+| Dim ListDim 
+{  
+  $$.attr = (:) $1.attr $2.attr; 
+  $1.env = $$.env;
+  $2.env = $$.env;
+
+  $$.err = $1.err ++ $2.err;
+  $$.btype = TS.sup (TS.isInt $1.btype) (TS.isInt $2.btype);
+}
+
+----------------------
+-- Left Expressions --
+----------------------
+
 LExp
-  : Ident { AbsPhynot.LIdent $1 }
-  | Ident ListDim { AbsPhynot.LArray $1 $2 }
+  : Ident {  }
+  | Ident ListDim {  }
 
-Dim :: { AbsPhynot.Dim }
-Dim : '[' RExp ']' { AbsPhynot.ArrayDimension $2 }
+-----------------------
+-- Right Expressions --
+-----------------------
 
-ListDim :: { [AbsPhynot.Dim] }
-ListDim : Dim { (:[]) $1 } | Dim ListDim { (:) $1 $2 }
-
-RExp :: { AbsPhynot.RExp }
 RExp
-  : RExp 'or' RExp2 { AbsPhynot.Or $1 $3 }
-  | RExp 'and' RExp2 { AbsPhynot.And $1 $3 }
-  | 'not' RExp2 { AbsPhynot.Not $2 }
-  | RExp1 { $1 }
+  : RExp 'or' RExp2 {   }
+  | RExp 'and' RExp2 {   }
+  | 'not' RExp2 {  }
+  | RExp1 
+{  
+  $$.attr = $1.attr; 
+  $$.err = $1.err;
+  $$.btype = $1.btype;
+  $1.env = $$.env;
+}
 
-RExp2 :: { AbsPhynot.RExp }
 RExp2
-  : RExp2 '==' RExp3 { AbsPhynot.Eq $1 $3 }
-  | RExp2 '!=' RExp3 { AbsPhynot.Neq $1 $3 }
-  | RExp2 '<' RExp3 { AbsPhynot.Lt $1 $3 }
-  | RExp2 '>' RExp3 { AbsPhynot.Gt $1 $3 }
-  | RExp2 '<=' RExp3 { AbsPhynot.Le $1 $3 }
-  | RExp2 '>=' RExp3 { AbsPhynot.Ge $1 $3 }
-  | RExp3 { $1 }
+  : RExp2 '==' RExp3 {  }
+  | RExp2 '!=' RExp3 {    }
+  | RExp2 '<' RExp3 {    }
+  | RExp2 '>' RExp3 {     }
+  | RExp2 '<=' RExp3 {    }
+  | RExp2 '>=' RExp3 {      }
+  | RExp3 
+{ 
+  $$.attr = $1.attr; 
+  $$.err = $1.err;
+  $$.btype = $1.btype;
+  $1.env = $$.env;
+}
 
-RExp3 :: { AbsPhynot.RExp }
 RExp3
-  : RExp3 '+' RExp4 { AbsPhynot.Add $1 $3 }
-  | RExp3 '-' RExp4 { AbsPhynot.Sub $1 $3 }
-  | RExp3 '*' RExp4 { AbsPhynot.Mul $1 $3 }
-  | RExp3 '/' RExp4 { AbsPhynot.Div $1 $3 }
-  | RExp3 '%' RExp4 { AbsPhynot.Mod $1 $3 }
-  | RExp4 { $1 }
+  : RExp3 '+' RExp4 {  }
+  | RExp3 '-' RExp4 {   }
+  | RExp3 '*' RExp4 {     }
+  | RExp3 '/' RExp4 {    }
+  | RExp3 '%' RExp4 {    }
+  | RExp4 
+{    
+  $$.attr = $1.attr; 
+  $$.err = $1.err;
+  $$.btype = $1.btype;
+  $1.env = $$.env;
+}
 
-RExp4 :: { AbsPhynot.RExp }
-RExp4 : '&' RExp5 { AbsPhynot.PointerRef $2 } | RExp5 { $1 }
+RExp4 : '&' RExp5 
+{     
+  $$.attr = Abs.PointerRef $2.attr; 
+  $2.env = $$.env;
 
-RExp5 :: { AbsPhynot.RExp }
+  $$.err = $2.err;
+  $$.btype = (TS.ADDRESS $2.btype);
+} 
+| RExp5 
+{ 
+  $$.attr = $1.attr; 
+  $$.err = $1.err;
+  $$.btype = $1.btype;
+  $1.env = $$.env;
+}
+
 RExp5
-  : Integer { AbsPhynot.IntValue $1 }
-  | Double { AbsPhynot.FloatValue $1 }
-  | String { AbsPhynot.StringValue $1 }
-  | Char { AbsPhynot.CharValue $1 }
-  | Boolean { AbsPhynot.BooleanValue $1 }
-  | Ident { AbsPhynot.VarValue $1 }
-  | Ident '(' ListRExp ')' { AbsPhynot.FuncCall $1 $3 }
-  | '(' RExp ')' { $2 }
+  : Integer 
+{ 
+  $$.attr = Abs.IntValue $1.attr; 
+  $$.err = $1.err;
+  $$.btype = $1.btype;
+}
+  | Double 
+{ 
+  $$.attr = Abs.FloatValue $1.attr;
+  $$.err = $1.err;
+  $$.btype = $1.btype;
+}
+  | String 
+{     
+  $$.attr = Abs.StringValue $1.attr;
+  $$.err = $1.err;
+  $$.btype = $1.btype; 
+}
+  | Char 
+{  
+  $$.attr = Abs.CharValue $1.attr;
+  $$.err = $1.err;
+  $$.btype = $1.btype;
+}
+  | Boolean 
+{  
+  $$.attr = Abs.BooleanValue $1.attr;
+  $$.err = $1.err;
+  $$.btype = $1.btype;
+}
+  | Ident 
+{ 
+  $$.attr = Abs.VarValue $1.attr;
+  $$.err = if E.containsEntry $1.ident $$.env
+          then []
+          else [Err.mkSerr (TS.Base (TS.ERROR ("Variable " ++ $1.ident ++ " not declared"))) (posLineCol $1.pos)];
+  $$.btype = (E.getVarType $1.ident $$.env);
+}
+  | Ident '(' ListRExp ')' 
+{  
+  $$.attr = Abs.FuncCall $1.attr $3.attr;
+  $3.env = $$.env;
 
-ListRExp :: { [AbsPhynot.RExp] }
-ListRExp
-  : {- empty -} { [] }
-  | RExp { (:[]) $1 }
-  | RExp ',' ListRExp { (:) $1 $3 }
+  $$.btype = (E.getFuncType $1.ident $$.env);
+  $$.err = (Err.mkFuncCallErrs $1.ident $3.paramTypes $$.env (posLineCol $1.pos)) ++ $3.err;
+}
+  | Ident '()' 
+{  
+  $$.attr = Abs.FuncCallNoParam $1.attr;
 
-RExp1 :: { AbsPhynot.RExp }
-RExp1 : RExp2 { $1 }
+  $$.btype = (E.getFuncType $1.ident $$.env);
+  $$.err = (Err.mkFuncCallErrs $1.ident [] $$.env (posLineCol $1.pos));
+}
+  | '(' RExp ')'  
+{ 
+  $$.attr =  $2.attr;
+  $$.err = $2.err;
+  $$.btype = $2.btype;
+  $2.env = $$.env;
+}
+
+ListRExp : {- empty -} 
+{ 
+  $$.attr = [];
+
+  $$.err = [];
+  $$.paramTypes = [];
+}
+  | RExp 
+{    
+  $$.attr = (:[]) $1.attr; 
+  $1.env = $$.env;
+
+  $$.err = $1.err;
+  $$.paramTypes = [$1.btype]; 
+}
+  | RExp ',' ListRExp 
+{  
+  $$.attr = (:) $1.attr $3.attr; 
+  $1.env = $$.env;
+  $3.env = $$.env;
+
+  $$.err = $1.err ++ $3.err;
+  $$.paramTypes = $1.btype : $3.paramTypes;
+}
+
+RExp1 : RExp2 
+{ 
+  $$.attr = $1.attr;
+  $$.err = $1.err;
+  $$.btype = $1.btype;
+  $1.env = $$.env;
+}
 
 {
+
+data Result = Result Abs.Program [String] deriving (Show)
 
 type Err = Either String
 
@@ -257,4 +615,3 @@ myLexer :: String -> [Token]
 myLexer = tokens
 
 }
-
