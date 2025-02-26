@@ -51,7 +51,7 @@ sup t1 t2                         = Base (ERROR ("Type mismatch: " ++ typeToStri
 getArrayCurrentType :: Type -> Int -> Type
 getArrayCurrentType t 0 = t
 getArrayCurrentType (ARRAY t) n = getArrayCurrentType t (n - 1)
-getArrayCurrentType _ _ = error "Invalid type or dimensions"
+getArrayCurrentType _ _ = Base (ERROR "Invalid array access")
 
 -- Given a type, returns a string representation of it
 typeToString :: Type -> String
