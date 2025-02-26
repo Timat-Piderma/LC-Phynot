@@ -428,10 +428,42 @@ Stm: BasicType Ident
   
   $$.pos = (tokenPosn $1);
 }
-  | 'readInt' '()' {  }
-  | 'readFloat' '()' {  }
-  | 'readChar' '()' {  }
-  | 'readString' '()' { }
+  | 'readInt' '()' 
+{  
+  $$.attr = Abs.ReadInt;
+  $$.pos = (tokenPosn $1);
+
+  $$.btype = (TS.Base TS.INT);
+
+  $$.err = [];
+}
+  | 'readFloat' '()' 
+{  
+  $$.attr = Abs.ReadFloat;
+  $$.pos = (tokenPosn $1);
+
+  $$.btype = (TS.Base TS.FLOAT);
+
+  $$.err = []; 
+}
+  | 'readChar' '()' 
+{  
+  $$.attr = Abs.ReadChar;
+  $$.pos = (tokenPosn $1);
+
+  $$.btype = (TS.Base TS.CHAR);
+
+  $$.err = [];  
+}
+  | 'readString' '()' 
+{   
+  $$.attr = Abs.ReadString;
+  $$.pos = (tokenPosn $1);
+
+  $$.btype = (TS.Base TS.STRING);
+
+  $$.err = [];
+}
 
 
 ----------------------
