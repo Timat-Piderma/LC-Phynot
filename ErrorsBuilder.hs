@@ -92,3 +92,22 @@ mkProcedureCallErrs procName params env pos
     | containsEntry procName env = mkFuncCallParamErrs procName params (getFuncParams procName env) pos
     | not (containsEntry procName env) = [mkSerr (Base (ERROR ("Error: function '" ++ procName ++ "' not declared"))) pos]
     | otherwise = []
+
+mkBoolRelErrs :: Type -> Type -> (Int, Int) -> (Int, Int) -> (Int, Int) -> [String]
+mkBoolRelErrs t1 t2 t1Pos t2Pos relPos
+    | isERROR t1 && isERROR t2 = [ mkSerr t1 t1Pos , mkSerr t2 t2Pos]
+    | isERROR t1 = [ mkSerr t1 t1Pos]
+    | isERROR t2 = [ mkSerr t2 t2Pos]
+    | sup t1 t2 == Base BOOL = []
+    | otherwise = [ mkSerr (Base (ERROR ("Type mismatch: can't compare " ++ typeToString t1 ++ " with " ++ typeToString t2))) relPos]
+
+mkRelErrs :: Type -> Type -> (Int, Int) -> (Int, Int) -> (Int, Int) -> [String]
+mkRelErrs t1 t2 t1Pos t2Pos relPos
+    | isERROR t1 && isERROR t2 = [ mkSerr t1 t1Pos , mkSerr t2 t2Pos]
+    | isERROR t1 = [ mkSerr t1 t1Pos]
+    | isERROR t2 = [ mkSerr t2 t2Pos]
+    | rel t1 t2 == Base BOOL = []
+    | otherwise = [ mkSerr (Base (ERROR ("Type mismatch: can't compare " ++ typeToString t1 ++ " with " ++ typeToString t2))) relPos]
+
+prettyRelErr :: [String] -> String -> [String]
+prettyRelErr errs relName = map (++ " in '" ++ relName ++ "' expression") errs
