@@ -48,6 +48,11 @@ sup _ (Base (ERROR s))            = Base (ERROR s)
 
 sup t1 t2                         = Base (ERROR ("Type mismatch: " ++ typeToString t1 ++ " and " ++ typeToString t2 ++ " are not compatible"))
 
+getArrayCurrentType :: Type -> Int -> Type
+getArrayCurrentType t 0 = t
+getArrayCurrentType (ARRAY t) n = getArrayCurrentType t (n - 1)
+getArrayCurrentType _ _ = error "Invalid type or dimensions"
+
 -- Given a type, returns a string representation of it
 typeToString :: Type -> String
 typeToString (Base (ERROR s))  = s
@@ -76,16 +81,21 @@ rel x y = case sup x y of
   _                         -> Base BOOL
 
 -- Checks if a value is BOOL
-isBoolean :: Type -> Type
-isBoolean (Base BOOL) = Base BOOL
-isBoolean _ = Base (ERROR "Error: not a boolean")
+isBoolean :: Type -> Bool
+isBoolean (Base BOOL) = True
+isBoolean _ = False
 
 -- Checks if a value is INT
-isInt :: Type -> Type
-isInt (Base INT) = Base INT
-isInt _ = Base (ERROR "Error: not an integer")
+isInt :: Type -> Bool
+isInt (Base INT) = True
+isInt _ = False
 
 -- Checks if a value is an ERROR
 isERROR :: Type -> Bool
 isERROR (Base (ERROR _)) = True
 isERROR _ = False
+
+-- Checks if a value is a ARRAY
+isArray :: Type -> Bool
+isArray (ARRAY _) = True
+isArray _ = False
