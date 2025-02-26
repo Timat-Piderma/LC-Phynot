@@ -17,9 +17,15 @@ mkSerr _ _ = "Internal Error" -- Should never happen
 
 mkIfErrs :: Type -> [String] -> (Int, Int) -> [String]
 mkIfErrs t errs pos = case t of
-  Base (ERROR e) ->  mkSerr (Base (ERROR (e ++ " in if guard expression"))) pos : errs
+  Base (ERROR e) ->  mkSerr (Base (ERROR (e ++ " in if statement guard expression"))) pos : errs
   Base BOOL -> errs
-  _ -> mkSerr (Base (ERROR "Error: guard not bool")) pos : errs
+  _ -> mkSerr (Base (ERROR "Error: if statement guard not bool")) pos : errs
+
+mkWhileErrs :: Type -> [String] -> (Int, Int) -> [String]
+mkWhileErrs t errs pos = case t of
+  Base (ERROR e) ->  mkSerr (Base (ERROR (e ++ " in while statement guard expression"))) pos : errs
+  Base BOOL -> errs
+  _ -> mkSerr (Base (ERROR "Error: while statement guard not bool")) pos : errs
 
 mkDeclErrs :: EnvT -> String -> (Int, Int) -> [String]
 mkDeclErrs env varName pos
