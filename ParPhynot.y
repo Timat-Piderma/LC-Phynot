@@ -102,6 +102,8 @@ import LexPhynot
 %attribute ident { String }
 %attribute pos { Posn }
 %attribute btype { TS.Type }
+%attribute arraytype { TS.Type }
+%attribute arraydim { Int }
 %attribute funcName { String }
 %attribute paramTypes { [TS.Type] }
 
@@ -236,12 +238,15 @@ Stm: BasicType Ident
   | BasicType Ident ListDim 
 {  
   $$.attr = Abs.ArrayDeclaration $1.attr $2.attr $3.attr;
-  $$.modifiedEnv = E.insertVar $2.ident (posLineCol $$.pos) $$.btype $$.env;
-  $$.err = Err.mkArrayDeclErrs $3.btype $$.env $2.ident (posLineCol $$.pos) ++ $3.err;
+  $$.modifiedEnv = E.insertArray $2.ident (posLineCol $$.pos) $$.btype $3.arraydim $$.env;
   $$.ident = $2.ident;
   $$.pos = $2.pos;
-  $$.btype = (TS.ARRAY $1.btype);
+
+  $$.btype = (TS.ARRAY $3.btype);
+  $3.arraytype = $1.btype;
   $3.env = $$.env;  
+
+  $$.err = Err.mkArrayDeclErrs $$.env $2.ident (posLineCol $$.pos) ++ $3.err;
 }
   | BasicType '*' Ident 
 {  
@@ -353,7 +358,18 @@ Stm: BasicType Ident
 -- Assignment --
 ----------------
 
-  | LExp '=' RExp {  }
+  | LExp '=' RExp 
+{  
+  $$.attr = Abs.Assignment $1.attr $3.attr;
+  $$.modifiedEnv = $$.env;
+  $$.err = Err.mkAssignmentErrs $1.btype $3.btype (posLineCol $$.pos) ++ $1.err ++ $3.err;
+  $$.ident = $1.ident;
+  $$.pos = $1.pos;
+  $$.btype = TS.sup $1.btype $3.btype;
+  
+  $3.env = $$.env;
+  $1.env = $$.env;
+}
 
 -----------------------
 -- Default Functions --
@@ -436,8 +452,9 @@ Dim : '[' RExp ']'
   $$.attr = Abs.ArrayDimension $2.attr; 
   $1.env = $$.env;
 
-  $$.err = $2.err;
-  $$.btype = $2.btype;
+  $$.err = if TS.isInt $2.btype
+          then $2.err
+          else [Err.mkSerr (TS.Base (TS.ERROR ("Array index must be an integer"))) (posLineCol $2.pos)];
 }
 
 ListDim : Dim 
@@ -445,8 +462,11 @@ ListDim : Dim
   $$.attr = (:[]) $1.attr;
   $1.env = $$.env;
 
+
+  $$.btype = $$.arraytype;
+  $$.arraydim = 1;
+
   $$.err = $1.err;
-  $$.btype = $1.btype;
 } 
 | Dim ListDim 
 {  
@@ -454,17 +474,38 @@ ListDim : Dim
   $1.env = $$.env;
   $2.env = $$.env;
 
+  $$.btype = (TS.ARRAY $2.btype);
+  $$.arraydim = 1 + $2.arraydim;
+  $2.arraytype = $$.arraytype;
+
   $$.err = $1.err ++ $2.err;
-  $$.btype = TS.sup (TS.isInt $1.btype) (TS.isInt $2.btype);
 }
 
 ----------------------
 -- Left Expressions --
 ----------------------
 
-LExp
-  : Ident {  }
-  | Ident ListDim {  }
+LExp: Ident 
+{
+  $$.attr = Abs.LIdent $1.attr;
+  $$.ident = $1.ident;
+  $$.btype = (E.getVarType $1.ident $$.env);
+  $$.pos = $1.pos;
+
+  $$.err = [];
+}
+  | Ident ListDim 
+{  
+  $$.attr = Abs.LArray $1.attr $2.attr;
+  $$.ident = $1.ident;
+  $2.env = $$.env;
+
+  $$.btype = TS.getArrayCurrentType (E.getArrayType $1.ident $$.env) $2.arraydim;
+  $2.arraytype = (E.getArrayType $1.ident $$.env);
+
+  $$.err = $2.err;
+  $$.pos = $1.pos;
+}
 
 -----------------------
 -- Right Expressions --
@@ -561,9 +602,7 @@ RExp5
   | Ident 
 { 
   $$.attr = Abs.VarValue $1.attr;
-  $$.err = if E.containsEntry $1.ident $$.env
-          then []
-          else [Err.mkSerr (TS.Base (TS.ERROR ("Variable " ++ $1.ident ++ " not declared"))) (posLineCol $1.pos)];
+  $$.err = $1.err;
   $$.btype = (E.getVarType $1.ident $$.env);
 }
   | Ident '(' ListRExp ')' 
