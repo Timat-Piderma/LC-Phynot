@@ -3,13 +3,13 @@ module ErrorsBuilder where
 import TypeSystem as TS
 import Env as E
 
-mkAssignmentErrs :: Type -> Type -> (Int, Int) -> [String]
-mkAssignmentErrs varType assType pos
-    | isERROR varType && isERROR assType = [ mkSerr varType pos, mkSerr assType pos]
-    | isERROR varType = [ mkSerr varType pos]
-    | isERROR assType = [ mkSerr assType pos]
+mkAssignmentErrs :: Type -> Type -> (Int, Int) -> (Int, Int) -> [String]
+mkAssignmentErrs varType assType varPos assPos
+    | isERROR varType && isERROR assType = [ mkSerr varType varPos, mkSerr assType assPos]
+    | isERROR varType = [ mkSerr varType varPos]
+    | isERROR assType = [ mkSerr assType assPos]
     | sup varType assType == varType = []
-    | otherwise = [ mkSerr (Base (ERROR ("Type mismatch: can't assign " ++ typeToString assType ++ " value to " ++ typeToString varType ++ " variable"))) pos]
+    | otherwise = [ mkSerr (Base (ERROR ("Type mismatch: can't assign " ++ typeToString assType ++ " value to " ++ typeToString varType ++ " variable"))) varPos]
 
 mkSerr :: Type -> (Int, Int) -> String
 (mkSerr (Base (ERROR s))) (a,b) = "[" ++ show a ++ ":" ++ show b ++ "] " ++ s  ;
