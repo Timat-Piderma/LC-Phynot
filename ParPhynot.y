@@ -88,10 +88,10 @@ import LexPhynot
   '{'           { PT _ (TS _ 48) }
   '}'           { PT _ (TS _ 49) }
   L_Ident       { PT _ (TV _)    }
-  L_charac      { PT _ (TC $$)   }
-  L_doubl       { PT _ (TD $$)   }
-  L_integ       { PT _ (TI $$)   }
-  L_quoted      { PT _ (TL $$)   }
+  L_charac      { PT _ (TC _)    }
+  L_doubl       { PT _ (TD _)   }
+  L_integ       { PT _ (TI _)   }
+  L_quoted      { PT _ (TL _)   }
 
 %attributetype {Attr a}
 %attribute res { Result }
@@ -124,30 +124,38 @@ Ident  : L_Ident
 
 Char     : L_charac 
 { 
-  $$.attr =  (read $1) :: Char;
+  $$.attr =  read (tokenText $1) :: Char;
   $$.err = [];
   $$.btype = (TS.Base TS.CHAR);
+
+  $$.pos = (tokenPosn $1);
  }
 
 Double   : L_doubl  
 { 
-  $$.attr = (read $1) :: Double;
+  $$.attr = read (tokenText $1) :: Double;
   $$.err = [];
   $$.btype = (TS.Base TS.FLOAT);
+
+  $$.pos = (tokenPosn $1);
 }
 
 Integer  : L_integ  
 { 
-  $$.attr = (read $1) :: Integer;
+  $$.attr = read (tokenText $1) :: Integer;
   $$.err = [];
   $$.btype = (TS.Base TS.INT);
+
+  $$.pos = (tokenPosn $1);
 }
 
 String   : L_quoted 
 {
-  $$.attr =  $1;
+  $$.attr =  ((\(PT _ (TL s)) -> s) $1);
   $$.err = [];
   $$.btype = (TS.Base TS.STRING);
+
+  $$.pos = (tokenPosn $1);
 }
 
 Boolean   : 'True' 
