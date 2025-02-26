@@ -76,6 +76,9 @@ mathtype _          = ERROR "Cannot perform arithmetic operations on this type"
 
 -- Given two types, returns the BOOL if they are compatible
 rel :: Type -> Type -> Type
+rel (Base BOOL) (Base BOOL) = Base (ERROR "Cannot compare with boolean values")
+rel (Base BOOL) _ = Base (ERROR "Cannot compare with boolean values")
+rel _ (Base BOOL) = Base (ERROR "Cannot compare with boolean values")
 rel x y = case sup x y of
   Base (ERROR d)            -> Base (ERROR d)
   _                         -> Base BOOL
