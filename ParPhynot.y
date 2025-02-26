@@ -748,11 +748,56 @@ RExp2
 }
 
 RExp3
-  : RExp3 '+' RExp4 {  }
-  | RExp3 '-' RExp4 {   }
-  | RExp3 '*' RExp4 {     }
-  | RExp3 '/' RExp4 {    }
-  | RExp3 '%' RExp4 {    }
+  : RExp3 '+' RExp4 
+{  
+  $$.attr = Abs.Add $1.attr $3.attr;
+  $$.err = $1.err ++ $3.err;
+  $$.btype = TS.sup $1.btype $3.btype;
+  $1.env = $$.env;
+  $3.env = $$.env;
+
+  $$.pos = (tokenPosn $2);
+}
+  | RExp3 '-' RExp4 
+{   
+  $$.attr = Abs.Sub $1.attr $3.attr;
+  $$.err = $1.err ++ $3.err;
+  $$.btype = TS.sup $1.btype $3.btype;
+  $1.env = $$.env;
+  $3.env = $$.env;
+
+  $$.pos = (tokenPosn $2);
+}
+  | RExp3 '*' RExp4 
+{     
+  $$.attr = Abs.Mul $1.attr $3.attr;
+  $$.err = $1.err ++ $3.err;
+  $$.btype = TS.sup $1.btype $3.btype;
+  $1.env = $$.env;
+  $3.env = $$.env;
+
+  $$.pos = (tokenPosn $2);
+}
+  | RExp3 '/' RExp4 
+{    
+  $$.attr = Abs.Div $1.attr $3.attr;
+  $$.err = $1.err ++ $3.err;
+  $$.btype = TS.sup $1.btype $3.btype;
+  $1.env = $$.env;
+  $3.env = $$.env;
+
+  $$.pos = (tokenPosn $2);
+}
+  | RExp3 '%' RExp4 
+{    
+  $$.attr = Abs.Mod $1.attr $3.attr;
+  $$.err = $1.err ++ $3.err;
+  $$.btype = TS.sup $1.btype $3.btype;
+  $1.env = $$.env;
+  $3.env = $$.env;
+
+  $$.pos = (tokenPosn $2);
+}
   | RExp4 
 {    
   $$.attr = $1.attr; 
