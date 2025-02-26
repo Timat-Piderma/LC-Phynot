@@ -4,12 +4,12 @@ import TypeSystem as TS
 import Env as E
 
 mkAssignmentErrs :: Type -> Type -> (Int, Int) -> [String]
-mkAssignmentErrs t1 t2 pos
-  | isERROR t1 && isERROR t2 = [ mkSerr t1 pos, mkSerr t2 pos]
-  | isERROR t1 = [ mkSerr t1 pos]
-  | isERROR t2 = [ mkSerr t2 pos]
-  | sup t1 t2 == t1 = []
-  | otherwise = [ mkSerr (Base (ERROR ("Type mismatch: " ++ typeToString t1 ++ " and " ++ typeToString t2))) pos]
+mkAssignmentErrs varType assType pos
+    | isERROR varType && isERROR assType = [ mkSerr varType pos, mkSerr assType pos]
+    | isERROR varType = [ mkSerr varType pos]
+    | isERROR assType = [ mkSerr assType pos]
+    | sup varType assType == varType = []
+    | otherwise = [ mkSerr (Base (ERROR ("Type mismatch: can't assign " ++ typeToString assType ++ " value to " ++ typeToString varType ++ " variable"))) pos]
 
 mkSerr :: Type -> (Int, Int) -> String
 (mkSerr (Base (ERROR s))) (a,b) = "[" ++ show a ++ ":" ++ show b ++ "] " ++ s  ;
@@ -35,10 +35,9 @@ mkDeclInitErrs varType initType env varName pos
     | sup varType initType == varType = []
     | otherwise = [ mkSerr (Base (ERROR ("Type mismatch: can't convert " ++ typeToString initType ++ " to " ++ typeToString varType))) pos]
 
-mkArrayDeclErrs :: Type -> EnvT -> String -> (Int, Int) -> [String]
-mkArrayDeclErrs indexType env varName pos
+mkArrayDeclErrs :: EnvT -> String -> (Int, Int) -> [String]
+mkArrayDeclErrs env varName pos
     | containsEntry varName env = [mkSerr (Base (ERROR ("Variable '" ++ varName ++ "' already declared at: " ++ show (getVarPos varName env)))) pos]
-    | sup indexType (Base INT) /= Base INT = [ mkSerr (Base (ERROR "Error: array index must be an integer")) pos]
     | otherwise = [] 
 
 mkPointerDeclInitErrs :: Type -> Type -> EnvT -> String -> (Int, Int) -> [String]
