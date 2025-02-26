@@ -384,10 +384,50 @@ Stm: BasicType Ident
 -- Default Functions --
 -----------------------
 
-  | 'writeInt' '(' ')' {  }
-  | 'writeFloat' '(' ')' {  }
-  | 'writeChar' '(' ')' {   }
-  | 'writeString' '(' ')' {   }
+  | 'writeInt' '(' RExp ')' 
+{  
+  $$.attr = Abs.WriteInt $3.attr;
+  $3.env = $$.env;
+
+  $$.err = if TS.isInt $3.btype
+          then $3.err
+          else [Err.mkSerr (TS.Base (TS.ERROR ("writeInt expects an integer parameter, found '" ++ TS.typeToString($3.btype) ++ "'"))) (posLineCol $$.pos)];
+  
+  $$.pos = (tokenPosn $1);
+}
+  | 'writeFloat' '(' RExp ')' 
+{  
+  $$.attr = Abs.WriteFloat $3.attr;
+  $3.env = $$.env;
+
+  $$.err = if TS.isInt $3.btype
+          then $3.err
+          else [Err.mkSerr (TS.Base (TS.ERROR ("writeFloat expects a float parameter, found '" ++ TS.typeToString($3.btype) ++ "'"))) (posLineCol $$.pos)];
+  
+  $$.pos = (tokenPosn $1);
+}
+  | 'writeChar' '(' RExp ')' 
+{   
+  $$.attr = Abs.WriteChar $3.attr;
+  $3.env = $$.env;
+
+  $$.err = if TS.isChar $3.btype
+          then $3.err
+          else [Err.mkSerr (TS.Base (TS.ERROR ("writeChar expects a char parameter, found '" ++ TS.typeToString($3.btype) ++ "'"))) (posLineCol $$.pos)];
+  
+  $$.pos = (tokenPosn $1);
+}
+  | 'writeString' '(' RExp ')' 
+{   
+  $$.attr = Abs.WriteString $3.attr;
+  $3.env = $$.env;
+
+  $$.err = if TS.isString $3.btype
+          then $3.err
+          else [Err.mkSerr (TS.Base (TS.ERROR ("writeString expects a String parameter, found '" ++ TS.typeToString($3.btype) ++ "'"))) (posLineCol $$.pos)];
+  
+  $$.pos = (tokenPosn $1);
+}
   | 'readInt' '()' {  }
   | 'readFloat' '()' {  }
   | 'readChar' '()' {  }
@@ -459,7 +499,7 @@ Param : BasicType Ident
 Dim : '[' RExp ']' 
 {   
   $$.attr = Abs.ArrayDimension $2.attr; 
-  $1.env = $$.env;
+  $2.env = $$.env;
 
   $$.err = if TS.isInt $2.btype
           then $2.err
