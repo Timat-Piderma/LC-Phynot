@@ -118,6 +118,7 @@ Ident  : L_Ident
   $$.attr = Abs.Ident (tokenText $1);
   $$.ident = (tokenText $1);
   $$.err = [];
+
   $$.pos = (tokenPosn $1);
 }
 
@@ -362,7 +363,7 @@ Stm: BasicType Ident
 {  
   $$.attr = Abs.Assignment $1.attr $3.attr;
   $$.modifiedEnv = $$.env;
-  $$.err = Err.mkAssignmentErrs $1.btype $3.btype (posLineCol $$.pos) ++ $1.err ++ $3.err;
+  $$.err = Err.mkAssignmentErrs $1.btype $3.btype (posLineCol $1.pos) (posLineCol $3.pos) ++ $1.err ++ $3.err;
   $$.ident = $1.ident;
   $$.pos = $1.pos;
   $$.btype = TS.sup $1.btype $3.btype;
@@ -521,6 +522,8 @@ RExp
   $$.err = $1.err;
   $$.btype = $1.btype;
   $1.env = $$.env;
+
+  $$.pos = $1.pos;
 }
 
 RExp2
@@ -536,6 +539,8 @@ RExp2
   $$.err = $1.err;
   $$.btype = $1.btype;
   $1.env = $$.env;
+
+  $$.pos = $1.pos;
 }
 
 RExp3
@@ -550,6 +555,8 @@ RExp3
   $$.err = $1.err;
   $$.btype = $1.btype;
   $1.env = $$.env;
+
+  $$.pos = $1.pos;
 }
 
 RExp4 : '&' RExp5 
@@ -559,6 +566,8 @@ RExp4 : '&' RExp5
 
   $$.err = $2.err;
   $$.btype = (TS.ADDRESS $2.btype);
+
+  $$.pos = $2.pos;
 } 
 | RExp5 
 { 
@@ -566,6 +575,8 @@ RExp4 : '&' RExp5
   $$.err = $1.err;
   $$.btype = $1.btype;
   $1.env = $$.env;
+
+  $$.pos = $1.pos;
 }
 
 RExp5
@@ -574,36 +585,62 @@ RExp5
   $$.attr = Abs.IntValue $1.attr; 
   $$.err = $1.err;
   $$.btype = $1.btype;
+
+  $$.pos = $1.pos;
 }
   | Double 
 { 
   $$.attr = Abs.FloatValue $1.attr;
   $$.err = $1.err;
   $$.btype = $1.btype;
+
+  $$.pos = $1.pos;
 }
   | String 
 {     
   $$.attr = Abs.StringValue $1.attr;
   $$.err = $1.err;
   $$.btype = $1.btype; 
+
+  $$.pos = $1.pos;
 }
   | Char 
 {  
   $$.attr = Abs.CharValue $1.attr;
   $$.err = $1.err;
   $$.btype = $1.btype;
+
+  $$.pos = $1.pos;
 }
   | Boolean 
 {  
   $$.attr = Abs.BooleanValue $1.attr;
   $$.err = $1.err;
   $$.btype = $1.btype;
+
+  $$.pos = $1.pos;
 }
   | Ident 
 { 
   $$.attr = Abs.VarValue $1.attr;
   $$.err = $1.err;
   $$.btype = (E.getVarType $1.ident $$.env);
+
+  $$.pos = $1.pos;
+}
+  | Ident ListDim 
+{ 
+  $$.attr = Abs.ArrayEntry $1.attr $2.attr; 
+  $$.ident = $1.ident;
+  $2.env = $$.env;
+
+  $$.btype = TS.getArrayCurrentType (E.getArrayType $1.ident $$.env) $2.arraydim;
+
+
+  $2.arraytype = (E.getArrayType $1.ident $$.env);
+
+  $$.err = $2.err;
+  $$.pos = $1.pos;
 }
   | Ident '(' ListRExp ')' 
 {  
@@ -612,6 +649,8 @@ RExp5
 
   $$.btype = (E.getFuncType $1.ident $$.env);
   $$.err = (Err.mkFuncCallErrs $1.ident $3.paramTypes $$.env (posLineCol $1.pos)) ++ $3.err;
+
+  $$.pos = $1.pos;
 }
   | Ident '()' 
 {  
@@ -619,6 +658,8 @@ RExp5
 
   $$.btype = (E.getFuncType $1.ident $$.env);
   $$.err = (Err.mkFuncCallErrs $1.ident [] $$.env (posLineCol $1.pos));
+
+  $$.pos = $1.pos;
 }
   | '(' RExp ')'  
 { 
@@ -626,6 +667,8 @@ RExp5
   $$.err = $2.err;
   $$.btype = $2.btype;
   $2.env = $$.env;
+
+  $$.pos = $2.pos;
 }
 
 ListRExp : {- empty -} 
@@ -659,6 +702,8 @@ RExp1 : RExp2
   $$.err = $1.err;
   $$.btype = $1.btype;
   $1.env = $$.env;
+
+  $$.pos = $1.pos;
 }
 
 {
