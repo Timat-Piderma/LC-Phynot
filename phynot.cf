@@ -96,6 +96,7 @@ CharValue.                      RExp5 ::= Char;
 BooleanValue.                   RExp5 ::= Boolean;
 VarValue.                       RExp5 ::= Ident;
     
+ArrayEntry.                     RExp5 ::= Ident [Dim];
 FuncCall.                       RExp5 ::= Ident "(" [RExp] ")";
 FuncCallNoParam.                RExp5 ::= Ident "()";
 separator RExp ","; 

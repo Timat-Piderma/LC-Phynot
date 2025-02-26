@@ -86,6 +86,7 @@ data RExp
     | CharValue Char
     | BooleanValue Boolean
     | VarValue Ident
+    | ArrayEntry Ident [Dim]
     | FuncCall Ident [RExp]
     | FuncCallNoParam Ident
   deriving (C.Eq, C.Ord, C.Show, C.Read)
