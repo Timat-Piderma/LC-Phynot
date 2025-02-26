@@ -90,6 +90,21 @@ isInt :: Type -> Bool
 isInt (Base INT) = True
 isInt _ = False
 
+-- Checks if a value is FLOAT
+isFloat :: Type -> Bool
+isFloat (Base FLOAT) = True
+isFloat _ = False
+
+-- Checks if a value is CHAR
+isChar :: Type -> Bool
+isChar (Base CHAR) = True
+isChar _ = False
+
+-- Checks if a value is STRING
+isString :: Type -> Bool
+isString (Base STRING) = True
+isString _ = False
+
 -- Checks if a value is an ERROR
 isERROR :: Type -> Bool
 isERROR (Base (ERROR _)) = True
