@@ -470,11 +470,49 @@ Stm: BasicType Ident
 -- Sequence Control --
 ----------------------
 
-  | 'if' RExp '{' ListStm '}' {   }
-  | 'if' RExp '{' ListStm '}' 'else' '{' ListStm '}' {       }
-  | 'while' RExp '{' ListStm '}' {   }
-  | 'break' {   }
-  | 'continue' {   }
+  | 'if' RExp '{' ListStm '}' 
+{   
+    $$.attr = Abs.IfThen $2.attr $4.attr;
+    $2.env = $$.env;
+    $4.env = $$.env;
+    $$.modifiedEnv = $$.env;
+    $$.err = Err.mkIfErrs $2.btype $4.err (posLineCol (tokenPosn $1));
+}
+  | 'if' RExp '{' ListStm '}' 'else' '{' ListStm '}' 
+{       
+    $$.attr = Abs.IfThenElse $2.attr $4.attr $8.attr;
+    $2.env = $$.env;
+    $4.env = $$.env;
+    $8.env = $$.env;
+    $$.modifiedEnv = $$.env;
+    $$.err = Err.mkIfErrs $2.btype ($4.err ++ $8.err) (posLineCol (tokenPosn $1));
+}
+  | 'while' RExp '{' ListStm '}' 
+{   
+    $$.attr = Abs.WhileDo $2.attr $4.attr; 
+    $2.env = $$.env;
+    $4.env = E.insertVar "continue" (posLineCol (tokenPosn $1)) (TS.Base TS.BOOL) (E.insertVar("break") (posLineCol (tokenPosn $1)) (TS.Base TS.BOOL) $$.env);
+    $$.modifiedEnv = $$.env;
+    $$.err = Err.mkWhileErrs $2.btype $4.err (posLineCol (tokenPosn $1));
+}
+  | 'break' 
+{   
+  $$.attr = Abs.Break;
+  $$.modifiedEnv = $$.env;
+  $$.err = if E.containsEntry "break" $$.env
+          then []
+          else [Err.mkSerr (TS.Base (TS.ERROR "Break statement outside of loop")) (posLineCol $$.pos)];
+  $$.pos = (tokenPosn $1);
+}
+  | 'continue' 
+{   
+  $$.attr = Abs.Continue;
+  $$.modifiedEnv = $$.env;
+  $$.err = if E.containsEntry "continue" $$.env
+          then []
+          else [Err.mkSerr (TS.Base (TS.ERROR "Continue statement outside of loop")) (posLineCol $$.pos)];
+  $$.pos = (tokenPosn $1);
+}
   | 'pass' 
 {  
   $$.attr = Abs.Pass;
