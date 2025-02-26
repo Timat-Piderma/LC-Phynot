@@ -3,13 +3,13 @@ module ErrorsBuilder where
 import TypeSystem as TS
 import Env as E
 
-mkAssignmentErrs :: Type -> Type -> (Int, Int) -> [String]
-mkAssignmentErrs t1 t2 pos
-  | isERROR t1 && isERROR t2 = [ mkSerr t1 pos, mkSerr t2 pos]
-  | isERROR t1 = [ mkSerr t1 pos]
-  | isERROR t2 = [ mkSerr t2 pos]
-  | sup t1 t2 == t1 = []
-  | otherwise = [ mkSerr (Base (ERROR ("Type mismatch: " ++ typeToString t1 ++ " and " ++ typeToString t2))) pos]
+mkAssignmentErrs :: Type -> Type -> (Int, Int) -> (Int, Int) -> [String]
+mkAssignmentErrs varType assType varPos assPos
+    | isERROR varType && isERROR assType = [ mkSerr varType varPos, mkSerr assType assPos]
+    | isERROR varType = [ mkSerr varType varPos]
+    | isERROR assType = [ mkSerr assType assPos]
+    | sup varType assType == varType = []
+    | otherwise = [ mkSerr (Base (ERROR ("Type mismatch: can't assign " ++ typeToString assType ++ " value to " ++ typeToString varType ++ " variable"))) varPos]
 
 mkSerr :: Type -> (Int, Int) -> String
 (mkSerr (Base (ERROR s))) (a,b) = "[" ++ show a ++ ":" ++ show b ++ "] " ++ s  ;
@@ -17,9 +17,15 @@ mkSerr _ _ = "Internal Error" -- Should never happen
 
 mkIfErrs :: Type -> [String] -> (Int, Int) -> [String]
 mkIfErrs t errs pos = case t of
-  Base (ERROR e) ->  mkSerr (Base (ERROR (e ++ " in if guard expression"))) pos : errs
+  Base (ERROR e) ->  mkSerr (Base (ERROR (e ++ " in if statement guard expression"))) pos : errs
   Base BOOL -> errs
-  _ -> mkSerr (Base (ERROR "Error: guard not bool")) pos : errs
+  _ -> mkSerr (Base (ERROR "Error: if statement guard not bool")) pos : errs
+
+mkWhileErrs :: Type -> [String] -> (Int, Int) -> [String]
+mkWhileErrs t errs pos = case t of
+  Base (ERROR e) ->  mkSerr (Base (ERROR (e ++ " in while statement guard expression"))) pos : errs
+  Base BOOL -> errs
+  _ -> mkSerr (Base (ERROR "Error: while statement guard not bool")) pos : errs
 
 mkDeclErrs :: EnvT -> String -> (Int, Int) -> [String]
 mkDeclErrs env varName pos
@@ -35,10 +41,9 @@ mkDeclInitErrs varType initType env varName pos
     | sup varType initType == varType = []
     | otherwise = [ mkSerr (Base (ERROR ("Type mismatch: can't convert " ++ typeToString initType ++ " to " ++ typeToString varType))) pos]
 
-mkArrayDeclErrs :: Type -> EnvT -> String -> (Int, Int) -> [String]
-mkArrayDeclErrs indexType env varName pos
+mkArrayDeclErrs :: EnvT -> String -> (Int, Int) -> [String]
+mkArrayDeclErrs env varName pos
     | containsEntry varName env = [mkSerr (Base (ERROR ("Variable '" ++ varName ++ "' already declared at: " ++ show (getVarPos varName env)))) pos]
-    | sup indexType (Base INT) /= Base INT = [ mkSerr (Base (ERROR "Error: array index must be an integer")) pos]
     | otherwise = [] 
 
 mkPointerDeclInitErrs :: Type -> Type -> EnvT -> String -> (Int, Int) -> [String]
@@ -87,3 +92,22 @@ mkProcedureCallErrs procName params env pos
     | containsEntry procName env = mkFuncCallParamErrs procName params (getFuncParams procName env) pos
     | not (containsEntry procName env) = [mkSerr (Base (ERROR ("Error: function '" ++ procName ++ "' not declared"))) pos]
     | otherwise = []
+
+mkBoolRelErrs :: Type -> Type -> (Int, Int) -> (Int, Int) -> (Int, Int) -> [String]
+mkBoolRelErrs t1 t2 t1Pos t2Pos relPos
+    | isERROR t1 && isERROR t2 = [ mkSerr t1 t1Pos , mkSerr t2 t2Pos]
+    | isERROR t1 = [ mkSerr t1 t1Pos]
+    | isERROR t2 = [ mkSerr t2 t2Pos]
+    | sup t1 t2 == Base BOOL = []
+    | otherwise = [ mkSerr (Base (ERROR ("Type mismatch: can't compare " ++ typeToString t1 ++ " with " ++ typeToString t2))) relPos]
+
+mkRelErrs :: Type -> Type -> (Int, Int) -> (Int, Int) -> (Int, Int) -> [String]
+mkRelErrs t1 t2 t1Pos t2Pos relPos
+    | isERROR t1 && isERROR t2 = [ mkSerr t1 t1Pos , mkSerr t2 t2Pos]
+    | isERROR t1 = [ mkSerr t1 t1Pos]
+    | isERROR t2 = [ mkSerr t2 t2Pos]
+    | rel t1 t2 == Base BOOL = []
+    | otherwise = [ mkSerr (Base (ERROR ("Type mismatch: can't compare " ++ typeToString t1 ++ " with " ++ typeToString t2))) relPos]
+
+prettyRelErr :: [String] -> String -> [String]
+prettyRelErr errs relName = map (++ " in '" ++ relName ++ "' expression") errs

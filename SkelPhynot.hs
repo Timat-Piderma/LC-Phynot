@@ -103,5 +103,6 @@ transRExp x = case x of
   AbsPhynot.CharValue char -> failure x
   AbsPhynot.BooleanValue boolean -> failure x
   AbsPhynot.VarValue ident -> failure x
+  AbsPhynot.ArrayEntry ident dims -> failure x
   AbsPhynot.FuncCall ident rexps -> failure x
   AbsPhynot.FuncCallNoParam ident -> failure x

@@ -48,6 +48,11 @@ sup _ (Base (ERROR s))            = Base (ERROR s)
 
 sup t1 t2                         = Base (ERROR ("Type mismatch: " ++ typeToString t1 ++ " and " ++ typeToString t2 ++ " are not compatible"))
 
+getArrayCurrentType :: Type -> Int -> Type
+getArrayCurrentType t 0 = t
+getArrayCurrentType (ARRAY t) n = getArrayCurrentType t (n - 1)
+getArrayCurrentType _ _ = Base (ERROR "Invalid array access")
+
 -- Given a type, returns a string representation of it
 typeToString :: Type -> String
 typeToString (Base (ERROR s))  = s
@@ -71,21 +76,44 @@ mathtype _          = ERROR "Cannot perform arithmetic operations on this type"
 
 -- Given two types, returns the BOOL if they are compatible
 rel :: Type -> Type -> Type
+rel (Base BOOL) (Base BOOL) = Base (ERROR "Cannot compare with boolean values")
+rel (Base BOOL) _ = Base (ERROR "Cannot compare with boolean values")
+rel _ (Base BOOL) = Base (ERROR "Cannot compare with boolean values")
 rel x y = case sup x y of
   Base (ERROR d)            -> Base (ERROR d)
   _                         -> Base BOOL
 
 -- Checks if a value is BOOL
-isBoolean :: Type -> Type
-isBoolean (Base BOOL) = Base BOOL
-isBoolean _ = Base (ERROR "Error: not a boolean")
+isBoolean :: Type -> Bool
+isBoolean (Base BOOL) = True
+isBoolean _ = False
 
 -- Checks if a value is INT
-isInt :: Type -> Type
-isInt (Base INT) = Base INT
-isInt _ = Base (ERROR "Error: not an integer")
+isInt :: Type -> Bool
+isInt (Base INT) = True
+isInt _ = False
+
+-- Checks if a value is FLOAT
+isFloat :: Type -> Bool
+isFloat (Base FLOAT) = True
+isFloat _ = False
+
+-- Checks if a value is CHAR
+isChar :: Type -> Bool
+isChar (Base CHAR) = True
+isChar _ = False
+
+-- Checks if a value is STRING
+isString :: Type -> Bool
+isString (Base STRING) = True
+isString _ = False
 
 -- Checks if a value is an ERROR
 isERROR :: Type -> Bool
 isERROR (Base (ERROR _)) = True
 isERROR _ = False
+
+-- Checks if a value is a ARRAY
+isArray :: Type -> Bool
+isArray (ARRAY _) = True
+isArray _ = False

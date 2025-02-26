@@ -13,6 +13,12 @@ data EnvEntity = Variable {
     btype :: Type,
     params :: [Type]
     }
+    | Array {
+    id :: String,
+    pos :: (Int, Int),
+    btype :: Type,
+    dimensions :: Int
+    }
     deriving (Show, Read)
 
 emptyEnv :: EnvT
@@ -21,11 +27,19 @@ emptyEnv = Map.empty
 mkVar :: String -> (Int, Int) -> Type -> EnvEntity
 mkVar varName varPos varType = Variable varName varPos varType []
 
+mkArray :: String -> (Int, Int) -> Type -> Int -> EnvEntity
+mkArray varName varPos varType dim = Array varName varPos varType dim
+
 -- inserts only if not already in the environment
 insertVar :: String -> (Int, Int) -> Type -> EnvT -> EnvT
 insertVar varName varPos varType env = if containsEntry varName env
     then env
     else Map.insert varName (mkVar varName varPos varType) env 
+
+insertArray :: String -> (Int, Int) -> Type -> Int -> EnvT -> EnvT
+insertArray varName varPos varType dim env = if containsEntry varName env
+    then env
+    else Map.insert varName (mkArray varName varPos varType dim) env
 
 insertFunc :: String -> (Int, Int) -> Type -> [Type] -> EnvT -> EnvT
 insertFunc funcName funcPos funcType funcParams env = if containsEntry funcName env
@@ -47,6 +61,20 @@ getVarType :: String -> EnvT -> Type
 getVarType varName env = case Map.lookup varName env of
     Just entry  -> btype entry
     Nothing     -> Base (ERROR ("Variable '" ++ varName ++ "' not declared"))
+
+getArrayType :: String -> EnvT -> Type
+getArrayType varName env = case Map.lookup varName env of
+    Just entry -> case btype entry of
+        ARRAY t -> ARRAY t
+        _       -> Base (ERROR ("Variable '" ++ varName ++ "' is not an array"))
+    Nothing     -> Base (ERROR ("Variable '" ++ varName ++ "' not declared"))
+
+getArrayDim :: String -> EnvT -> Int
+getArrayDim varName env = case Map.lookup varName env of
+    Just entry -> case btype entry of
+        ARRAY _ -> dimensions entry
+        _       -> 0
+    Nothing     -> 0
 
 getFuncType :: String -> EnvT -> Type 
 getFuncType funcName env = case Map.lookup funcName env of

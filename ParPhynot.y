@@ -88,10 +88,10 @@ import LexPhynot
   '{'           { PT _ (TS _ 48) }
   '}'           { PT _ (TS _ 49) }
   L_Ident       { PT _ (TV _)    }
-  L_charac      { PT _ (TC $$)   }
-  L_doubl       { PT _ (TD $$)   }
-  L_integ       { PT _ (TI $$)   }
-  L_quoted      { PT _ (TL $$)   }
+  L_charac      { PT _ (TC _)    }
+  L_doubl       { PT _ (TD _)   }
+  L_integ       { PT _ (TI _)   }
+  L_quoted      { PT _ (TL _)   }
 
 %attributetype {Attr a}
 %attribute res { Result }
@@ -102,6 +102,8 @@ import LexPhynot
 %attribute ident { String }
 %attribute pos { Posn }
 %attribute btype { TS.Type }
+%attribute arraytype { TS.Type }
+%attribute arraydim { Int }
 %attribute funcName { String }
 %attribute paramTypes { [TS.Type] }
 
@@ -116,35 +118,44 @@ Ident  : L_Ident
   $$.attr = Abs.Ident (tokenText $1);
   $$.ident = (tokenText $1);
   $$.err = [];
+
   $$.pos = (tokenPosn $1);
 }
 
 Char     : L_charac 
 { 
-  $$.attr =  (read $1) :: Char;
+  $$.attr =  read (tokenText $1) :: Char;
   $$.err = [];
   $$.btype = (TS.Base TS.CHAR);
+
+  $$.pos = (tokenPosn $1);
  }
 
 Double   : L_doubl  
 { 
-  $$.attr = (read $1) :: Double;
+  $$.attr = read (tokenText $1) :: Double;
   $$.err = [];
   $$.btype = (TS.Base TS.FLOAT);
+
+  $$.pos = (tokenPosn $1);
 }
 
 Integer  : L_integ  
 { 
-  $$.attr = (read $1) :: Integer;
+  $$.attr = read (tokenText $1) :: Integer;
   $$.err = [];
   $$.btype = (TS.Base TS.INT);
+
+  $$.pos = (tokenPosn $1);
 }
 
 String   : L_quoted 
 {
-  $$.attr =  $1;
+  $$.attr =  ((\(PT _ (TL s)) -> s) $1);
   $$.err = [];
   $$.btype = (TS.Base TS.STRING);
+
+  $$.pos = (tokenPosn $1);
 }
 
 Boolean   : 'True' 
@@ -152,12 +163,16 @@ Boolean   : 'True'
   $$.attr = Abs.Boolean_True;
   $$.err = [];
   $$.btype = (TS.Base TS.BOOL);
+
+  $$.pos = (tokenPosn $1);
 }
 | 'False' 
 { 
   $$.attr = Abs.Boolean_False;
   $$.err = [];
   $$.btype = (TS.Base TS.BOOL);
+
+  $$.pos = (tokenPosn $1);
 }
 
 BasicType: 'int' 
@@ -236,12 +251,15 @@ Stm: BasicType Ident
   | BasicType Ident ListDim 
 {  
   $$.attr = Abs.ArrayDeclaration $1.attr $2.attr $3.attr;
-  $$.modifiedEnv = E.insertVar $2.ident (posLineCol $$.pos) $$.btype $$.env;
-  $$.err = Err.mkArrayDeclErrs $3.btype $$.env $2.ident (posLineCol $$.pos) ++ $3.err;
+  $$.modifiedEnv = E.insertArray $2.ident (posLineCol $$.pos) $$.btype $3.arraydim $$.env;
   $$.ident = $2.ident;
   $$.pos = $2.pos;
-  $$.btype = (TS.ARRAY $1.btype);
+
+  $$.btype = (TS.ARRAY $3.btype);
+  $3.arraytype = $1.btype;
   $3.env = $$.env;  
+
+  $$.err = Err.mkArrayDeclErrs $$.env $2.ident (posLineCol $$.pos) ++ $3.err;
 }
   | BasicType '*' Ident 
 {  
@@ -353,31 +371,152 @@ Stm: BasicType Ident
 -- Assignment --
 ----------------
 
-  | LExp '=' RExp {  }
+  | LExp '=' RExp 
+{  
+  $$.attr = Abs.Assignment $1.attr $3.attr;
+  $$.modifiedEnv = $$.env;
+  $$.err = Err.mkAssignmentErrs $1.btype $3.btype (posLineCol $1.pos) (posLineCol $3.pos) ++ $1.err ++ $3.err;
+  $$.ident = $1.ident;
+  $$.pos = $1.pos;
+  $$.btype = TS.sup $1.btype $3.btype;
+  
+  $3.env = $$.env;
+  $1.env = $$.env;
+}
 
 -----------------------
 -- Default Functions --
 -----------------------
 
-  | 'writeInt' '(' ')' {  }
-  | 'writeFloat' '(' ')' {  }
-  | 'writeChar' '(' ')' {   }
-  | 'writeString' '(' ')' {   }
-  | 'readInt' '()' {  }
-  | 'readFloat' '()' {  }
-  | 'readChar' '()' {  }
-  | 'readString' '()' { }
+  | 'writeInt' '(' RExp ')' 
+{  
+  $$.attr = Abs.WriteInt $3.attr;
+  $3.env = $$.env;
+
+  $$.err = if TS.isInt $3.btype
+          then $3.err
+          else [Err.mkSerr (TS.Base (TS.ERROR ("writeInt expects an integer parameter, found '" ++ TS.typeToString($3.btype) ++ "'"))) (posLineCol $$.pos)];
+  
+  $$.pos = (tokenPosn $1);
+}
+  | 'writeFloat' '(' RExp ')' 
+{  
+  $$.attr = Abs.WriteFloat $3.attr;
+  $3.env = $$.env;
+
+  $$.err = if TS.isInt $3.btype
+          then $3.err
+          else [Err.mkSerr (TS.Base (TS.ERROR ("writeFloat expects a float parameter, found '" ++ TS.typeToString($3.btype) ++ "'"))) (posLineCol $$.pos)];
+  
+  $$.pos = (tokenPosn $1);
+}
+  | 'writeChar' '(' RExp ')' 
+{   
+  $$.attr = Abs.WriteChar $3.attr;
+  $3.env = $$.env;
+
+  $$.err = if TS.isChar $3.btype
+          then $3.err
+          else [Err.mkSerr (TS.Base (TS.ERROR ("writeChar expects a char parameter, found '" ++ TS.typeToString($3.btype) ++ "'"))) (posLineCol $$.pos)];
+  
+  $$.pos = (tokenPosn $1);
+}
+  | 'writeString' '(' RExp ')' 
+{   
+  $$.attr = Abs.WriteString $3.attr;
+  $3.env = $$.env;
+
+  $$.err = if TS.isString $3.btype
+          then $3.err
+          else [Err.mkSerr (TS.Base (TS.ERROR ("writeString expects a String parameter, found '" ++ TS.typeToString($3.btype) ++ "'"))) (posLineCol $$.pos)];
+  
+  $$.pos = (tokenPosn $1);
+}
+  | 'readInt' '()' 
+{  
+  $$.attr = Abs.ReadInt;
+  $$.pos = (tokenPosn $1);
+
+  $$.btype = (TS.Base TS.INT);
+
+  $$.err = [];
+}
+  | 'readFloat' '()' 
+{  
+  $$.attr = Abs.ReadFloat;
+  $$.pos = (tokenPosn $1);
+
+  $$.btype = (TS.Base TS.FLOAT);
+
+  $$.err = []; 
+}
+  | 'readChar' '()' 
+{  
+  $$.attr = Abs.ReadChar;
+  $$.pos = (tokenPosn $1);
+
+  $$.btype = (TS.Base TS.CHAR);
+
+  $$.err = [];  
+}
+  | 'readString' '()' 
+{   
+  $$.attr = Abs.ReadString;
+  $$.pos = (tokenPosn $1);
+
+  $$.btype = (TS.Base TS.STRING);
+
+  $$.err = [];
+}
 
 
 ----------------------
 -- Sequence Control --
 ----------------------
 
-  | 'if' RExp '{' ListStm '}' {   }
-  | 'if' RExp '{' ListStm '}' 'else' '{' ListStm '}' {       }
-  | 'while' RExp '{' ListStm '}' {   }
-  | 'break' {   }
-  | 'continue' {   }
+  | 'if' RExp '{' ListStm '}' 
+{   
+    $$.attr = Abs.IfThen $2.attr $4.attr;
+    $2.env = $$.env;
+    $4.env = $$.env;
+    $$.modifiedEnv = $$.env;
+    $$.err = Err.mkIfErrs $2.btype $4.err (posLineCol (tokenPosn $1)) ++ $2.err;
+}
+  | 'if' RExp '{' ListStm '}' 'else' '{' ListStm '}' 
+{       
+    $$.attr = Abs.IfThenElse $2.attr $4.attr $8.attr;
+    $2.env = $$.env;
+    $4.env = $$.env;
+    $8.env = $$.env;
+    $$.modifiedEnv = $$.env;
+    $$.err = Err.mkIfErrs $2.btype ($4.err ++ $8.err) (posLineCol (tokenPosn $1)) ++ $2.err;
+}
+  | 'while' RExp '{' ListStm '}' 
+{   
+    $$.attr = Abs.WhileDo $2.attr $4.attr; 
+    $2.env = $$.env;
+    $4.env = E.insertVar "continue" (posLineCol (tokenPosn $1)) (TS.Base TS.BOOL) (E.insertVar("break") (posLineCol (tokenPosn $1)) (TS.Base TS.BOOL) $$.env);
+    $$.modifiedEnv = $$.env;
+    $$.err = Err.mkWhileErrs $2.btype $4.err (posLineCol (tokenPosn $1)) ++ $2.err; 
+}
+  | 'break' 
+{   
+  $$.attr = Abs.Break;
+  $$.modifiedEnv = $$.env;
+  $$.err = if E.containsEntry "break" $$.env
+          then []
+          else [Err.mkSerr (TS.Base (TS.ERROR "Break statement outside of loop")) (posLineCol $$.pos)];
+  $$.pos = (tokenPosn $1);
+}
+  | 'continue' 
+{   
+  $$.attr = Abs.Continue;
+  $$.modifiedEnv = $$.env;
+  $$.err = if E.containsEntry "continue" $$.env
+          then []
+          else [Err.mkSerr (TS.Base (TS.ERROR "Continue statement outside of loop")) (posLineCol $$.pos)];
+  $$.pos = (tokenPosn $1);
+}
   | 'pass' 
 {  
   $$.attr = Abs.Pass;
@@ -434,10 +573,11 @@ Param : BasicType Ident
 Dim : '[' RExp ']' 
 {   
   $$.attr = Abs.ArrayDimension $2.attr; 
-  $1.env = $$.env;
+  $2.env = $$.env;
 
-  $$.err = $2.err;
-  $$.btype = $2.btype;
+  $$.err = if TS.isInt $2.btype
+          then $2.err
+          else [Err.mkSerr (TS.Base (TS.ERROR ("Array index must be an integer"))) (posLineCol $2.pos)];
 }
 
 ListDim : Dim 
@@ -445,8 +585,11 @@ ListDim : Dim
   $$.attr = (:[]) $1.attr;
   $1.env = $$.env;
 
+
+  $$.btype = $$.arraytype;
+  $$.arraydim = 1;
+
   $$.err = $1.err;
-  $$.btype = $1.btype;
 } 
 | Dim ListDim 
 {  
@@ -454,61 +597,215 @@ ListDim : Dim
   $1.env = $$.env;
   $2.env = $$.env;
 
+  $$.btype = (TS.ARRAY $2.btype);
+  $$.arraydim = 1 + $2.arraydim;
+  $2.arraytype = $$.arraytype;
+
   $$.err = $1.err ++ $2.err;
-  $$.btype = TS.sup (TS.isInt $1.btype) (TS.isInt $2.btype);
 }
 
 ----------------------
 -- Left Expressions --
 ----------------------
 
-LExp
-  : Ident {  }
-  | Ident ListDim {  }
+LExp: Ident 
+{
+  $$.attr = Abs.LIdent $1.attr;
+  $$.ident = $1.ident;
+  $$.btype = (E.getVarType $1.ident $$.env);
+  $$.pos = $1.pos;
+
+  $$.err = [];
+}
+  | Ident ListDim 
+{  
+  $$.attr = Abs.LArray $1.attr $2.attr;
+  $$.ident = $1.ident;
+  $2.env = $$.env;
+
+  $$.btype = TS.getArrayCurrentType (E.getArrayType $1.ident $$.env) $2.arraydim;
+  $2.arraytype = (E.getArrayType $1.ident $$.env);
+
+  $$.err = $2.err;
+  $$.pos = $1.pos;
+}
 
 -----------------------
 -- Right Expressions --
 -----------------------
 
 RExp
-  : RExp 'or' RExp2 {   }
-  | RExp 'and' RExp2 {   }
-  | 'not' RExp2 {  }
+  : RExp 'or' RExp2 
+{   
+  $$.attr = Abs.Or $1.attr $3.attr;
+  $$.err = (Err.prettyRelErr (Err.mkBoolRelErrs $1.btype $3.btype (posLineCol $1.pos) (posLineCol $3.pos) (posLineCol $$.pos)) "or")  ++ $1.err ++ $3.err;
+  $$.btype = TS.Base TS.BOOL;
+  $1.env = $$.env;  
+  $3.env = $$.env;
+
+  $$.pos = (tokenPosn $2);
+}
+  | RExp 'and' RExp2 
+{   
+  $$.attr = Abs.And $1.attr $3.attr;
+  $$.err = (Err.prettyRelErr (Err.mkBoolRelErrs $1.btype $3.btype (posLineCol $1.pos) (posLineCol $3.pos) (posLineCol $$.pos)) "and")  ++ $1.err ++ $3.err;
+  $$.btype = TS.Base TS.BOOL;
+  $1.env = $$.env;  
+  $3.env = $$.env;
+
+  $$.pos = (tokenPosn $2);
+}
+  | 'not' RExp2 
+{  
+  $$.attr = Abs.Not $2.attr;
+  $$.err =  if TS.isBoolean $2.btype
+          then $2.err
+          else [Err.mkSerr (TS.Base (TS.ERROR ("'not' expects a boolean parameter, found '" ++ TS.typeToString($2.btype) ++ "'"))) (posLineCol $$.pos)];
+  $$.btype = TS.Base TS.BOOL;
+  $2.env = $$.env; 
+
+  $$.pos = (tokenPosn $1); 
+}
   | RExp1 
 {  
   $$.attr = $1.attr; 
   $$.err = $1.err;
   $$.btype = $1.btype;
   $1.env = $$.env;
+
+  $$.pos = $1.pos;
 }
 
 RExp2
-  : RExp2 '==' RExp3 {  }
-  | RExp2 '!=' RExp3 {    }
-  | RExp2 '<' RExp3 {    }
-  | RExp2 '>' RExp3 {     }
-  | RExp2 '<=' RExp3 {    }
-  | RExp2 '>=' RExp3 {      }
+  : RExp2 '==' RExp3 
+{  
+    $$.attr = Abs.Eq $1.attr $3.attr;
+    $$.err = (Err.prettyRelErr (Err.mkRelErrs $1.btype $3.btype (posLineCol $1.pos) (posLineCol $3.pos) (posLineCol $$.pos)) "==")  ++ $1.err ++ $3.err;
+    $$.btype = TS.Base TS.BOOL; 
+    $1.env = $$.env;
+    $3.env = $$.env;
+
+    $$.pos = (tokenPosn $2);
+}
+  | RExp2 '!=' RExp3 
+{    
+    $$.attr = Abs.Neq $1.attr $3.attr;
+    $$.err = (Err.prettyRelErr (Err.mkRelErrs $1.btype $3.btype (posLineCol $1.pos) (posLineCol $3.pos) (posLineCol $$.pos)) "!=")  ++ $1.err ++ $3.err;
+    $$.btype = TS.Base TS.BOOL; 
+    $1.env = $$.env;
+    $3.env = $$.env;
+
+    $$.pos = (tokenPosn $2);
+}
+  | RExp2 '<' RExp3 
+{    
+    $$.attr = Abs.Lt $1.attr $3.attr;
+    $$.err = (Err.prettyRelErr (Err.mkRelErrs $1.btype $3.btype (posLineCol $1.pos) (posLineCol $3.pos) (posLineCol $$.pos)) "<")  ++ $1.err ++ $3.err;
+    $$.btype = TS.Base TS.BOOL; 
+    $1.env = $$.env;
+    $3.env = $$.env;
+
+    $$.pos = (tokenPosn $2);
+}
+  | RExp2 '>' RExp3 
+{     
+    $$.attr = Abs.Gt $1.attr $3.attr;
+    $$.err = (Err.prettyRelErr (Err.mkRelErrs $1.btype $3.btype (posLineCol $1.pos) (posLineCol $3.pos) (posLineCol $$.pos)) ">")  ++ $1.err ++ $3.err;
+    $$.btype = TS.Base TS.BOOL; 
+    $1.env = $$.env;
+    $3.env = $$.env;
+
+    $$.pos = (tokenPosn $2);
+}
+  | RExp2 '<=' RExp3 
+{    
+    $$.attr = Abs.Le $1.attr $3.attr;
+    $$.err = (Err.prettyRelErr (Err.mkRelErrs $1.btype $3.btype (posLineCol $1.pos) (posLineCol $3.pos) (posLineCol $$.pos)) "<=")  ++ $1.err ++ $3.err;
+    $$.btype = TS.Base TS.BOOL; 
+    $1.env = $$.env;
+    $3.env = $$.env;
+
+    $$.pos = (tokenPosn $2);
+}
+  | RExp2 '>=' RExp3 
+{      
+    $$.attr = Abs.Ge $1.attr $3.attr;
+    $$.err = (Err.prettyRelErr (Err.mkRelErrs $1.btype $3.btype (posLineCol $1.pos) (posLineCol $3.pos) (posLineCol $$.pos)) ">=")  ++ $1.err ++ $3.err;
+    $$.btype = TS.Base TS.BOOL; 
+    $1.env = $$.env;
+    $3.env = $$.env;
+
+    $$.pos = (tokenPosn $2);
+}
   | RExp3 
 { 
   $$.attr = $1.attr; 
   $$.err = $1.err;
   $$.btype = $1.btype;
   $1.env = $$.env;
+
+  $$.pos = $1.pos;
 }
 
 RExp3
-  : RExp3 '+' RExp4 {  }
-  | RExp3 '-' RExp4 {   }
-  | RExp3 '*' RExp4 {     }
-  | RExp3 '/' RExp4 {    }
-  | RExp3 '%' RExp4 {    }
+  : RExp3 '+' RExp4 
+{  
+  $$.attr = Abs.Add $1.attr $3.attr;
+  $$.err = $1.err ++ $3.err;
+  $$.btype = TS.sup $1.btype $3.btype;
+  $1.env = $$.env;
+  $3.env = $$.env;
+
+  $$.pos = (tokenPosn $2);
+}
+  | RExp3 '-' RExp4 
+{   
+  $$.attr = Abs.Sub $1.attr $3.attr;
+  $$.err = $1.err ++ $3.err;
+  $$.btype = TS.sup $1.btype $3.btype;
+  $1.env = $$.env;
+  $3.env = $$.env;
+
+  $$.pos = (tokenPosn $2);
+}
+  | RExp3 '*' RExp4 
+{     
+  $$.attr = Abs.Mul $1.attr $3.attr;
+  $$.err = $1.err ++ $3.err;
+  $$.btype = TS.sup $1.btype $3.btype;
+  $1.env = $$.env;
+  $3.env = $$.env;
+
+  $$.pos = (tokenPosn $2);
+}
+  | RExp3 '/' RExp4 
+{    
+  $$.attr = Abs.Div $1.attr $3.attr;
+  $$.err = $1.err ++ $3.err;
+  $$.btype = TS.sup $1.btype $3.btype;
+  $1.env = $$.env;
+  $3.env = $$.env;
+
+  $$.pos = (tokenPosn $2);
+}
+  | RExp3 '%' RExp4 
+{    
+  $$.attr = Abs.Mod $1.attr $3.attr;
+  $$.err = $1.err ++ $3.err;
+  $$.btype = TS.sup $1.btype $3.btype;
+  $1.env = $$.env;
+  $3.env = $$.env;
+
+  $$.pos = (tokenPosn $2);
+}
   | RExp4 
 {    
   $$.attr = $1.attr; 
   $$.err = $1.err;
   $$.btype = $1.btype;
   $1.env = $$.env;
+
+  $$.pos = $1.pos;
 }
 
 RExp4 : '&' RExp5 
@@ -518,6 +815,8 @@ RExp4 : '&' RExp5
 
   $$.err = $2.err;
   $$.btype = (TS.ADDRESS $2.btype);
+
+  $$.pos = $2.pos;
 } 
 | RExp5 
 { 
@@ -525,6 +824,8 @@ RExp4 : '&' RExp5
   $$.err = $1.err;
   $$.btype = $1.btype;
   $1.env = $$.env;
+
+  $$.pos = $1.pos;
 }
 
 RExp5
@@ -533,38 +834,62 @@ RExp5
   $$.attr = Abs.IntValue $1.attr; 
   $$.err = $1.err;
   $$.btype = $1.btype;
+
+  $$.pos = $1.pos;
 }
   | Double 
 { 
   $$.attr = Abs.FloatValue $1.attr;
   $$.err = $1.err;
   $$.btype = $1.btype;
+
+  $$.pos = $1.pos;
 }
   | String 
 {     
   $$.attr = Abs.StringValue $1.attr;
   $$.err = $1.err;
   $$.btype = $1.btype; 
+
+  $$.pos = $1.pos;
 }
   | Char 
 {  
   $$.attr = Abs.CharValue $1.attr;
   $$.err = $1.err;
   $$.btype = $1.btype;
+
+  $$.pos = $1.pos;
 }
   | Boolean 
 {  
   $$.attr = Abs.BooleanValue $1.attr;
   $$.err = $1.err;
   $$.btype = $1.btype;
+
+  $$.pos = $1.pos;
 }
   | Ident 
 { 
   $$.attr = Abs.VarValue $1.attr;
-  $$.err = if E.containsEntry $1.ident $$.env
-          then []
-          else [Err.mkSerr (TS.Base (TS.ERROR ("Variable " ++ $1.ident ++ " not declared"))) (posLineCol $1.pos)];
+  $$.err = $1.err;
   $$.btype = (E.getVarType $1.ident $$.env);
+
+  $$.pos = $1.pos;
+}
+  | Ident ListDim 
+{ 
+  $$.attr = Abs.ArrayEntry $1.attr $2.attr; 
+  $$.ident = $1.ident;
+  $2.env = $$.env;
+
+  $$.btype = TS.getArrayCurrentType (E.getArrayType $1.ident $$.env) $2.arraydim;
+
+
+  $2.arraytype = (E.getArrayType $1.ident $$.env);
+
+  $$.err = $2.err;
+  $$.pos = $1.pos;
 }
   | Ident '(' ListRExp ')' 
 {  
@@ -573,6 +898,8 @@ RExp5
 
   $$.btype = (E.getFuncType $1.ident $$.env);
   $$.err = (Err.mkFuncCallErrs $1.ident $3.paramTypes $$.env (posLineCol $1.pos)) ++ $3.err;
+
+  $$.pos = $1.pos;
 }
   | Ident '()' 
 {  
@@ -580,6 +907,8 @@ RExp5
 
   $$.btype = (E.getFuncType $1.ident $$.env);
   $$.err = (Err.mkFuncCallErrs $1.ident [] $$.env (posLineCol $1.pos));
+
+  $$.pos = $1.pos;
 }
   | '(' RExp ')'  
 { 
@@ -587,6 +916,8 @@ RExp5
   $$.err = $2.err;
   $$.btype = $2.btype;
   $2.env = $$.env;
+
+  $$.pos = $2.pos;
 }
 
 ListRExp : {- empty -} 
@@ -620,6 +951,8 @@ RExp1 : RExp2
   $$.err = $1.err;
   $$.btype = $1.btype;
   $1.env = $$.env;
+
+  $$.pos = $1.pos;
 }
 
 {
