@@ -67,7 +67,7 @@ getArrayType varName env = case Map.lookup varName env of
     Just entry -> case btype entry of
         ARRAY t -> ARRAY t
         _       -> Base (ERROR ("Variable '" ++ varName ++ "' is not an array"))
-    Nothing     -> Base (ERROR ("Variable '" ++ varName ++ "' not declared"))
+    Nothing     -> Base (ERROR ("Array '" ++ varName ++ "' not declared"))
 
 getArrayDim :: String -> EnvT -> Int
 getArrayDim varName env = case Map.lookup varName env of
