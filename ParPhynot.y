@@ -593,7 +593,9 @@ LExp: Ident
 {
   $$.attr = Abs.LIdent $1.attr;
   $$.ident = $1.ident;
-  $$.btype = (E.getVarType $1.ident $$.env);
+  $$.btype = if TS.isERROR (E.getVarType $1.ident $$.env)
+            then Err.mkError (TS.getErrorMessage (E.getVarType $1.ident $$.env)) (posLineCol $1.pos)
+            else E.getVarType $1.ident $$.env;
   $$.pos = $1.pos;
 
   $$.err = [];
