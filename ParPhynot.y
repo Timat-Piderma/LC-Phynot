@@ -228,7 +228,6 @@ ListStm : Stm ';'
 -- Declarations --
 ------------------
 
--- Variable Declaration
 Stm: BasicType Ident 
 { 
   $$.attr = Abs.VarDeclaration $1.attr $2.attr;
@@ -274,7 +273,7 @@ Stm: BasicType Ident
 {  
   $$.attr = Abs.PointerDeclarationInit $1.attr $3.attr $5.attr;
   $$.modifiedEnv = E.insertVar $3.ident (posLineCol $$.pos) $$.btype $$.env;
-  $$.err = Err.mkPointerDeclInitErrs $$.btype $5.btype $$.env $3.ident (posLineCol $$.pos) ++ $5.err; 
+  $$.err = Err.mkPointerDeclInitErrs (TS.sup $$.btype $5.btype) $$.env $3.ident (posLineCol $$.pos) ++ $5.err; 
   $$.ident = $3.ident;
   $$.pos = $3.pos;
   $$.btype = (TS.POINTER $1.btype) ;
@@ -393,10 +392,7 @@ Stm: BasicType Ident
   $$.attr = Abs.WriteInt $3.attr;
   $3.env = $$.env;
 
-  $$.err = if TS.isInt $3.btype
-          then $3.err
-          else [Err.mkSerr (TS.Base (TS.ERROR ("writeInt expects an integer parameter, found '" ++ TS.typeToString($3.btype) ++ "'"))) (posLineCol $$.pos)];
-  
+  $$.err = Err.mkFuncCallErrs "writeInt" [$3.btype] $$.env (posLineCol $$.pos) ++ $3.err;
   $$.pos = (tokenPosn $1);
 }
   | 'writeFloat' '(' RExp ')' 
@@ -404,10 +400,7 @@ Stm: BasicType Ident
   $$.attr = Abs.WriteFloat $3.attr;
   $3.env = $$.env;
 
-  $$.err = if TS.isInt $3.btype
-          then $3.err
-          else [Err.mkSerr (TS.Base (TS.ERROR ("writeFloat expects a float parameter, found '" ++ TS.typeToString($3.btype) ++ "'"))) (posLineCol $$.pos)];
-  
+  $$.err = Err.mkFuncCallErrs "writeFloat" [$3.btype] $$.env (posLineCol $$.pos) ++ $3.err;
   $$.pos = (tokenPosn $1);
 }
   | 'writeChar' '(' RExp ')' 
@@ -415,10 +408,7 @@ Stm: BasicType Ident
   $$.attr = Abs.WriteChar $3.attr;
   $3.env = $$.env;
 
-  $$.err = if TS.isChar $3.btype
-          then $3.err
-          else [Err.mkSerr (TS.Base (TS.ERROR ("writeChar expects a char parameter, found '" ++ TS.typeToString($3.btype) ++ "'"))) (posLineCol $$.pos)];
-  
+  $$.err = Err.mkFuncCallErrs "writeChar" [$3.btype] $$.env (posLineCol $$.pos) ++ $3.err;
   $$.pos = (tokenPosn $1);
 }
   | 'writeString' '(' RExp ')' 
@@ -426,10 +416,7 @@ Stm: BasicType Ident
   $$.attr = Abs.WriteString $3.attr;
   $3.env = $$.env;
 
-  $$.err = if TS.isString $3.btype
-          then $3.err
-          else [Err.mkSerr (TS.Base (TS.ERROR ("writeString expects a String parameter, found '" ++ TS.typeToString($3.btype) ++ "'"))) (posLineCol $$.pos)];
-  
+  $$.err = Err.mkFuncCallErrs "writeString" [$3.btype] $$.env (posLineCol $$.pos) ++ $3.err;
   $$.pos = (tokenPosn $1);
 }
   | 'readInt' '()' 
@@ -503,18 +490,14 @@ Stm: BasicType Ident
 {   
   $$.attr = Abs.Break;
   $$.modifiedEnv = $$.env;
-  $$.err = if E.containsEntry "break" $$.env
-          then []
-          else [Err.mkSerr (TS.Base (TS.ERROR "Break statement outside of loop")) (posLineCol $$.pos)];
+  $$.err = Err.mkJumpStatementErrs "break" $$.env (posLineCol $$.pos);
   $$.pos = (tokenPosn $1);
 }
   | 'continue' 
 {   
   $$.attr = Abs.Continue;
   $$.modifiedEnv = $$.env;
-  $$.err = if E.containsEntry "continue" $$.env
-          then []
-          else [Err.mkSerr (TS.Base (TS.ERROR "Continue statement outside of loop")) (posLineCol $$.pos)];
+  $$.err = Err.mkJumpStatementErrs "continue" $$.env (posLineCol $$.pos);
   $$.pos = (tokenPosn $1);
 }
   | 'pass' 
@@ -575,9 +558,7 @@ Dim : '[' RExp ']'
   $$.attr = Abs.ArrayDimension $2.attr; 
   $2.env = $$.env;
 
-  $$.err = if TS.isInt $2.btype
-          then $2.err
-          else [Err.mkSerr (TS.Base (TS.ERROR ("Array index must be an integer"))) (posLineCol $2.pos)];
+  $$.err = Err.mkArrayIndexErrs $2.btype (posLineCol $2.pos) ++ $2.err;
 }
 
 ListDim : Dim 
@@ -623,7 +604,10 @@ LExp: Ident
   $$.ident = $1.ident;
   $2.env = $$.env;
 
-  $$.btype = TS.getArrayCurrentType (E.getArrayType $1.ident $$.env) $2.arraydim;
+  $$.btype = if TS.isERROR (E.getArrayType $1.ident $$.env) 
+            then Err.mkError (TS.getErrorMessage (E.getArrayType $1.ident $$.env)) (posLineCol $1.pos)
+            else TS.getArrayCurrentType (E.getArrayType $1.ident $$.env) $2.arraydim;
+
   $2.arraytype = (E.getArrayType $1.ident $$.env);
 
   $$.err = $2.err;
@@ -658,9 +642,7 @@ RExp
   | 'not' RExp2 
 {  
   $$.attr = Abs.Not $2.attr;
-  $$.err =  if TS.isBoolean $2.btype
-          then $2.err
-          else [Err.mkSerr (TS.Base (TS.ERROR ("'not' expects a boolean parameter, found '" ++ TS.typeToString($2.btype) ++ "'"))) (posLineCol $$.pos)];
+  $$.err =  (Err.mkNotErrs $2.btype (posLineCol $$.pos)) ++ $2.err;
   $$.btype = TS.Base TS.BOOL;
   $2.env = $$.env; 
 
@@ -752,7 +734,9 @@ RExp3
 {  
   $$.attr = Abs.Add $1.attr $3.attr;
   $$.err = $1.err ++ $3.err;
-  $$.btype = TS.sup $1.btype $3.btype;
+  $$.btype = if TS.isERROR (TS.sup (TS.mathtype $1.btype) (TS.mathtype $3.btype))
+            then TS.Base  (TS.ERROR (head(Err.mkBinOppErrs  $1.btype $3.btype (posLineCol $1.pos) (posLineCol $3.pos) (posLineCol $$.pos) "+")))
+            else TS.sup (TS.mathtype $1.btype) (TS.mathtype $3.btype);
   $1.env = $$.env;
   $3.env = $$.env;
 
@@ -762,7 +746,7 @@ RExp3
 {   
   $$.attr = Abs.Sub $1.attr $3.attr;
   $$.err = $1.err ++ $3.err;
-  $$.btype = TS.sup $1.btype $3.btype;
+  $$.btype = TS.sup (TS.mathtype $1.btype) (TS.mathtype $3.btype);
   $1.env = $$.env;
   $3.env = $$.env;
 
@@ -772,7 +756,7 @@ RExp3
 {     
   $$.attr = Abs.Mul $1.attr $3.attr;
   $$.err = $1.err ++ $3.err;
-  $$.btype = TS.sup $1.btype $3.btype;
+  $$.btype = TS.sup (TS.mathtype $1.btype) (TS.mathtype $3.btype);
   $1.env = $$.env;
   $3.env = $$.env;
 
@@ -782,7 +766,7 @@ RExp3
 {    
   $$.attr = Abs.Div $1.attr $3.attr;
   $$.err = $1.err ++ $3.err;
-  $$.btype = TS.sup $1.btype $3.btype;
+  $$.btype = TS.sup (TS.mathtype $1.btype) (TS.mathtype $3.btype);
   $1.env = $$.env;
   $3.env = $$.env;
 
@@ -792,7 +776,7 @@ RExp3
 {    
   $$.attr = Abs.Mod $1.attr $3.attr;
   $$.err = $1.err ++ $3.err;
-  $$.btype = TS.sup $1.btype $3.btype;
+  $$.btype = TS.sup (TS.mathtype $1.btype) (TS.mathtype $3.btype);
   $1.env = $$.env;
   $3.env = $$.env;
 
@@ -873,7 +857,10 @@ RExp5
 { 
   $$.attr = Abs.VarValue $1.attr;
   $$.err = $1.err;
-  $$.btype = (E.getVarType $1.ident $$.env);
+
+  $$.btype = if TS.isERROR (E.getVarType $1.ident $$.env)
+            then Err.mkError (TS.getErrorMessage (E.getVarType $1.ident $$.env)) (posLineCol $$.pos)
+            else (E.getVarType $1.ident $$.env);
 
   $$.pos = $1.pos;
 }

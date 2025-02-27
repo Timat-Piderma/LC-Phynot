@@ -1,4 +1,5 @@
 module TypeSystem where
+import GHC.Windows (getErrorMessage)
 
 data BasicType = ERROR String | INT | FLOAT | BOOL | CHAR | STRING | NONE
   deriving (Eq, Show, Read)
@@ -49,6 +50,7 @@ sup _ (Base (ERROR s))            = Base (ERROR s)
 sup t1 t2                         = Base (ERROR ("Type mismatch: " ++ typeToString t1 ++ " and " ++ typeToString t2 ++ " are not compatible"))
 
 getArrayCurrentType :: Type -> Int -> Type
+getArrayCurrentType (Base (ERROR s)) _ = Base (ERROR s)
 getArrayCurrentType t 0           = t
 getArrayCurrentType (ARRAY t) n   = getArrayCurrentType t (n - 1)
 getArrayCurrentType _ _           = Base (ERROR "Invalid array access")
@@ -82,6 +84,10 @@ rel _ (Base BOOL)                 = Base (ERROR "Cannot compare with boolean val
 rel x y = case sup x y of
   Base (ERROR d)                  -> Base (ERROR d)
   _                               -> Base BOOL
+
+getErrorMessage :: Type -> String
+getErrorMessage (Base (ERROR s))  = s
+getErrorMessage _                 = "No error"
 
 -- Checks if a value is BOOL
 isBoolean :: Type -> Bool
