@@ -760,7 +760,9 @@ RExp3
 {   
   $$.attr = Abs.Sub $1.attr $3.attr;
   $$.err = $1.err ++ $3.err;
-  $$.btype = TS.sup (TS.mathtype $1.btype) (TS.mathtype $3.btype);
+  $$.btype = if TS.isERROR (TS.sup (TS.mathtype $1.btype) (TS.mathtype $3.btype))
+            then TS.Base  (TS.ERROR (head(Err.mkBinOppErrs  $1.btype $3.btype (posLineCol $1.pos) (posLineCol $3.pos) (posLineCol $$.pos) "-")))
+            else TS.sup (TS.mathtype $1.btype) (TS.mathtype $3.btype);
   $1.env = $$.env;
   $3.env = $$.env;
 
@@ -770,7 +772,9 @@ RExp3
 {     
   $$.attr = Abs.Mul $1.attr $3.attr;
   $$.err = $1.err ++ $3.err;
-  $$.btype = TS.sup (TS.mathtype $1.btype) (TS.mathtype $3.btype);
+  $$.btype = if TS.isERROR (TS.sup (TS.mathtype $1.btype) (TS.mathtype $3.btype))
+            then TS.Base  (TS.ERROR (head(Err.mkBinOppErrs  $1.btype $3.btype (posLineCol $1.pos) (posLineCol $3.pos) (posLineCol $$.pos) "*")))
+            else TS.sup (TS.mathtype $1.btype) (TS.mathtype $3.btype);
   $1.env = $$.env;
   $3.env = $$.env;
 
@@ -780,7 +784,9 @@ RExp3
 {    
   $$.attr = Abs.Div $1.attr $3.attr;
   $$.err = $1.err ++ $3.err;
-  $$.btype = TS.sup (TS.mathtype $1.btype) (TS.mathtype $3.btype);
+  $$.btype = if TS.isERROR (TS.sup (TS.mathtype $1.btype) (TS.mathtype $3.btype))
+            then TS.Base  (TS.ERROR (head(Err.mkBinOppErrs  $1.btype $3.btype (posLineCol $1.pos) (posLineCol $3.pos) (posLineCol $$.pos) "/")))
+            else TS.sup (TS.mathtype $1.btype) (TS.mathtype $3.btype);
   $1.env = $$.env;
   $3.env = $$.env;
 
@@ -790,7 +796,9 @@ RExp3
 {    
   $$.attr = Abs.Mod $1.attr $3.attr;
   $$.err = $1.err ++ $3.err;
-  $$.btype = TS.sup (TS.mathtype $1.btype) (TS.mathtype $3.btype);
+  $$.btype = if TS.isERROR (TS.sup (TS.mathtype $1.btype) (TS.mathtype $3.btype))
+            then TS.Base  (TS.ERROR (head(Err.mkBinOppErrs  $1.btype $3.btype (posLineCol $1.pos) (posLineCol $3.pos) (posLineCol $$.pos) "%")))
+            else TS.sup (TS.mathtype $1.btype) (TS.mathtype $3.btype);
   $1.env = $$.env;
   $3.env = $$.env;
 
