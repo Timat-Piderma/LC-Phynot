@@ -387,6 +387,7 @@ Stm: BasicType Ident
 {  
   $$.attr = Abs.WriteInt $3.attr;
   $3.env = $$.env;
+  $$.modifiedEnv = $$.env;
 
   $$.err = Err.mkFuncCallErrs "writeInt" [$3.btype] $$.env (posLineCol $$.pos) ++ $3.err;
   $$.pos = (tokenPosn $1);
@@ -395,6 +396,7 @@ Stm: BasicType Ident
 {  
   $$.attr = Abs.WriteFloat $3.attr;
   $3.env = $$.env;
+  $$.modifiedEnv = $$.env;
 
   $$.err = Err.mkFuncCallErrs "writeFloat" [$3.btype] $$.env (posLineCol $$.pos) ++ $3.err;
   $$.pos = (tokenPosn $1);
@@ -403,6 +405,7 @@ Stm: BasicType Ident
 {   
   $$.attr = Abs.WriteChar $3.attr;
   $3.env = $$.env;
+  $$.modifiedEnv = $$.env;
 
   $$.err = Err.mkFuncCallErrs "writeChar" [$3.btype] $$.env (posLineCol $$.pos) ++ $3.err;
   $$.pos = (tokenPosn $1);
@@ -411,6 +414,7 @@ Stm: BasicType Ident
 {   
   $$.attr = Abs.WriteString $3.attr;
   $3.env = $$.env;
+  $$.modifiedEnv = $$.env;
 
   $$.err = Err.mkFuncCallErrs "writeString" [$3.btype] $$.env (posLineCol $$.pos) ++ $3.err;
   $$.pos = (tokenPosn $1);
@@ -418,6 +422,7 @@ Stm: BasicType Ident
   | 'readInt' '()' 
 {  
   $$.attr = Abs.ReadInt;
+  $$.modifiedEnv = $$.env;
   $$.pos = (tokenPosn $1);
 
   $$.btype = (TS.Base TS.INT);
@@ -427,6 +432,7 @@ Stm: BasicType Ident
   | 'readFloat' '()' 
 {  
   $$.attr = Abs.ReadFloat;
+  $$.modifiedEnv = $$.env;
   $$.pos = (tokenPosn $1);
 
   $$.btype = (TS.Base TS.FLOAT);
@@ -436,6 +442,7 @@ Stm: BasicType Ident
   | 'readChar' '()' 
 {  
   $$.attr = Abs.ReadChar;
+  $$.modifiedEnv = $$.env;
   $$.pos = (tokenPosn $1);
 
   $$.btype = (TS.Base TS.CHAR);
@@ -445,6 +452,7 @@ Stm: BasicType Ident
   | 'readString' '()' 
 {   
   $$.attr = Abs.ReadString;
+  $$.modifiedEnv = $$.env;
   $$.pos = (tokenPosn $1);
 
   $$.btype = (TS.Base TS.STRING);
