@@ -135,8 +135,8 @@ mkBinOppErrs (Base (ERROR s1)) (Base (ERROR s2)) _ _ _ _ = [s1, s2]
 mkBinOppErrs (Base (ERROR s)) _ _ _ _ _ = [s]
 mkBinOppErrs _ (Base (ERROR s)) _ _ _ _ = [s]
 mkBinOppErrs t1 t2 t1Pos t2Pos oppPos opName
-    | isERROR (mathtype t1) = [ mkStringError ("Can not perform arithmetic operation in the first argument of '" ++ opName ++ "' expression") oppPos]
-    | isERROR (mathtype t2) = [ mkStringError ("Can not perform arithmetic operation in the second argument of '" ++ opName ++ "' expression") oppPos]
+    | isERROR (mathtype t1) = [ mkStringError ("Can not perform arithmetic operation in the first argument of '" ++ opName ++ "' expression, type found: " ++ typeToString t1) oppPos]
+    | isERROR (mathtype t2) = [ mkStringError ("Can not perform arithmetic operation in the second argument of '" ++ opName ++ "' expression, type found: " ++ typeToString t2) oppPos]
     | mathtype t1 == mathtype t2 = []
     | otherwise = [ mkStringError ("Type mismatch: can't perform arithmetic operations on " ++ typeToString t1 ++ " and " ++ typeToString t2) oppPos]
 
