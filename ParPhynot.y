@@ -872,7 +872,11 @@ RExp5
   $$.ident = $1.ident;
   $2.env = $$.env;
 
-  $$.btype = TS.getArrayCurrentType (E.getArrayType $1.ident $$.env) $2.arraydim;
+  $$.btype = if TS.isERROR (E.getArrayType $1.ident $$.env) 
+            then Err.mkError (TS.getErrorMessage (E.getArrayType $1.ident $$.env)) (posLineCol $1.pos)
+            else if TS.isERROR (TS.getArrayCurrentType (E.getArrayType $1.ident $$.env) $2.arraydim)
+              then Err.mkError ("Array " ++ $$.ident ++" has " ++ show(E.getArrayDim $$.ident $$.env) ++ " dimension/s but there are " ++ show $2.arraydim ++ " indexes") (posLineCol $1.pos)
+              else TS.getArrayCurrentType (E.getArrayType $1.ident $$.env) $2.arraydim;
 
 
   $2.arraytype = (E.getArrayType $1.ident $$.env);
