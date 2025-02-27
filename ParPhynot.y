@@ -121,7 +121,6 @@ Ident  : L_Ident
 
   $$.pos = (tokenPosn $1);
 }
-
 Char     : L_charac 
 { 
   $$.attr =  read (tokenText $1) :: Char;
@@ -129,8 +128,7 @@ Char     : L_charac
   $$.btype = (TS.Base TS.CHAR);
 
   $$.pos = (tokenPosn $1);
- }
-
+}
 Double   : L_doubl  
 { 
   $$.attr = read (tokenText $1) :: Double;
@@ -139,7 +137,6 @@ Double   : L_doubl
 
   $$.pos = (tokenPosn $1);
 }
-
 Integer  : L_integ  
 { 
   $$.attr = read (tokenText $1) :: Integer;
@@ -148,7 +145,6 @@ Integer  : L_integ
 
   $$.pos = (tokenPosn $1);
 }
-
 String   : L_quoted 
 {
   $$.attr =  ((\(PT _ (TL s)) -> s) $1);
@@ -157,7 +153,6 @@ String   : L_quoted
 
   $$.pos = (tokenPosn $1);
 }
-
 Boolean   : 'True' 
 { 
   $$.attr = Abs.Boolean_True;
@@ -224,6 +219,7 @@ ListStm : Stm ';'
   $3.env = $1.modifiedEnv;
   $$.err = $1.err ++ $3.err;
 }
+
 ------------------
 -- Declarations --
 ------------------
@@ -456,7 +452,6 @@ Stm: BasicType Ident
   $$.err = [];
 }
 
-
 ----------------------
 -- Sequence Control --
 ----------------------
@@ -508,6 +503,10 @@ Stm: BasicType Ident
   $$.pos = (tokenPosn $1);
 }
 
+-------------------------
+-- Function Parameters --
+-------------------------
+
 ListParam: {- empty -} 
 { 
   $$.attr = []; 
@@ -553,6 +552,10 @@ Param : BasicType Ident
   $$.btype = $1.btype;
 }
 
+----------------------
+-- Array Dimensions --
+----------------------
+
 Dim : '[' RExp ']' 
 {   
   $$.attr = Abs.ArrayDimension $2.attr; 
@@ -565,7 +568,6 @@ ListDim : Dim
 {  
   $$.attr = (:[]) $1.attr;
   $1.env = $$.env;
-
 
   $$.btype = $$.arraytype;
   $$.arraydim = 1;
