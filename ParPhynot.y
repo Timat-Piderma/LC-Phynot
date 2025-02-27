@@ -462,7 +462,7 @@ Stm: BasicType Ident
     $2.env = $$.env;
     $4.env = $$.env;
     $$.modifiedEnv = $$.env;
-    $$.err = Err.mkIfErrs $2.btype $4.err (posLineCol (tokenPosn $1)) ++ $2.err;
+    $$.err = Err.mkIfErrs $2.btype (posLineCol (tokenPosn $1)) ++ (Err.prettySequenceErr "if then" $4.err) ++ $2.err;
 }
   | 'if' RExp '{' ListStm '}' 'else' '{' ListStm '}' 
 {       
@@ -471,7 +471,7 @@ Stm: BasicType Ident
     $4.env = $$.env;
     $8.env = $$.env;
     $$.modifiedEnv = $$.env;
-    $$.err = Err.mkIfErrs $2.btype ($4.err ++ $8.err) (posLineCol (tokenPosn $1)) ++ $2.err;
+    $$.err = Err.mkIfErrs $2.btype (posLineCol (tokenPosn $1)) ++ (Err.prettySequenceErr "if then" $4.err) ++ (Err.prettySequenceErr "else" $8.err) ++ $2.err;
 }
   | 'while' RExp '{' ListStm '}' 
 {   
@@ -479,7 +479,7 @@ Stm: BasicType Ident
     $2.env = $$.env;
     $4.env = E.insertVar "continue" (posLineCol (tokenPosn $1)) (TS.Base TS.BOOL) (E.insertVar("break") (posLineCol (tokenPosn $1)) (TS.Base TS.BOOL) $$.env);
     $$.modifiedEnv = $$.env;
-    $$.err = Err.mkWhileErrs $2.btype $4.err (posLineCol (tokenPosn $1)) ++ $2.err; 
+    $$.err = Err.mkWhileErrs $2.btype (posLineCol (tokenPosn $1)) ++ (Err.prettySequenceErr "while" $4.err) ++ $2.err; 
 }
   | 'break' 
 {   

@@ -1,3 +1,5 @@
+{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
+{-# HLINT ignore "Eta reduce" #-}
 module ErrorsBuilder where
 
 import TypeSystem as TS
@@ -17,17 +19,20 @@ mkStringError s (a, b) = "[" ++ show a ++ ":" ++ show b ++ "] " ++ s
 mkError :: String -> (Int, Int) -> Type
 mkError s (a, b) = Base (ERROR (mkStringError s (a, b)));
 
-mkIfErrs :: Type -> [String] -> (Int, Int) -> [String]
-mkIfErrs t errs pos = case t of
-  Base (ERROR e) ->  [e]
-  Base BOOL -> errs
-  _ -> mkStringError "Error: if statement guard not boolean" pos : errs
+mkIfErrs :: Type -> (Int, Int) -> [String]
+mkIfErrs t pos = case t of
+  Base (ERROR e) -> [e]
+  Base BOOL -> []
+  _ -> [mkStringError ("Error: if statement guard not boolean, found: " ++ typeToString t) pos]
 
-mkWhileErrs :: Type -> [String] -> (Int, Int) -> [String]
-mkWhileErrs t errs pos = case t of
-  Base (ERROR e) ->  mkStringError (e ++ " in while statement guard expression") pos : errs
-  Base BOOL -> errs
-  _ -> mkStringError "Error: while statement guard not boolean" pos : errs
+mkWhileErrs :: Type -> (Int, Int) -> [String]
+mkWhileErrs t pos = case t of
+  Base (ERROR e) -> [e]
+  Base BOOL -> []
+  _ ->[mkStringError ("Error: while statement guard not boolean, found: " ++ typeToString t) pos]
+
+prettySequenceErr :: String -> [String] -> [String]
+prettySequenceErr blockName errs = map (++ " inside '" ++ blockName ++ "' block") errs
 
 mkDeclErrs :: EnvT -> String -> (Int, Int) -> [String]
 mkDeclErrs env varName pos
