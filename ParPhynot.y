@@ -256,6 +256,19 @@ Stm: BasicType Ident
 
   $$.err = Err.mkArrayDeclErrs $$.env $2.ident (posLineCol $$.pos) ++ $3.err;
 }
+  | BasicType Ident ListDim '=' RExp 
+{ 
+  $$.attr = Abs.ArrayDeclarationInit $1.attr $2.attr $3.attr $5.attr; 
+  $$.modifiedEnv = E.insertArray $2.ident (posLineCol $$.pos) $$.btype $3.arraydim $$.env;
+  $$.ident = $2.ident;
+  $$.pos = $2.pos;
+
+  $$.btype = (TS.ARRAY $3.btype);
+  $3.arraytype = $1.btype;
+  $5.env = $$.env; 
+
+  $$.err = Err.mkArrayDeclInitErrs $$.env $2.ident $$.btype $5.btype (posLineCol $$.pos) ++ $5.err; 
+}
   | BasicType '*' Ident 
 {  
   $$.attr = Abs.PointerDeclaration $1.attr $3.attr;
@@ -595,6 +608,42 @@ ListDim : Dim
   $$.err = $1.err ++ $2.err;
 }
 
+ArrVal : RExp 
+{ 
+  $$.attr = Abs.ArrayValue $1.attr;
+  $2.env = $$.env;
+
+  $$.err = Err.mkArrayValueErrs $$.arraytype $1.btype (posLineCol $1.pos) ++ $1.err;
+  $$.pos = $1.pos;
+
+  $$.arraytype = $1.btype;
+}
+
+ListArrVal : ArrVal 
+{ 
+  $$.attr = (:[]) $1.attr;
+  $1.env = $$.env;
+
+  $$.err = $1.err;
+  $$.pos = $1.pos;
+
+  $$.arraytype = $1.arraytype;
+}
+  | ArrVal ',' ListArrVal 
+{ 
+  $$.attr = (:) $1.attr $3.attr;
+  $1.env = $$.env;
+  $3.env = $$.env;
+
+  $$.err = $1.err ++ $3.err;
+
+  $$.arraytype = if $1.arraytype == $3.arraytype 
+                then $1.arraytype 
+                else Err.mkError ("Array elements must be of the same type: found " ++ TS.typeToString $1.arraytype ++ " at " ++ 
+                show (posLineCol $1.pos) ++ " and " ++ TS.typeToString $3.arraytype ++ " at " ++ show (posLineCol $3.pos))
+                (posLineCol $$.pos);
+}
+
 ----------------------
 -- Left Expressions --
 ----------------------
@@ -743,8 +792,22 @@ RExp2
   $$.pos = $1.pos;
 }
 
-RExp3
-  : RExp3 '+' RExp4 
+RExp3 : '[' ListArrVal ']' 
+{ 
+  $$.attr = Abs.ArrayStructure $2.attr; 
+
+  $$.err = $2.err;
+
+  $$.btype = if TS.isERROR $2.arraytype
+            then $2.arraytype
+            else TS.ARRAY $2.arraytype;
+
+  $2.env = $$.env;
+
+  $2.pos = $$.pos;
+  $$.pos = (tokenPosn $1);
+}
+  | RExp3 '+' RExp4 
 {  
   $$.attr = Abs.Add $1.attr $3.attr;
   $$.err = $1.err ++ $3.err;
