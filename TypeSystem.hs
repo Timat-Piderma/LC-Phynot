@@ -55,6 +55,11 @@ getArrayCurrentType t 0           = t
 getArrayCurrentType (ARRAY t) n   = getArrayCurrentType t (n - 1)
 getArrayCurrentType _ _           = Base (ERROR "Invalid array access")
 
+getDereferencedType :: Type -> Type
+getDereferencedType (Base (ERROR s)) = Base (ERROR s)
+getDereferencedType (POINTER t)   = t
+getDereferencedType _ = Base (ERROR "Invalid pointer dereference")
+
 -- Given a type, returns a string representation of it
 typeToString :: Type -> String
 typeToString (Base (ERROR s))     = s
