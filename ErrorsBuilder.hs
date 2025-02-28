@@ -53,11 +53,28 @@ mkArrayDeclErrs env varName pos
     | containsEntry varName env = [mkStringError ("Variable '" ++ varName ++ "' already declared at: " ++ show (getVarPos varName env)) pos]
     | otherwise = [] 
 
+mkArrayDeclInitErrs :: EnvT -> String -> Type -> Type -> (Int, Int) -> [String]
+mkArrayDeclInitErrs _ _ (Base (ERROR s1)) (Base (ERROR s2)) _ = [s1, s2]
+mkArrayDeclInitErrs _ _ (Base (ERROR s)) _ _ = [s]
+mkArrayDeclInitErrs _ _ _ (Base (ERROR s)) _ = [s]
+mkArrayDeclInitErrs env varName arrType valType  pos
+    | containsEntry varName env = [mkStringError ("Variable '" ++ varName ++ "' already declared at: " ++ show (getVarPos varName env)) pos]
+    | isERROR (TS.sup arrType valType) = [mkStringError (TS.getErrorMessage (sup arrType valType)) pos]
+    | otherwise = []
+
 mkArrayIndexErrs :: Type -> (Int, Int) -> [String]
 mkArrayIndexErrs (Base (ERROR s)) _ = [s]
 mkArrayIndexErrs t pos
     | isInt t = []
     | otherwise = [ mkStringError ("Array index must be an integer, found: " ++ typeToString t) pos]
+
+mkArrayValueErrs :: Type -> Type -> (Int, Int) -> [String]
+mkArrayValueErrs (Base (ERROR s1)) (Base (ERROR s2)) _ = [s1, s2]
+mkArrayValueErrs (Base (ERROR s)) _ _ = [s]
+mkArrayValueErrs _ (Base (ERROR s)) _ = [s]
+mkArrayValueErrs arrType valType pos
+    | arrType == valType = []
+    | otherwise = [ mkStringError ("Type misdfadsfdsfdmatch: can't convert " ++ typeToString valType ++ " to " ++ typeToString arrType) pos]
 
 mkNotErrs :: Type -> (Int, Int) -> [String]
 mkNotErrs (Base (ERROR s)) _ = [s]
