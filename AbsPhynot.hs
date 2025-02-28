@@ -10,9 +10,6 @@ import Prelude (Char, Double, Integer, String)
 import qualified Prelude as C (Eq, Ord, Show, Read)
 import qualified Data.String
 
-data Program = ProgramStart [Stm]
-  deriving (C.Eq, C.Ord, C.Show, C.Read)
-
 data BasicType
     = BasicType_int
     | BasicType_float
@@ -24,10 +21,14 @@ data BasicType
 data Boolean = Boolean_True | Boolean_False
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
+data Program = ProgramStart [Stm]
+  deriving (C.Eq, C.Ord, C.Show, C.Read)
+
 data Stm
     = VarDeclaration BasicType Ident
     | VarDeclarationInit BasicType Ident RExp
     | ArrayDeclaration BasicType Ident [Dim]
+    | ArrayDeclarationInit BasicType Ident [Dim] RExp
     | PointerDeclaration BasicType Ident
     | PointerDeclarationInit BasicType Ident RExp
     | FunctionDeclaration BasicType Ident [Param] [Stm]
@@ -58,10 +59,10 @@ data Stm
 data Param = Parameter BasicType Ident
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
-data LExp = LIdent Ident | LArray Ident [Dim]
+data Dim = ArrayDimension RExp
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
-data Dim = ArrayDimension RExp
+data LExp = LIdent Ident | LArray Ident [Dim]
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
 data RExp

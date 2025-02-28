@@ -19,10 +19,6 @@ transIdent :: AbsPhynot.Ident -> Result
 transIdent x = case x of
   AbsPhynot.Ident string -> failure x
 
-transProgram :: AbsPhynot.Program -> Result
-transProgram x = case x of
-  AbsPhynot.ProgramStart stms -> failure x
-
 transBasicType :: AbsPhynot.BasicType -> Result
 transBasicType x = case x of
   AbsPhynot.BasicType_int -> failure x
@@ -36,11 +32,16 @@ transBoolean x = case x of
   AbsPhynot.Boolean_True -> failure x
   AbsPhynot.Boolean_False -> failure x
 
+transProgram :: AbsPhynot.Program -> Result
+transProgram x = case x of
+  AbsPhynot.ProgramStart stms -> failure x
+
 transStm :: AbsPhynot.Stm -> Result
 transStm x = case x of
   AbsPhynot.VarDeclaration basictype ident -> failure x
   AbsPhynot.VarDeclarationInit basictype ident rexp -> failure x
   AbsPhynot.ArrayDeclaration basictype ident dims -> failure x
+  AbsPhynot.ArrayDeclarationInit basictype ident dims rexp -> failure x
   AbsPhynot.PointerDeclaration basictype ident -> failure x
   AbsPhynot.PointerDeclarationInit basictype ident rexp -> failure x
   AbsPhynot.FunctionDeclaration basictype ident params stms -> failure x
@@ -71,14 +72,14 @@ transParam :: AbsPhynot.Param -> Result
 transParam x = case x of
   AbsPhynot.Parameter basictype ident -> failure x
 
+transDim :: AbsPhynot.Dim -> Result
+transDim x = case x of
+  AbsPhynot.ArrayDimension rexp -> failure x
+
 transLExp :: AbsPhynot.LExp -> Result
 transLExp x = case x of
   AbsPhynot.LIdent ident -> failure x
   AbsPhynot.LArray ident dims -> failure x
-
-transDim :: AbsPhynot.Dim -> Result
-transDim x = case x of
-  AbsPhynot.ArrayDimension rexp -> failure x
 
 transRExp :: AbsPhynot.RExp -> Result
 transRExp x = case x of
