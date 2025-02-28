@@ -27,27 +27,27 @@ sup (Base CHAR) (Base INT)        = Base INT
 sup (ARRAY t1) (ARRAY t2) = 
   if t1 == t2 
     then ARRAY t1 
-  else Base (ERROR ("Array types "++ typeToString t1 ++ " and " ++ typeToString t2 ++ " do not match"))
+    else Base (ERROR ("Type mismatch: '" ++ typeToString t1 ++ "' and '" ++ typeToString t2 ++ "' are not compatible"))
 
 sup (POINTER t1) (POINTER t2) =
   if t1 == t2
     then POINTER t1
-  else Base (ERROR ("Pointer types "++ typeToString t1 ++ " and " ++ typeToString t2 ++ " do not match"))
+  else Base (ERROR ("Type mismatch: '" ++ typeToString t1 ++ "' and '" ++ typeToString t2 ++ "' are not compatible"))
 
 sup (ADDRESS t1) (POINTER t2) =  
   if t1 == t2
     then POINTER t1
-  else Base (ERROR ("Pointer of Type "++ typeToString t2 ++ " is pointing to an Address of Type " ++ typeToString t1))
+  else Base (ERROR ("Type mismatch: '" ++ typeToString t1 ++ "' and '" ++ typeToString t2 ++ "' are not compatible"))
 
 sup (POINTER t1) (ADDRESS t2) =
   if t1 == t2
     then POINTER t1
-  else Base (ERROR ("Pointer of Type "++ typeToString t1 ++ " is pointing to an Address of Type " ++ typeToString t2))
+  else Base (ERROR ("Type mismatch: '" ++ typeToString t1 ++ "' and '" ++ typeToString t2 ++ "' are not compatible"))
 
 sup (Base (ERROR s)) _            = Base (ERROR s)
 sup _ (Base (ERROR s))            = Base (ERROR s)
 
-sup t1 t2                         = Base (ERROR ("Type mismatch: " ++ typeToString t1 ++ " and " ++ typeToString t2 ++ " are not compatible"))
+sup t1 t2                         = Base (ERROR ("Type mismatch: '" ++ typeToString t1 ++ "' and '" ++ typeToString t2 ++ "' are not compatible"))
 
 getArrayCurrentType :: Type -> Int -> Type
 getArrayCurrentType (Base (ERROR s)) _ = Base (ERROR s)
