@@ -80,6 +80,7 @@ data RExp
     | Div RExp RExp
     | Mod RExp RExp
     | PointerRef RExp
+    | DereferenceVal RExp
     | IntValue Integer
     | FloatValue Double
     | StringValue String

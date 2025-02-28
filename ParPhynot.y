@@ -824,7 +824,19 @@ RExp4 : '&' RExp5
 
   $$.pos = $2.pos;
 } 
-| RExp5 
+  | '*' RExp5 
+{ 
+  $$.attr = Abs.DereferenceVal $2.attr;
+  $2.env = $$.env;
+
+  $$.err = $2.err;
+  $$.btype = if TS.isERROR (TS.getDereferencedType $2.btype)
+            then Err.mkError ("Dereference operation require a pointer value, found: " ++ TS.typeToString $2.btype) (posLineCol $$.pos)
+            else TS.getDereferencedType $2.btype;
+
+  $$.pos = $2.pos;
+}
+  | RExp5 
 { 
   $$.attr = $1.attr; 
   $$.err = $1.err;
@@ -834,8 +846,7 @@ RExp4 : '&' RExp5
   $$.pos = $1.pos;
 }
 
-RExp5
-  : Integer 
+RExp5 : Integer 
 { 
   $$.attr = Abs.IntValue $1.attr; 
   $$.err = $1.err;

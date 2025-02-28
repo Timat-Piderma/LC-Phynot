@@ -88,6 +88,7 @@ Div.                            RExp3 ::= RExp3 "/" RExp4;
 Mod.                            RExp3 ::= RExp3 "%" RExp4;
     
 PointerRef.                     RExp4 ::= "&" RExp5;
+DereferenceVal.                 RExp4 ::= "*" RExp5;
     
 IntValue.                       RExp5 ::= Integer;
 FloatValue.                     RExp5 ::= Double;

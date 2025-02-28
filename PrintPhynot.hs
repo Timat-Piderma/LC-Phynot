@@ -232,6 +232,7 @@ instance Print AbsPhynot.RExp where
     AbsPhynot.Div rexp1 rexp2 -> prPrec i 3 (concatD [prt 3 rexp1, doc (showString "/"), prt 4 rexp2])
     AbsPhynot.Mod rexp1 rexp2 -> prPrec i 3 (concatD [prt 3 rexp1, doc (showString "%"), prt 4 rexp2])
     AbsPhynot.PointerRef rexp -> prPrec i 4 (concatD [doc (showString "&"), prt 5 rexp])
+    AbsPhynot.DereferenceVal rexp -> prPrec i 4 (concatD [doc (showString "*"), prt 5 rexp])
     AbsPhynot.IntValue n -> prPrec i 5 (concatD [prt 0 n])
     AbsPhynot.FloatValue d -> prPrec i 5 (concatD [prt 0 d])
     AbsPhynot.StringValue str -> prPrec i 5 (concatD [printString str])
