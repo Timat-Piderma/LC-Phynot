@@ -573,9 +573,9 @@ Param : BasicType Ident
   $$.btype = $1.btype;
 }
 
-----------------------
--- Array Dimensions --
-----------------------
+-----------
+-- Array --
+-----------
 
 Dim : '[' RExp ']' 
 {   
@@ -611,9 +611,9 @@ ListDim : Dim
 ArrVal : RExp 
 { 
   $$.attr = Abs.ArrayValue $1.attr;
-  $2.env = $$.env;
+  $1.env = $$.env;
 
-  $$.err = Err.mkArrayValueErrs $$.arraytype $1.btype (posLineCol $1.pos) ++ $1.err;
+  $$.err = $1.err;
   $$.pos = $1.pos;
 
   $$.arraytype = $1.btype;
@@ -637,10 +637,14 @@ ListArrVal : ArrVal
 
   $$.err = $1.err ++ $3.err;
 
-  $$.arraytype = if $1.arraytype == $3.arraytype 
+  $$.arraytype = if TS.isERROR $1.arraytype 
                 then $1.arraytype 
-                else Err.mkError ("Array elements must be of the same type: found " ++ TS.typeToString $1.arraytype ++ " at " ++ 
-                show (posLineCol $1.pos) ++ " and " ++ TS.typeToString $3.arraytype ++ " at " ++ show (posLineCol $3.pos))
+                else if TS.isERROR $3.arraytype 
+                then $3.arraytype 
+                else if $1.arraytype == $3.arraytype 
+                then $1.arraytype 
+                else Err.mkError ("Array elements must be of the same type: found '" ++ TS.typeToString $1.arraytype ++ "' at " ++ 
+                show (posLineCol $1.pos) ++ " and '" ++ TS.typeToString $3.arraytype ++ "' at " ++ show (posLineCol $3.pos))
                 (posLineCol $$.pos);
 }
 
