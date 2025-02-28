@@ -68,14 +68,6 @@ mkArrayIndexErrs t pos
     | isInt t = []
     | otherwise = [ mkStringError ("Array index must be an integer, found: " ++ typeToString t) pos]
 
-mkArrayValueErrs :: Type -> Type -> (Int, Int) -> [String]
-mkArrayValueErrs (Base (ERROR s1)) (Base (ERROR s2)) _ = [s1, s2]
-mkArrayValueErrs (Base (ERROR s)) _ _ = [s]
-mkArrayValueErrs _ (Base (ERROR s)) _ = [s]
-mkArrayValueErrs arrType valType pos
-    | arrType == valType = []
-    | otherwise = [ mkStringError ("Type misdfadsfdsfdmatch: can't convert " ++ typeToString valType ++ " to " ++ typeToString arrType) pos]
-
 mkNotErrs :: Type -> (Int, Int) -> [String]
 mkNotErrs (Base (ERROR s)) _ = [s]
 mkNotErrs t pos
