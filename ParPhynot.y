@@ -269,7 +269,7 @@ Stm: BasicType Ident
 {  
   $$.attr = Abs.PointerDeclarationInit $1.attr $3.attr $5.attr;
   $$.modifiedEnv = E.insertVar $3.ident (posLineCol $$.pos) $$.btype $$.env;
-  $$.err = Err.mkPointerDeclInitErrs (TS.sup $$.btype $5.btype) $$.env $3.ident (posLineCol $$.pos) ++ $5.err; 
+  $$.err = (Err.mkPointerDeclInitErrs $$.btype $5.btype $$.env $3.ident (posLineCol $$.pos)) ++ $5.err;
   $$.ident = $3.ident;
   $$.pos = $3.pos;
   $$.btype = (TS.POINTER $1.btype) ;
@@ -820,8 +820,10 @@ RExp4 : '&' RExp5
   $2.env = $$.env;
 
   $$.err = $2.err;
-  $$.btype = (TS.ADDRESS $2.btype);
-
+  $$.btype = if TS.isERROR $2.btype
+            then $2.btype
+            else (TS.ADDRESS $2.btype);
+            
   $$.pos = $2.pos;
 } 
   | '*' RExp5 
