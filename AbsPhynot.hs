@@ -62,6 +62,9 @@ data Param = Parameter BasicType Ident
 data Dim = ArrayDimension RExp
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
+data ArrVal = ArrayValue RExp
+  deriving (C.Eq, C.Ord, C.Show, C.Read)
+
 data LExp = LIdent Ident | LArray Ident [Dim]
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
@@ -75,6 +78,7 @@ data RExp
     | Gt RExp RExp
     | Le RExp RExp
     | Ge RExp RExp
+    | ArrayStructure [ArrVal]
     | Add RExp RExp
     | Sub RExp RExp
     | Mul RExp RExp

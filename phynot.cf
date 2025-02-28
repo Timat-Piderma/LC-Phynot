@@ -22,7 +22,7 @@ terminator nonempty Stm ";";
 VarDeclaration.                 Stm ::= BasicType Ident;   
 VarDeclarationInit.             Stm ::= BasicType Ident "=" RExp;
 ArrayDeclaration.               Stm ::= BasicType Ident [Dim];
-ArrayDeclarationInit.           Stm ::= BasicType Ident [Dim] "=" "[" RExp "]"; 
+ArrayDeclarationInit.           Stm ::= BasicType Ident [Dim] "=" RExp; 
 PointerDeclaration.             Stm ::= BasicType "*" Ident;
 PointerDeclarationInit.         Stm ::= BasicType "*" Ident "=" RExp;
 
@@ -84,6 +84,9 @@ separator Param ",";
 ArrayDimension.                 Dim ::= "[" RExp "]";
 separator nonempty Dim "";  
 
+ArrayValue.                     ArrVal ::= RExp;
+separator nonempty ArrVal ",";
+
 ----------------------
 -- Left Expressions --
 ----------------------
@@ -105,6 +108,8 @@ Lt.                             RExp2 ::= RExp2 "<" RExp3;
 Gt.                             RExp2 ::= RExp2 ">" RExp3;
 Le.                             RExp2 ::= RExp2 "<=" RExp3;
 Ge.                             RExp2 ::= RExp2 ">=" RExp3;
+
+ArrayStructure.                 RExp3 ::= "[" [ArrVal] "]";
     
 Add.                            RExp3 ::= RExp3 "+" RExp4;
 Sub.                            RExp3 ::= RExp3 "-" RExp4;

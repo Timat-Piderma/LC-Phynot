@@ -166,7 +166,7 @@ instance Print AbsPhynot.Stm where
     AbsPhynot.VarDeclaration basictype id_ -> prPrec i 0 (concatD [prt 0 basictype, prt 0 id_])
     AbsPhynot.VarDeclarationInit basictype id_ rexp -> prPrec i 0 (concatD [prt 0 basictype, prt 0 id_, doc (showString "="), prt 0 rexp])
     AbsPhynot.ArrayDeclaration basictype id_ dims -> prPrec i 0 (concatD [prt 0 basictype, prt 0 id_, prt 0 dims])
-    AbsPhynot.ArrayDeclarationInit basictype id_ dims rexp -> prPrec i 0 (concatD [prt 0 basictype, prt 0 id_, prt 0 dims, doc (showString "="), doc (showString "["), prt 0 rexp, doc (showString "]")])
+    AbsPhynot.ArrayDeclarationInit basictype id_ dims rexp -> prPrec i 0 (concatD [prt 0 basictype, prt 0 id_, prt 0 dims, doc (showString "="), prt 0 rexp])
     AbsPhynot.PointerDeclaration basictype id_ -> prPrec i 0 (concatD [prt 0 basictype, doc (showString "*"), prt 0 id_])
     AbsPhynot.PointerDeclarationInit basictype id_ rexp -> prPrec i 0 (concatD [prt 0 basictype, doc (showString "*"), prt 0 id_, doc (showString "="), prt 0 rexp])
     AbsPhynot.FunctionDeclaration basictype id_ params stms -> prPrec i 0 (concatD [doc (showString "def"), prt 0 basictype, prt 0 id_, doc (showString "("), prt 0 params, doc (showString ")"), doc (showString "{"), prt 0 stms, doc (showString "}")])
@@ -211,6 +211,15 @@ instance Print [AbsPhynot.Dim] where
   prt _ [x] = concatD [prt 0 x]
   prt _ (x:xs) = concatD [prt 0 x, prt 0 xs]
 
+instance Print AbsPhynot.ArrVal where
+  prt i = \case
+    AbsPhynot.ArrayValue rexp -> prPrec i 0 (concatD [prt 0 rexp])
+
+instance Print [AbsPhynot.ArrVal] where
+  prt _ [] = concatD []
+  prt _ [x] = concatD [prt 0 x]
+  prt _ (x:xs) = concatD [prt 0 x, doc (showString ","), prt 0 xs]
+
 instance Print AbsPhynot.LExp where
   prt i = \case
     AbsPhynot.LIdent id_ -> prPrec i 0 (concatD [prt 0 id_])
@@ -227,6 +236,7 @@ instance Print AbsPhynot.RExp where
     AbsPhynot.Gt rexp1 rexp2 -> prPrec i 2 (concatD [prt 2 rexp1, doc (showString ">"), prt 3 rexp2])
     AbsPhynot.Le rexp1 rexp2 -> prPrec i 2 (concatD [prt 2 rexp1, doc (showString "<="), prt 3 rexp2])
     AbsPhynot.Ge rexp1 rexp2 -> prPrec i 2 (concatD [prt 2 rexp1, doc (showString ">="), prt 3 rexp2])
+    AbsPhynot.ArrayStructure arrvals -> prPrec i 3 (concatD [doc (showString "["), prt 0 arrvals, doc (showString "]")])
     AbsPhynot.Add rexp1 rexp2 -> prPrec i 3 (concatD [prt 3 rexp1, doc (showString "+"), prt 4 rexp2])
     AbsPhynot.Sub rexp1 rexp2 -> prPrec i 3 (concatD [prt 3 rexp1, doc (showString "-"), prt 4 rexp2])
     AbsPhynot.Mul rexp1 rexp2 -> prPrec i 3 (concatD [prt 3 rexp1, doc (showString "*"), prt 4 rexp2])

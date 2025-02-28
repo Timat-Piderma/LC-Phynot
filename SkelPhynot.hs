@@ -76,6 +76,10 @@ transDim :: AbsPhynot.Dim -> Result
 transDim x = case x of
   AbsPhynot.ArrayDimension rexp -> failure x
 
+transArrVal :: AbsPhynot.ArrVal -> Result
+transArrVal x = case x of
+  AbsPhynot.ArrayValue rexp -> failure x
+
 transLExp :: AbsPhynot.LExp -> Result
 transLExp x = case x of
   AbsPhynot.LIdent ident -> failure x
@@ -92,6 +96,7 @@ transRExp x = case x of
   AbsPhynot.Gt rexp1 rexp2 -> failure x
   AbsPhynot.Le rexp1 rexp2 -> failure x
   AbsPhynot.Ge rexp1 rexp2 -> failure x
+  AbsPhynot.ArrayStructure arrvals -> failure x
   AbsPhynot.Add rexp1 rexp2 -> failure x
   AbsPhynot.Sub rexp1 rexp2 -> failure x
   AbsPhynot.Mul rexp1 rexp2 -> failure x
