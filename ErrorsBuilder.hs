@@ -65,10 +65,13 @@ mkNotErrs t pos
     | isBoolean t = []
     | otherwise = [ mkStringError ("'not' expects a boolean parameter, found " ++ typeToString t) pos]
 
-mkPointerDeclInitErrs :: Type -> EnvT -> String -> (Int, Int) -> [String]
-mkPointerDeclInitErrs (Base (ERROR s)) _ _ _ = [s]
-mkPointerDeclInitErrs supType env varName pos
+mkPointerDeclInitErrs :: Type -> Type -> EnvT -> String -> (Int, Int) -> [String]
+mkPointerDeclInitErrs pointType derefType env varName pos
+    | isERROR pointType && isERROR derefType = [TS.getErrorMessage pointType, TS.getErrorMessage derefType]
+    | isERROR derefType = [TS.getErrorMessage derefType]
+    | isERROR pointType = [TS.getErrorMessage pointType]
     | containsEntry varName env = [mkStringError ("Variable '" ++ varName ++ "' already declared at: " ++ show (getVarPos varName env)) pos]
+    | isERROR (TS.sup pointType derefType) = [mkStringError (TS.getErrorMessage (sup pointType derefType)) pos]
     | otherwise = []
 
 mkParamErrs :: String -> String -> EnvT -> (Int, Int) -> [String]
