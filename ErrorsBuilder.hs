@@ -13,6 +13,14 @@ mkAssignmentErrs varType assType varPos assPos
     | sup varType assType == varType = []
     | otherwise = [ mkStringError  ("Type mismatch: can't assign " ++ typeToString assType ++ " value to " ++ typeToString varType ++ " variable") varPos]
 
+mkArrayLenErrs :: String -> [Int] -> [Int] -> (Int, Int) -> [String]
+mkArrayLenErrs _ [] [] _ = []
+
+mkArrayLenErrs varName (x:varLength) (y:assLength) pos
+    | length (x:varLength) /= length (y:assLength) = [mkStringError ("Error: can't assign array of length " ++ show y ++ " to array " ++ varName ++ " of length " ++ show x) pos]
+    | x >= y = mkArrayLenErrs varName varLength assLength pos
+    | otherwise = mkStringError ("Error: can't assign array of length " ++ show y ++ " to array " ++ varName ++ " of length " ++ show x) pos : mkArrayLenErrs varName varLength assLength pos
+
 mkStringError :: String -> (Int, Int) -> String
 mkStringError s (a, b) = "[" ++ show a ++ ":" ++ show b ++ "] " ++ s
 
