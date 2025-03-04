@@ -211,11 +211,15 @@ instance Print [AbsPhynot.Dim] where
   prt _ [x] = concatD [prt 0 x]
   prt _ (x:xs) = concatD [prt 0 x, prt 0 xs]
 
-instance Print AbsPhynot.ArrVal where
+instance Print AbsPhynot.Arr where
   prt i = \case
-    AbsPhynot.ArrayValue rexp -> prPrec i 0 (concatD [prt 0 rexp])
+    AbsPhynot.ArrayValues arrentrys -> prPrec i 0 (concatD [prt 0 arrentrys])
 
-instance Print [AbsPhynot.ArrVal] where
+instance Print AbsPhynot.ArrEntry where
+  prt i = \case
+    AbsPhynot.ArrayEntry rexp -> prPrec i 0 (concatD [prt 0 rexp])
+
+instance Print [AbsPhynot.ArrEntry] where
   prt _ [] = concatD []
   prt _ [x] = concatD [prt 0 x]
   prt _ (x:xs) = concatD [prt 0 x, doc (showString ","), prt 0 xs]
@@ -227,6 +231,7 @@ instance Print AbsPhynot.LExp where
 
 instance Print AbsPhynot.RExp where
   prt i = \case
+    AbsPhynot.ArrayStructure arr -> prPrec i 0 (concatD [doc (showString "["), prt 0 arr, doc (showString "]")])
     AbsPhynot.Or rexp1 rexp2 -> prPrec i 0 (concatD [prt 0 rexp1, doc (showString "or"), prt 2 rexp2])
     AbsPhynot.And rexp1 rexp2 -> prPrec i 0 (concatD [prt 0 rexp1, doc (showString "and"), prt 2 rexp2])
     AbsPhynot.Not rexp -> prPrec i 0 (concatD [doc (showString "not"), prt 2 rexp])
@@ -236,7 +241,6 @@ instance Print AbsPhynot.RExp where
     AbsPhynot.Gt rexp1 rexp2 -> prPrec i 2 (concatD [prt 2 rexp1, doc (showString ">"), prt 3 rexp2])
     AbsPhynot.Le rexp1 rexp2 -> prPrec i 2 (concatD [prt 2 rexp1, doc (showString "<="), prt 3 rexp2])
     AbsPhynot.Ge rexp1 rexp2 -> prPrec i 2 (concatD [prt 2 rexp1, doc (showString ">="), prt 3 rexp2])
-    AbsPhynot.ArrayStructure arrvals -> prPrec i 3 (concatD [doc (showString "["), prt 0 arrvals, doc (showString "]")])
     AbsPhynot.Add rexp1 rexp2 -> prPrec i 3 (concatD [prt 3 rexp1, doc (showString "+"), prt 4 rexp2])
     AbsPhynot.Sub rexp1 rexp2 -> prPrec i 3 (concatD [prt 3 rexp1, doc (showString "-"), prt 4 rexp2])
     AbsPhynot.Mul rexp1 rexp2 -> prPrec i 3 (concatD [prt 3 rexp1, doc (showString "*"), prt 4 rexp2])
@@ -250,7 +254,7 @@ instance Print AbsPhynot.RExp where
     AbsPhynot.CharValue c -> prPrec i 5 (concatD [prt 0 c])
     AbsPhynot.BooleanValue boolean -> prPrec i 5 (concatD [prt 0 boolean])
     AbsPhynot.VarValue id_ -> prPrec i 5 (concatD [prt 0 id_])
-    AbsPhynot.ArrayEntry id_ dims -> prPrec i 5 (concatD [prt 0 id_, prt 0 dims])
+    AbsPhynot.ArrayIndexValue id_ dims -> prPrec i 5 (concatD [prt 0 id_, prt 0 dims])
     AbsPhynot.FuncCall id_ rexps -> prPrec i 5 (concatD [prt 0 id_, doc (showString "("), prt 0 rexps, doc (showString ")")])
     AbsPhynot.FuncCallNoParam id_ -> prPrec i 5 (concatD [prt 0 id_, doc (showString "()")])
 

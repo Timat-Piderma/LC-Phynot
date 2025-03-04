@@ -84,8 +84,9 @@ separator Param ",";
 ArrayDimension.                 Dim ::= "[" RExp "]";
 separator nonempty Dim "";  
 
-ArrayValue.                     ArrVal ::= RExp;
-separator nonempty ArrVal ",";
+ArrayValues.                    Arr ::= [ArrEntry];
+ArrayEntry.                     ArrEntry ::= RExp;
+separator nonempty ArrEntry ",";
 
 ----------------------
 -- Left Expressions --
@@ -97,6 +98,8 @@ LArray.                         LExp ::= Ident [Dim];
 -----------------------
 -- Right Expressions --
 -----------------------   
+
+ArrayStructure.                 RExp ::= "[" Arr "]";
     
 Or.                             RExp ::= RExp "or" RExp2;
 And.                            RExp ::= RExp "and" RExp2;
@@ -108,8 +111,6 @@ Lt.                             RExp2 ::= RExp2 "<" RExp3;
 Gt.                             RExp2 ::= RExp2 ">" RExp3;
 Le.                             RExp2 ::= RExp2 "<=" RExp3;
 Ge.                             RExp2 ::= RExp2 ">=" RExp3;
-
-ArrayStructure.                 RExp3 ::= "[" [ArrVal] "]";
     
 Add.                            RExp3 ::= RExp3 "+" RExp4;
 Sub.                            RExp3 ::= RExp3 "-" RExp4;
@@ -127,7 +128,7 @@ CharValue.                      RExp5 ::= Char;
 BooleanValue.                   RExp5 ::= Boolean;
 VarValue.                       RExp5 ::= Ident;
     
-ArrayEntry.                     RExp5 ::= Ident [Dim];
+ArrayIndexValue.                RExp5 ::= Ident [Dim];
 FuncCall.                       RExp5 ::= Ident "(" [RExp] ")";
 FuncCallNoParam.                RExp5 ::= Ident "()";
 separator RExp ","; 

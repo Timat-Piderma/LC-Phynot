@@ -76,9 +76,13 @@ transDim :: AbsPhynot.Dim -> Result
 transDim x = case x of
   AbsPhynot.ArrayDimension rexp -> failure x
 
-transArrVal :: AbsPhynot.ArrVal -> Result
-transArrVal x = case x of
-  AbsPhynot.ArrayValue rexp -> failure x
+transArr :: AbsPhynot.Arr -> Result
+transArr x = case x of
+  AbsPhynot.ArrayValues arrentrys -> failure x
+
+transArrEntry :: AbsPhynot.ArrEntry -> Result
+transArrEntry x = case x of
+  AbsPhynot.ArrayEntry rexp -> failure x
 
 transLExp :: AbsPhynot.LExp -> Result
 transLExp x = case x of
@@ -87,6 +91,7 @@ transLExp x = case x of
 
 transRExp :: AbsPhynot.RExp -> Result
 transRExp x = case x of
+  AbsPhynot.ArrayStructure arr -> failure x
   AbsPhynot.Or rexp1 rexp2 -> failure x
   AbsPhynot.And rexp1 rexp2 -> failure x
   AbsPhynot.Not rexp -> failure x
@@ -96,7 +101,6 @@ transRExp x = case x of
   AbsPhynot.Gt rexp1 rexp2 -> failure x
   AbsPhynot.Le rexp1 rexp2 -> failure x
   AbsPhynot.Ge rexp1 rexp2 -> failure x
-  AbsPhynot.ArrayStructure arrvals -> failure x
   AbsPhynot.Add rexp1 rexp2 -> failure x
   AbsPhynot.Sub rexp1 rexp2 -> failure x
   AbsPhynot.Mul rexp1 rexp2 -> failure x
@@ -110,6 +114,6 @@ transRExp x = case x of
   AbsPhynot.CharValue char -> failure x
   AbsPhynot.BooleanValue boolean -> failure x
   AbsPhynot.VarValue ident -> failure x
-  AbsPhynot.ArrayEntry ident dims -> failure x
+  AbsPhynot.ArrayIndexValue ident dims -> failure x
   AbsPhynot.FuncCall ident rexps -> failure x
   AbsPhynot.FuncCallNoParam ident -> failure x

@@ -62,14 +62,18 @@ data Param = Parameter BasicType Ident
 data Dim = ArrayDimension RExp
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
-data ArrVal = ArrayValue RExp
+data Arr = ArrayValues [ArrEntry]
+  deriving (C.Eq, C.Ord, C.Show, C.Read)
+
+data ArrEntry = ArrayEntry RExp
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
 data LExp = LIdent Ident | LArray Ident [Dim]
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
 data RExp
-    = Or RExp RExp
+    = ArrayStructure Arr
+    | Or RExp RExp
     | And RExp RExp
     | Not RExp
     | Eq RExp RExp
@@ -78,7 +82,6 @@ data RExp
     | Gt RExp RExp
     | Le RExp RExp
     | Ge RExp RExp
-    | ArrayStructure [ArrVal]
     | Add RExp RExp
     | Sub RExp RExp
     | Mul RExp RExp
@@ -92,7 +95,7 @@ data RExp
     | CharValue Char
     | BooleanValue Boolean
     | VarValue Ident
-    | ArrayEntry Ident [Dim]
+    | ArrayIndexValue Ident [Dim]
     | FuncCall Ident [RExp]
     | FuncCallNoParam Ident
   deriving (C.Eq, C.Ord, C.Show, C.Read)
