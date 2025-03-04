@@ -102,8 +102,11 @@ import LexPhynot
 %attribute ident { String }
 %attribute pos { Posn }
 %attribute btype { TS.Type }
+
 %attribute arraytype { TS.Type }
-%attribute arraydim { Int }
+%attribute arraydim { [Int] }
+%attribute arraylen { Int }
+
 %attribute funcName { String }
 %attribute paramTypes { [TS.Type] }
 
@@ -124,7 +127,9 @@ Ident  : L_Ident
 Char     : L_charac 
 { 
   $$.attr =  read (tokenText $1) :: Char;
+  $$.ident = (tokenText $1);
   $$.err = [];
+
   $$.btype = (TS.Base TS.CHAR);
 
   $$.pos = (tokenPosn $1);
@@ -132,7 +137,9 @@ Char     : L_charac
 Double   : L_doubl  
 { 
   $$.attr = read (tokenText $1) :: Double;
+  $$.ident = (tokenText $1);
   $$.err = [];
+
   $$.btype = (TS.Base TS.FLOAT);
 
   $$.pos = (tokenPosn $1);
@@ -140,7 +147,9 @@ Double   : L_doubl
 Integer  : L_integ  
 { 
   $$.attr = read (tokenText $1) :: Integer;
+  $$.ident = (tokenText $1);
   $$.err = [];
+
   $$.btype = (TS.Base TS.INT);
 
   $$.pos = (tokenPosn $1);
@@ -148,7 +157,9 @@ Integer  : L_integ
 String   : L_quoted 
 {
   $$.attr =  ((\(PT _ (TL s)) -> s) $1);
+  $$.ident = (tokenText $1);
   $$.err = [];
+
   $$.btype = (TS.Base TS.STRING);
 
   $$.pos = (tokenPosn $1);
@@ -156,7 +167,9 @@ String   : L_quoted
 Boolean   : 'True' 
 { 
   $$.attr = Abs.Boolean_True;
+  $$.ident = (tokenText $1);
   $$.err = [];
+
   $$.btype = (TS.Base TS.BOOL);
 
   $$.pos = (tokenPosn $1);
@@ -164,7 +177,9 @@ Boolean   : 'True'
 | 'False' 
 { 
   $$.attr = Abs.Boolean_False;
+  $$.ident = (tokenText $1);
   $$.err = [];
+  
   $$.btype = (TS.Base TS.BOOL);
 
   $$.pos = (tokenPosn $1);
@@ -267,8 +282,13 @@ Stm: BasicType Ident
   $3.arraytype = $1.btype;
   $5.env = $$.env; 
 
-  $$.err = Err.mkArrayDeclInitErrs $$.env $2.ident $$.btype $5.btype (posLineCol $$.pos) ++ $5.err; 
+  $$.err = if TS.isArray $5.btype
+          then Err.mkArrayLenErrs $2.ident $3.arraydim $5.arraydim (posLineCol $$.pos)
+          ++ $5.err
+          else Err.mkArrayDeclInitErrs $$.env $2.ident $$.btype $5.btype (posLineCol $$.pos) ++ $5.err; 
 }
+  
+  
   | BasicType '*' Ident 
 {  
   $$.attr = Abs.PointerDeclaration $1.attr $3.attr;
@@ -383,7 +403,9 @@ Stm: BasicType Ident
 {  
   $$.attr = Abs.Assignment $1.attr $3.attr;
   $$.modifiedEnv = $$.env;
-  $$.err = Err.mkAssignmentErrs $1.btype $3.btype (posLineCol $1.pos) (posLineCol $3.pos) ++ $1.err ++ $3.err;
+  $$.err = if TS.isArray $3.btype 
+          then Err.mkArrayLenErrs $1.ident (E.getArrayLength $1.ident $$.env) $3.arraydim (posLineCol $$.pos) ++ $1.err ++ $3.err
+          else Err.mkAssignmentErrs $1.btype $3.btype (posLineCol $1.pos) (posLineCol $3.pos) ++ $1.err ++ $3.err;
   $$.ident = $1.ident;
   $$.pos = $1.pos;
   $$.btype = TS.sup $1.btype $3.btype;
@@ -583,6 +605,9 @@ Dim : '[' RExp ']'
   $2.env = $$.env;
 
   $$.err = Err.mkArrayIndexErrs $2.btype (posLineCol $2.pos) ++ $2.err;
+  $$.arraylen = if TS.isInt $2.btype 
+              then read $2.ident :: Int 
+              else 0;
 }
 
 ListDim : Dim 
@@ -591,7 +616,7 @@ ListDim : Dim
   $1.env = $$.env;
 
   $$.btype = $$.arraytype;
-  $$.arraydim = 1;
+  $$.arraydim = [$1.arraylen];
 
   $$.err = $1.err;
 } 
@@ -602,25 +627,43 @@ ListDim : Dim
   $2.env = $$.env;
 
   $$.btype = (TS.ARRAY $2.btype);
-  $$.arraydim = 1 + $2.arraydim;
+  $$.arraydim = $1.arraylen : $2.arraydim;
   $2.arraytype = $$.arraytype;
 
   $$.err = $1.err ++ $2.err;
 }
 
-ArrVal : RExp 
+Arr : ListArrEntry 
 { 
-  $$.attr = Abs.ArrayValue $1.attr;
+  $$.attr = Abs.ArrayValues $1.attr;
   $1.env = $$.env;
+  $$.btype = $1.arraytype;
+
+  $$.pos = $1.pos;
 
   $$.err = $1.err;
+
+  $$.arraydim = length $1.attr : $1.arraydim;
+}
+
+ArrEntry : RExp 
+{ 
+  $$.attr = Abs.ArrayEntry $1.attr;
+  $1.env = $$.env;
+
+  $$.err = if TS.isERROR $1.btype 
+          then TS.getErrorMessage $1.btype : $1.err
+          else $1.err;
   $$.pos = $1.pos;
+
+  $$.arraydim = if TS.isArray $1.btype
+                then $1.arraydim
+                else [];
 
   $$.arraytype = $1.btype;
 }
 
-ListArrVal : ArrVal 
-{ 
+ListArrEntry: ArrEntry { 
   $$.attr = (:[]) $1.attr;
   $1.env = $$.env;
 
@@ -628,14 +671,18 @@ ListArrVal : ArrVal
   $$.pos = $1.pos;
 
   $$.arraytype = $1.arraytype;
-}
-  | ArrVal ',' ListArrVal 
+
+  $$.arraydim = $1.arraydim;
+
+} 
+  | ArrEntry ',' ListArrEntry 
 { 
   $$.attr = (:) $1.attr $3.attr;
   $1.env = $$.env;
   $3.env = $$.env;
 
   $$.err = $1.err ++ $3.err;
+  $$.pos = $3.pos;
 
   $$.arraytype = if TS.isERROR $1.arraytype 
                 then $1.arraytype 
@@ -646,6 +693,9 @@ ListArrVal : ArrVal
                 else Err.mkError ("Array elements must be of the same type: found '" ++ TS.typeToString $1.arraytype ++ "' at " ++ 
                 show (posLineCol $1.pos) ++ " and '" ++ TS.typeToString $3.arraytype ++ "' at " ++ show (posLineCol $3.pos))
                 (posLineCol $$.pos);
+
+  $$.arraydim = zipWith max $1.arraydim $3.arraydim;
+
 }
 
 ----------------------
@@ -671,9 +721,9 @@ LExp: Ident
 
   $$.btype = if TS.isERROR (E.getArrayType $1.ident $$.env) 
             then Err.mkError (TS.getErrorMessage (E.getArrayType $1.ident $$.env)) (posLineCol $1.pos)
-            else if TS.isERROR (TS.getArrayCurrentType (E.getArrayType $1.ident $$.env) $2.arraydim)
-              then Err.mkError ("Array " ++ $$.ident ++" has " ++ show(E.getArrayDim $$.ident $$.env) ++ " dimension/s but there are " ++ show $2.arraydim ++ " indexes") (posLineCol $1.pos)
-              else TS.getArrayCurrentType (E.getArrayType $1.ident $$.env) $2.arraydim;
+            else if TS.isERROR (TS.getArrayCurrentType (E.getArrayType $1.ident $$.env) (length($2.arraydim)))
+              then Err.mkError ("Array " ++ $$.ident ++" has " ++ show(E.getArrayDim $$.ident $$.env) ++ " dimension/s but there are " ++ show (length($2.arraydim)) ++ " indexes") (posLineCol $1.pos)
+              else TS.getArrayCurrentType (E.getArrayType $1.ident $$.env) (length($2.arraydim));
 
   $2.arraytype = (E.getArrayType $1.ident $$.env);
 
@@ -685,8 +735,21 @@ LExp: Ident
 -- Right Expressions --
 -----------------------
 
-RExp
-  : RExp 'or' RExp2 
+RExp : '[' Arr ']' 
+{ 
+  $$.attr = Abs.ArrayStructure $2.attr;
+  $2.env = $$.env;
+
+  $$.btype = (TS.ARRAY $2.btype);
+
+  $$.pos = $2.pos;
+
+  $$.arraylen = length($2.arraydim);
+  $$.arraydim = $2.arraydim;
+
+  $$.err = $2.err;
+}
+  | RExp 'or' RExp2 
 {   
   $$.attr = Abs.Or $1.attr $3.attr;
   $$.err = (Err.prettyRelErr (Err.mkBoolRelErrs $1.btype $3.btype (posLineCol $1.pos) (posLineCol $3.pos) (posLineCol $$.pos)) "or")  ++ $1.err ++ $3.err;
@@ -721,6 +784,8 @@ RExp
   $$.err = $1.err;
   $$.btype = $1.btype;
   $1.env = $$.env;
+
+  $$.ident = $1.ident;
 
   $$.pos = $1.pos;
 }
@@ -793,25 +858,11 @@ RExp2
   $$.btype = $1.btype;
   $1.env = $$.env;
 
+  $$.ident = $1.ident;
   $$.pos = $1.pos;
 }
 
-RExp3 : '[' ListArrVal ']' 
-{ 
-  $$.attr = Abs.ArrayStructure $2.attr; 
-
-  $$.err = $2.err;
-
-  $$.btype = if TS.isERROR $2.arraytype
-            then $2.arraytype
-            else TS.ARRAY $2.arraytype;
-
-  $2.env = $$.env;
-
-  $2.pos = $$.pos;
-  $$.pos = (tokenPosn $1);
-}
-  | RExp3 '+' RExp4 
+RExp3 : RExp3 '+' RExp4 
 {  
   $$.attr = Abs.Add $1.attr $3.attr;
   $$.err = $1.err ++ $3.err;
@@ -878,6 +929,7 @@ RExp3 : '[' ListArrVal ']'
   $$.btype = $1.btype;
   $1.env = $$.env;
 
+  $$.ident = $1.ident;
   $$.pos = $1.pos;
 }
 
@@ -912,6 +964,7 @@ RExp4 : '&' RExp5
   $$.btype = $1.btype;
   $1.env = $$.env;
 
+  $$.ident = $1.ident;
   $$.pos = $1.pos;
 }
 
@@ -921,6 +974,7 @@ RExp5 : Integer
   $$.err = $1.err;
   $$.btype = $1.btype;
 
+  $$.ident = $1.ident;
   $$.pos = $1.pos;
 }
   | Double 
@@ -929,6 +983,7 @@ RExp5 : Integer
   $$.err = $1.err;
   $$.btype = $1.btype;
 
+  $$.ident = $1.ident;
   $$.pos = $1.pos;
 }
   | String 
@@ -937,6 +992,7 @@ RExp5 : Integer
   $$.err = $1.err;
   $$.btype = $1.btype; 
 
+  $$.ident = $1.ident;
   $$.pos = $1.pos;
 }
   | Char 
@@ -945,6 +1001,7 @@ RExp5 : Integer
   $$.err = $1.err;
   $$.btype = $1.btype;
 
+  $$.ident = $1.ident;
   $$.pos = $1.pos;
 }
   | Boolean 
@@ -953,6 +1010,7 @@ RExp5 : Integer
   $$.err = $1.err;
   $$.btype = $1.btype;
 
+  $$.ident = $1.ident;
   $$.pos = $1.pos;
 }
   | Ident 
@@ -968,15 +1026,15 @@ RExp5 : Integer
 }
   | Ident ListDim 
 { 
-  $$.attr = Abs.ArrayEntry $1.attr $2.attr; 
+  $$.attr = Abs.ArrayIndexValue $1.attr $2.attr; 
   $$.ident = $1.ident;
   $2.env = $$.env;
 
   $$.btype = if TS.isERROR (E.getArrayType $1.ident $$.env) 
             then Err.mkError (TS.getErrorMessage (E.getArrayType $1.ident $$.env)) (posLineCol $1.pos)
-            else if TS.isERROR (TS.getArrayCurrentType (E.getArrayType $1.ident $$.env) $2.arraydim)
-              then Err.mkError ("Array " ++ $$.ident ++" has " ++ show(E.getArrayDim $$.ident $$.env) ++ " dimension/s but there are " ++ show $2.arraydim ++ " indexes") (posLineCol $1.pos)
-              else TS.getArrayCurrentType (E.getArrayType $1.ident $$.env) $2.arraydim;
+            else if TS.isERROR (TS.getArrayCurrentType (E.getArrayType $1.ident $$.env) (length($2.arraydim)))
+              then Err.mkError ("Array " ++ $$.ident ++" has " ++ show(E.getArrayDim $$.ident $$.env) ++ " dimension/s but there are " ++ show (length($2.arraydim)) ++ " indexes") (posLineCol $1.pos)
+              else TS.getArrayCurrentType (E.getArrayType $1.ident $$.env) (length($2.arraydim));
 
 
   $2.arraytype = (E.getArrayType $1.ident $$.env);
@@ -1045,6 +1103,7 @@ RExp1 : RExp2
   $$.btype = $1.btype;
   $1.env = $$.env;
 
+  $$.ident = $1.ident;
   $$.pos = $1.pos;
 }
 
