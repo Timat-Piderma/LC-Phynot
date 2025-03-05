@@ -365,12 +365,14 @@ Stm: BasicType Ident
 { 
   $$.attr = Abs.ProcedureCall $1.attr $3.attr;
   $3.env = $$.env;
+  $$.modifiedEnv = $$.env;
 
   $$.err = (Err.mkProcedureCallErrs $1.ident $3.paramTypes $$.env (posLineCol $1.pos)) ++ $3.err;
 }
   | Ident '()' 
 { 
   $$.attr = Abs.ProcedureCallNoParam $1.attr;
+  $$.modifiedEnv = $$.env;
   
   $$.err = (Err.mkProcedureCallErrs $1.ident [] $$.env (posLineCol $1.pos));
 }
