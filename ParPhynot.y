@@ -22,16 +22,20 @@ import LexPhynot
 %name pBasicType BasicType
 %name pBoolean Boolean
 %name pStm Stm
-%name pListParam ListParam
 %name pParam Param
-%name pLExp LExp
+%name pListParam ListParam
 %name pDim Dim
 %name pListDim ListDim
+%name pArr Arr
+%name pArrEntry ArrEntry
+%name pListArrEntry ListArrEntry
+%name pLExp LExp
 %name pRExp RExp
 %name pRExp2 RExp2
 %name pRExp3 RExp3
 %name pRExp4 RExp4
 %name pRExp5 RExp5
+%name pRExp6 RExp6
 %name pListRExp ListRExp
 %name pRExp1 RExp1
 -- no lexer declaration
@@ -62,23 +66,24 @@ import LexPhynot
   'True'     { PT _ (TS _ 22) }
   '['        { PT _ (TS _ 23) }
   ']'        { PT _ (TS _ 24) }
-  'and'      { PT _ (TS _ 25) }
-  'bool'     { PT _ (TS _ 26) }
-  'break'    { PT _ (TS _ 27) }
-  'char'     { PT _ (TS _ 28) }
-  'continue' { PT _ (TS _ 29) }
-  'def'      { PT _ (TS _ 30) }
-  'else'     { PT _ (TS _ 31) }
-  'float'    { PT _ (TS _ 32) }
-  'if'       { PT _ (TS _ 33) }
-  'int'      { PT _ (TS _ 34) }
-  'not'      { PT _ (TS _ 35) }
-  'or'       { PT _ (TS _ 36) }
-  'pass'     { PT _ (TS _ 37) }
-  'return'   { PT _ (TS _ 38) }
-  'while'    { PT _ (TS _ 39) }
-  '{'        { PT _ (TS _ 40) }
-  '}'        { PT _ (TS _ 41) }
+  '^'        { PT _ (TS _ 25) }
+  'and'      { PT _ (TS _ 26) }
+  'bool'     { PT _ (TS _ 27) }
+  'break'    { PT _ (TS _ 28) }
+  'char'     { PT _ (TS _ 29) }
+  'continue' { PT _ (TS _ 30) }
+  'def'      { PT _ (TS _ 31) }
+  'else'     { PT _ (TS _ 32) }
+  'float'    { PT _ (TS _ 33) }
+  'if'       { PT _ (TS _ 34) }
+  'int'      { PT _ (TS _ 35) }
+  'not'      { PT _ (TS _ 36) }
+  'or'       { PT _ (TS _ 37) }
+  'pass'     { PT _ (TS _ 38) }
+  'return'   { PT _ (TS _ 39) }
+  'while'    { PT _ (TS _ 40) }
+  '{'        { PT _ (TS _ 41) }
+  '}'        { PT _ (TS _ 42) }
   L_Ident    { PT _ (TV _)   }
   L_charac   { PT _ (TC _)   }
   L_doubl    { PT _ (TD _)   }
@@ -846,7 +851,30 @@ RExp3 : RExp3 '+' RExp4
   $$.pos = $1.pos;
 }
 
-RExp4 : '&' RExp5 
+RExp4 : RExp4 '^' RExp5 
+{ 
+  $$.attr = Abs.Pow $1.attr $3.attr;
+  $$.err = $1.err ++ $3.err;
+  $$.btype = if TS.isERROR (TS.sup (TS.mathtype $1.btype) (TS.mathtype $3.btype))
+            then TS.Base  (TS.ERROR (head(Err.mkBinOppErrs  $1.btype $3.btype (posLineCol $1.pos) (posLineCol $3.pos) (posLineCol $$.pos) "^")))
+            else TS.sup (TS.mathtype $1.btype) (TS.mathtype $3.btype);
+  $1.env = $$.env;
+  $3.env = $$.env;
+
+  $$.pos = (tokenPosn $2);
+} 
+  | RExp5 
+{ 
+  $$.attr = $1.attr;
+  $$.err = $1.err;
+  $$.btype = $1.btype;
+  $1.env = $$.env;
+
+  $$.ident = $1.ident;
+  $$.pos = $1.pos;
+}
+
+RExp5 : '&' RExp6 
 {     
   $$.attr = Abs.PointerRef $2.attr; 
   $2.env = $$.env;
@@ -858,7 +886,7 @@ RExp4 : '&' RExp5
             
   $$.pos = $2.pos;
 } 
-  | '*' RExp5 
+  | '*' RExp6 
 { 
   $$.attr = Abs.DereferenceVal $2.attr;
   $2.env = $$.env;
@@ -870,7 +898,17 @@ RExp4 : '&' RExp5
 
   $$.pos = $2.pos;
 }
-  | RExp5 
+  | '-' RExp6 
+{ 
+  $$.attr = Abs.Neg $2.attr; 
+  $2.env = $$.env;
+
+  $$.err = $2.err;
+  $$.btype = TS.mathtype $2.btype;
+
+  $$.pos = $2.pos; 
+}
+  | RExp6
 { 
   $$.attr = $1.attr; 
   $$.err = $1.err;
@@ -881,7 +919,7 @@ RExp4 : '&' RExp5
   $$.pos = $1.pos;
 }
 
-RExp5 : Integer 
+RExp6 : Integer 
 { 
   $$.attr = Abs.IntValue $1.attr; 
   $$.err = $1.err;

@@ -79,8 +79,10 @@ data RExp
     | Mul RExp RExp
     | Div RExp RExp
     | Mod RExp RExp
+    | Pow RExp RExp
     | PointerRef RExp
     | DereferenceVal RExp
+    | Neg RExp
     | IntValue Integer
     | FloatValue Double
     | StringValue String

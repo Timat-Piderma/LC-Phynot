@@ -98,8 +98,10 @@ transRExp x = case x of
   AbsPhynot.Mul rexp1 rexp2 -> failure x
   AbsPhynot.Div rexp1 rexp2 -> failure x
   AbsPhynot.Mod rexp1 rexp2 -> failure x
+  AbsPhynot.Pow rexp1 rexp2 -> failure x
   AbsPhynot.PointerRef rexp -> failure x
   AbsPhynot.DereferenceVal rexp -> failure x
+  AbsPhynot.Neg rexp -> failure x
   AbsPhynot.IntValue integer -> failure x
   AbsPhynot.FloatValue double -> failure x
   AbsPhynot.StringValue string -> failure x

@@ -104,21 +104,24 @@ Sub.                            RExp3 ::= RExp3 "-" RExp4;
 Mul.                            RExp3 ::= RExp3 "*" RExp4;
 Div.                            RExp3 ::= RExp3 "/" RExp4;
 Mod.                            RExp3 ::= RExp3 "%" RExp4;
+
+Pow.                            RExp4 ::= RExp4 "^" RExp5;
+
+PointerRef.                     RExp5 ::= "&" RExp6;
+DereferenceVal.                 RExp5 ::= "*" RExp6;
+Neg.                            RExp5 ::= "-" RExp6;
+
+IntValue.                       RExp6 ::= Integer;
+FloatValue.                     RExp6 ::= Double;
+StringValue.                    RExp6 ::= String;
+CharValue.                      RExp6 ::= Char;
+BooleanValue.                   RExp6 ::= Boolean;
+VarValue.                       RExp6 ::= Ident;
     
-PointerRef.                     RExp4 ::= "&" RExp5;
-DereferenceVal.                 RExp4 ::= "*" RExp5;
-    
-IntValue.                       RExp5 ::= Integer;
-FloatValue.                     RExp5 ::= Double;
-StringValue.                    RExp5 ::= String;
-CharValue.                      RExp5 ::= Char;
-BooleanValue.                   RExp5 ::= Boolean;
-VarValue.                       RExp5 ::= Ident;
-    
-ArrayIndexValue.                RExp5 ::= Ident [Dim];
-FuncCall.                       RExp5 ::= Ident "(" [RExp] ")";
-FuncCallNoParam.                RExp5 ::= Ident "()";
+ArrayIndexValue.                RExp6 ::= Ident [Dim];
+FuncCall.                       RExp6 ::= Ident "(" [RExp] ")";
+FuncCallNoParam.                RExp6 ::= Ident "()";
 separator RExp ","; 
     
-coercions RExp 5;   
+coercions RExp 6;   
     
