@@ -2,6 +2,7 @@
 {-# HLINT ignore "Eta reduce" #-}
 module ErrorsBuilder where
 
+import Data.List
 import TypeSystem as TS
 import Env as E
 
@@ -102,7 +103,22 @@ prettyFuncErr errs funcName = map (++ " inside function '" ++ funcName ++ "'") e
 mkFuncDeclErrs :: Type -> EnvT -> String -> [Type] -> (Int, Int) -> [String]
 mkFuncDeclErrs funcType env funcName params pos
     | getVarPos funcName env == (-1,-1) = [mkStringError ("Primitive function '" ++ funcName ++ "' can not be redefined") pos] 
+    | containsPrototype funcName env = protoToFuncErrs funcType funcName params env pos
     | containsEntry funcName env = [mkStringError ("Function '" ++ funcName ++ "' already declared at: " ++ show (getVarPos funcName env)) pos] 
+    | otherwise = []
+
+protoToFuncErrs :: Type -> String -> [Type] -> EnvT -> (Int, Int) -> [String]
+protoToFuncErrs (Base (ERROR s)) _ _ _ _ = [s]
+protoToFuncErrs funcType funcName params env pos
+    | getFuncType funcName env == funcType && getFuncParams funcName env == params = []
+    | getFuncType funcName env /= funcType && getFuncParams funcName env /= params = [mkStringError ("Error: function '" ++ funcName ++ "' has different return type: '" ++ typeToString (getFuncType funcName env) ++ "' and parameters: '" ++ intercalate ", " (map typeToString (getFuncParams funcName env)) ++ "' than prototype") pos]
+    | getFuncType funcName env /= funcType = [mkStringError ("Error: function '" ++ funcName ++ "' has different return type: '" ++ typeToString (getFuncType funcName env) ++ "' than prototype") pos]
+    | getFuncParams funcName env /= params = [mkStringError ("Error: function '" ++ funcName ++ "' has different parameters: '" ++ intercalate ", " (map typeToString (getFuncParams funcName env)) ++ "' than prototype") pos]
+    | otherwise = []
+
+mkPrototypeErrs :: Type -> EnvT -> String -> [Type] -> (Int, Int) -> [String]
+mkPrototypeErrs funcType env funcName params pos
+    | containsEntry funcName env = [mkStringError ("Prototype function '" ++ funcName ++ "' already declared at: " ++ show (getVarPos funcName env)) pos] 
     | otherwise = []
 
 mkReturnErrs :: EnvT -> Type -> (Int, Int) -> [String]
