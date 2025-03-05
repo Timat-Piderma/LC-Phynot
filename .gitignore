@@ -5,7 +5,6 @@
 !AbsPhynot.hs
 !Env.hs
 !ErrM.hs
-!LexPhynot.hs
 !LexPhynot.x
 !Makefile
 !ParPhynot.y
