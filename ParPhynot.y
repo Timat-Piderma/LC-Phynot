@@ -310,13 +310,52 @@ Stm: BasicType Ident
 -- Functions --
 ---------------
 
+  | BasicType Ident '(' ListParam ')' 
+{ 
+  $$.attr = Abs.FunctionPrototype $1.attr $2.attr $4.attr; 
+
+  $$.modifiedEnv = E.insertPrototype $2.ident (posLineCol ($2.pos)) $1.btype $4.paramTypes $$.env;
+  $4.env = E.insertVar "return" (posLineCol ($2.pos)) ($$.btype) $$.env;
+
+  $4.funcName = $2.ident;
+
+  $$.err = $4.err ++ (Err.mkPrototypeErrs $1.btype $$.env $2.ident $4.paramTypes (posLineCol ($2.pos)));
+
+}
+  | BasicType Ident '()' 
+{ 
+  $$.attr = Abs.FunctionNoParamPrototype $1.attr $2.attr; 
+  
+  $$.modifiedEnv = E.insertPrototype $2.ident (posLineCol ($2.pos)) $1.btype [] $$.env;
+
+  $$.err = (Err.mkPrototypeErrs $2.btype $$.env $2.ident [] (posLineCol ($2.pos)));
+}
+  | 'None' Ident '(' ListParam ')' 
+{ 
+  $$.attr = Abs.ProcedurePrototype $2.attr $4.attr; 
+  
+  $$.modifiedEnv = E.insertPrototype $2.ident (posLineCol ($2.pos)) (TS.Base TS.NONE) $4.paramTypes $$.env;
+  $4.env = $$.modifiedEnv;
+
+  $4.funcName = $2.ident;
+
+  $$.err = $4.err ++ (Err.mkPrototypeErrs (TS.Base TS.NONE) $$.env $2.ident $4.paramTypes (posLineCol ($2.pos)));
+}
+  | 'None' Ident '()' 
+{ 
+  $$.attr = Abs.ProcedureNoParamPrototype $2.attr; 
+  
+  $$.modifiedEnv = E.insertPrototype $2.ident (posLineCol ($2.pos)) (TS.Base TS.NONE) [] $$.env;
+
+  $$.err = (Err.mkPrototypeErrs (TS.Base TS.NONE) $$.env $2.ident [] (posLineCol ($2.pos)));
+}
   | 'def' BasicType Ident '(' ListParam ')' '{' ListStm '}' 
 {  
   $$.attr = Abs.FunctionDeclaration $2.attr $3.attr $5.attr $8.attr; 
 
   $$.modifiedEnv = E.insertFunc $3.ident (posLineCol $3.pos) $2.btype $5.paramTypes $$.env;
   $8.env = $5.modifiedEnv;
-  $5.env = E.insertFunc $3.ident (posLineCol $$.pos) $2.btype $5.paramTypes (E.insertVar "return" (posLineCol ($3.pos)) ($$.btype) E.emptyEnv);
+  $5.env = E.insertFunc $3.ident (posLineCol $$.pos) $2.btype $5.paramTypes (E.insertVar "return" (posLineCol ($3.pos)) ($$.btype) $$.env);
 
   $5.funcName = $3.ident;
   $$.btype = $2.btype;
@@ -328,7 +367,7 @@ Stm: BasicType Ident
   $$.attr = Abs.FunctionNoParamDeclaration $2.attr $3.attr $6.attr; 
 
   $$.modifiedEnv = E.insertFunc $3.ident (posLineCol $3.pos) $2.btype [] $$.env;
-  $6.env = E.insertFunc $3.ident (posLineCol $$.pos) $2.btype [] (E.insertVar "return" (posLineCol ($3.pos)) ($$.btype) E.emptyEnv);
+  $6.env = E.insertFunc $3.ident (posLineCol $$.pos) $2.btype [] (E.insertVar "return" (posLineCol ($3.pos)) ($$.btype) $$.env);
 
   $$.btype = $2.btype;
 

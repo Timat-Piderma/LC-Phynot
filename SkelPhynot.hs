@@ -44,6 +44,10 @@ transStm x = case x of
   AbsPhynot.ArrayDeclarationInit basictype ident dims rexp -> failure x
   AbsPhynot.PointerDeclaration basictype ident -> failure x
   AbsPhynot.PointerDeclarationInit basictype ident rexp -> failure x
+  AbsPhynot.FunctionPrototype basictype ident params -> failure x
+  AbsPhynot.FunctionNoParamPrototype basictype ident -> failure x
+  AbsPhynot.ProcedurePrototype ident params -> failure x
+  AbsPhynot.ProcedureNoParamPrototype ident -> failure x
   AbsPhynot.FunctionDeclaration basictype ident params stms -> failure x
   AbsPhynot.FunctionNoParamDeclaration basictype ident stms -> failure x
   AbsPhynot.ProcedureDeclaration ident params stms -> failure x

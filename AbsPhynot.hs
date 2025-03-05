@@ -31,6 +31,10 @@ data Stm
     | ArrayDeclarationInit BasicType Ident [Dim] RExp
     | PointerDeclaration BasicType Ident
     | PointerDeclarationInit BasicType Ident RExp
+    | FunctionPrototype BasicType Ident [Param]
+    | FunctionNoParamPrototype BasicType Ident
+    | ProcedurePrototype Ident [Param]
+    | ProcedureNoParamPrototype Ident
     | FunctionDeclaration BasicType Ident [Param] [Stm]
     | FunctionNoParamDeclaration BasicType Ident [Stm]
     | ProcedureDeclaration Ident [Param] [Stm]

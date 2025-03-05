@@ -30,6 +30,10 @@ PointerDeclarationInit.         Stm ::= BasicType "*" Ident "=" RExp;
 -- Functions --
 ---------------
 
+FunctionPrototype.              Stm ::= BasicType Ident "(" [Param] ")";
+FunctionNoParamPrototype.       Stm ::= BasicType Ident "()";
+ProcedurePrototype.             Stm ::= "None" Ident "(" [Param] ")";
+ProcedureNoParamPrototype.      Stm ::= "None" Ident "()";
 FunctionDeclaration.            Stm ::= "def" BasicType Ident "(" [Param] ")" "{" [Stm] "}";
 FunctionNoParamDeclaration.     Stm ::= "def" BasicType Ident "()" "{" [Stm] "}";
 ProcedureDeclaration.           Stm ::= "def" "None" Ident "(" [Param] ")" "{" [Stm] "}";
