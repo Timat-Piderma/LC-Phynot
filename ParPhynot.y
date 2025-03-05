@@ -38,60 +38,52 @@ import LexPhynot
 %monad { Err } { (>>=) } { return }
 %tokentype {Token}
 %token
-  '!='          { PT _ (TS _ 1)  }
-  '%'           { PT _ (TS _ 2)  }
-  '&'           { PT _ (TS _ 3)  }
-  '('           { PT _ (TS _ 4)  }
-  '()'          { PT _ (TS _ 5)  }
-  ')'           { PT _ (TS _ 6)  }
-  '*'           { PT _ (TS _ 7)  }
-  '+'           { PT _ (TS _ 8)  }
-  ','           { PT _ (TS _ 9)  }
-  '-'           { PT _ (TS _ 10) }
-  '/'           { PT _ (TS _ 11) }
-  ';'           { PT _ (TS _ 12) }
-  '<'           { PT _ (TS _ 13) }
-  '<='          { PT _ (TS _ 14) }
-  '='           { PT _ (TS _ 15) }
-  '=='          { PT _ (TS _ 16) }
-  '>'           { PT _ (TS _ 17) }
-  '>='          { PT _ (TS _ 18) }
-  'False'       { PT _ (TS _ 19) }
-  'None'        { PT _ (TS _ 20) }
-  'String'      { PT _ (TS _ 21) }
-  'True'        { PT _ (TS _ 22) }
-  '['           { PT _ (TS _ 23) }
-  ']'           { PT _ (TS _ 24) }
-  'and'         { PT _ (TS _ 25) }
-  'bool'        { PT _ (TS _ 26) }
-  'break'       { PT _ (TS _ 27) }
-  'char'        { PT _ (TS _ 28) }
-  'continue'    { PT _ (TS _ 29) }
-  'def'         { PT _ (TS _ 30) }
-  'else'        { PT _ (TS _ 31) }
-  'float'       { PT _ (TS _ 32) }
-  'if'          { PT _ (TS _ 33) }
-  'int'         { PT _ (TS _ 34) }
-  'not'         { PT _ (TS _ 35) }
-  'or'          { PT _ (TS _ 36) }
-  'pass'        { PT _ (TS _ 37) }
-  'readChar'    { PT _ (TS _ 38) }
-  'readFloat'   { PT _ (TS _ 39) }
-  'readInt'     { PT _ (TS _ 40) }
-  'readString'  { PT _ (TS _ 41) }
-  'return'      { PT _ (TS _ 42) }
-  'while'       { PT _ (TS _ 43) }
-  'writeChar'   { PT _ (TS _ 44) }
-  'writeFloat'  { PT _ (TS _ 45) }
-  'writeInt'    { PT _ (TS _ 46) }
-  'writeString' { PT _ (TS _ 47) }
-  '{'           { PT _ (TS _ 48) }
-  '}'           { PT _ (TS _ 49) }
-  L_Ident       { PT _ (TV _)    }
-  L_charac      { PT _ (TC _)    }
-  L_doubl       { PT _ (TD _)   }
-  L_integ       { PT _ (TI _)   }
-  L_quoted      { PT _ (TL _)   }
+  '!='       { PT _ (TS _ 1)  }
+  '%'        { PT _ (TS _ 2)  }
+  '&'        { PT _ (TS _ 3)  }
+  '('        { PT _ (TS _ 4)  }
+  '()'       { PT _ (TS _ 5)  }
+  ')'        { PT _ (TS _ 6)  }
+  '*'        { PT _ (TS _ 7)  }
+  '+'        { PT _ (TS _ 8)  }
+  ','        { PT _ (TS _ 9)  }
+  '-'        { PT _ (TS _ 10) }
+  '/'        { PT _ (TS _ 11) }
+  ';'        { PT _ (TS _ 12) }
+  '<'        { PT _ (TS _ 13) }
+  '<='       { PT _ (TS _ 14) }
+  '='        { PT _ (TS _ 15) }
+  '=='       { PT _ (TS _ 16) }
+  '>'        { PT _ (TS _ 17) }
+  '>='       { PT _ (TS _ 18) }
+  'False'    { PT _ (TS _ 19) }
+  'None'     { PT _ (TS _ 20) }
+  'String'   { PT _ (TS _ 21) }
+  'True'     { PT _ (TS _ 22) }
+  '['        { PT _ (TS _ 23) }
+  ']'        { PT _ (TS _ 24) }
+  'and'      { PT _ (TS _ 25) }
+  'bool'     { PT _ (TS _ 26) }
+  'break'    { PT _ (TS _ 27) }
+  'char'     { PT _ (TS _ 28) }
+  'continue' { PT _ (TS _ 29) }
+  'def'      { PT _ (TS _ 30) }
+  'else'     { PT _ (TS _ 31) }
+  'float'    { PT _ (TS _ 32) }
+  'if'       { PT _ (TS _ 33) }
+  'int'      { PT _ (TS _ 34) }
+  'not'      { PT _ (TS _ 35) }
+  'or'       { PT _ (TS _ 36) }
+  'pass'     { PT _ (TS _ 37) }
+  'return'   { PT _ (TS _ 38) }
+  'while'    { PT _ (TS _ 39) }
+  '{'        { PT _ (TS _ 40) }
+  '}'        { PT _ (TS _ 41) }
+  L_Ident    { PT _ (TV _)   }
+  L_charac   { PT _ (TC _)   }
+  L_doubl    { PT _ (TD _)   }
+  L_integ    { PT _ (TI _)   }
+  L_quoted   { PT _ (TL _)   }
 
 %attributetype {Attr a}
 %attribute res { Result }
@@ -414,87 +406,6 @@ Stm: BasicType Ident
   
   $3.env = $$.env;
   $1.env = $$.env;
-}
-
------------------------
--- Default Functions --
------------------------
-
-  | 'writeInt' '(' RExp ')' 
-{  
-  $$.attr = Abs.WriteInt $3.attr;
-  $3.env = $$.env;
-  $$.modifiedEnv = $$.env;
-
-  $$.err = Err.mkFuncCallErrs "writeInt" [$3.btype] $$.env (posLineCol $$.pos) ++ $3.err;
-  $$.pos = (tokenPosn $1);
-}
-  | 'writeFloat' '(' RExp ')' 
-{  
-  $$.attr = Abs.WriteFloat $3.attr;
-  $3.env = $$.env;
-  $$.modifiedEnv = $$.env;
-
-  $$.err = Err.mkFuncCallErrs "writeFloat" [$3.btype] $$.env (posLineCol $$.pos) ++ $3.err;
-  $$.pos = (tokenPosn $1);
-}
-  | 'writeChar' '(' RExp ')' 
-{   
-  $$.attr = Abs.WriteChar $3.attr;
-  $3.env = $$.env;
-  $$.modifiedEnv = $$.env;
-
-  $$.err = Err.mkFuncCallErrs "writeChar" [$3.btype] $$.env (posLineCol $$.pos) ++ $3.err;
-  $$.pos = (tokenPosn $1);
-}
-  | 'writeString' '(' RExp ')' 
-{   
-  $$.attr = Abs.WriteString $3.attr;
-  $3.env = $$.env;
-  $$.modifiedEnv = $$.env;
-
-  $$.err = Err.mkFuncCallErrs "writeString" [$3.btype] $$.env (posLineCol $$.pos) ++ $3.err;
-  $$.pos = (tokenPosn $1);
-}
-  | 'readInt' '()' 
-{  
-  $$.attr = Abs.ReadInt;
-  $$.modifiedEnv = $$.env;
-  $$.pos = (tokenPosn $1);
-
-  $$.btype = (TS.Base TS.INT);
-
-  $$.err = [];
-}
-  | 'readFloat' '()' 
-{  
-  $$.attr = Abs.ReadFloat;
-  $$.modifiedEnv = $$.env;
-  $$.pos = (tokenPosn $1);
-
-  $$.btype = (TS.Base TS.FLOAT);
-
-  $$.err = []; 
-}
-  | 'readChar' '()' 
-{  
-  $$.attr = Abs.ReadChar;
-  $$.modifiedEnv = $$.env;
-  $$.pos = (tokenPosn $1);
-
-  $$.btype = (TS.Base TS.CHAR);
-
-  $$.err = [];  
-}
-  | 'readString' '()' 
-{   
-  $$.attr = Abs.ReadString;
-  $$.modifiedEnv = $$.env;
-  $$.pos = (tokenPosn $1);
-
-  $$.btype = (TS.Base TS.STRING);
-
-  $$.err = [];
 }
 
 ----------------------

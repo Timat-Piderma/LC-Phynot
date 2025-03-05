@@ -40,14 +40,6 @@ data Stm
     | Return RExp
     | ReturnNone
     | Assignment LExp RExp
-    | WriteInt RExp
-    | WriteFloat RExp
-    | WriteChar RExp
-    | WriteString RExp
-    | ReadInt
-    | ReadFloat
-    | ReadChar
-    | ReadString
     | IfThen RExp [Stm]
     | IfThenElse RExp [Stm] [Stm]
     | WhileDo RExp [Stm]

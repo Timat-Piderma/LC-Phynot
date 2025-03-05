@@ -53,14 +53,6 @@ transStm x = case x of
   AbsPhynot.Return rexp -> failure x
   AbsPhynot.ReturnNone -> failure x
   AbsPhynot.Assignment lexp rexp -> failure x
-  AbsPhynot.WriteInt rexp -> failure x
-  AbsPhynot.WriteFloat rexp -> failure x
-  AbsPhynot.WriteChar rexp -> failure x
-  AbsPhynot.WriteString rexp -> failure x
-  AbsPhynot.ReadInt -> failure x
-  AbsPhynot.ReadFloat -> failure x
-  AbsPhynot.ReadChar -> failure x
-  AbsPhynot.ReadString -> failure x
   AbsPhynot.IfThen rexp stms -> failure x
   AbsPhynot.IfThenElse rexp stms1 stms2 -> failure x
   AbsPhynot.WhileDo rexp stms -> failure x

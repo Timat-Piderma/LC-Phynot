@@ -45,19 +45,6 @@ ReturnNone.                     Stm ::= "return";
 
 Assignment.                     Stm ::= LExp "=" RExp;
 
------------------------
--- Default Functions --
------------------------
-
-WriteInt.                       Stm ::= "writeInt" "(" RExp ")";  
-WriteFloat.                     Stm ::= "writeFloat" "(" RExp ")";
-WriteChar.                      Stm ::= "writeChar" "(" RExp ")";
-WriteString.                    Stm ::= "writeString" "(" RExp ")";
-ReadInt.                        Stm ::= "readInt" "()";
-ReadFloat.                      Stm ::= "readFloat" "()";
-ReadChar.                       Stm ::= "readChar" "()";
-ReadString.                     Stm ::= "readString" "()";
-
 ----------------------
 -- Sequence Control --
 ----------------------
