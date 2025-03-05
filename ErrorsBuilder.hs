@@ -101,7 +101,7 @@ prettyFuncErr errs funcName = map (++ " inside function '" ++ funcName ++ "'") e
 
 mkFuncDeclErrs :: Type -> EnvT -> String -> [Type] -> (Int, Int) -> [String]
 mkFuncDeclErrs funcType env funcName params pos
-    | getVarPos funcName env == (0,0) = [mkStringError ("Primitive function '" ++ funcName ++ "' can not be redefined") pos] 
+    | getVarPos funcName env == (-1,-1) = [mkStringError ("Primitive function '" ++ funcName ++ "' can not be redefined") pos] 
     | containsEntry funcName env = [mkStringError ("Function '" ++ funcName ++ "' already declared at: " ++ show (getVarPos funcName env)) pos] 
     | otherwise = []
 

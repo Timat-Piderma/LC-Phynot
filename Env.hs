@@ -28,14 +28,14 @@ data EnvEntity =
     deriving (Show, Read)
 
 emptyEnv :: EnvT
-emptyEnv = Map.insert "writeInt" (mkFunc "writeInt" (0,0) (Base NONE) [Base INT]) (
-    Map.insert "writeFloat" (mkFunc "writeFloat" (0,0) (Base NONE) [Base FLOAT]) (
-    Map.insert "writeChar" (mkFunc "writeChar" (0,0) (Base NONE) [Base CHAR]) (
-    Map.insert "writeString" (mkFunc "writeString" (0,0) (Base NONE) [Base STRING]) (
-    Map.insert "readInt" (mkFunc "readInt" (0,0) (Base INT) []) (
-    Map.insert "readFloat" (mkFunc "readFloat" (0,0) (Base FLOAT) []) (
-    Map.insert "readChar" (mkFunc "readChar" (0,0) (Base CHAR) []) (
-    Map.insert "readString" (mkFunc "readString" (0,0) (Base STRING) []) Map.empty
+emptyEnv = Map.insert "writeInt" (mkFunc "writeInt" (-1, -1) (Base NONE) [Base INT]) (
+    Map.insert "writeFloat" (mkFunc "writeFloat" (-1, -1) (Base NONE) [Base FLOAT]) (
+    Map.insert "writeChar" (mkFunc "writeChar" (-1, -1) (Base NONE) [Base CHAR]) (
+    Map.insert "writeString" (mkFunc "writeString" (-1, -1) (Base NONE) [Base STRING]) (
+    Map.insert "readInt" (mkFunc "readInt" (-1, -1) (Base INT) []) (
+    Map.insert "readFloat" (mkFunc "readFloat" (-1, -1) (Base FLOAT) []) (
+    Map.insert "readChar" (mkFunc "readChar" (-1, -1) (Base CHAR) []) (
+    Map.insert "readString" (mkFunc "readString" (-1, -1) (Base STRING) []) Map.empty
     )))))))
 
 mkVar :: String -> (Int, Int) -> Type -> EnvEntity
