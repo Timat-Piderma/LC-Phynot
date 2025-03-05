@@ -7,11 +7,11 @@ import AbsPhynot as Abs
 
 type EnvT = Map.Map String EnvEntity
 
-data EnvEntity = Variable {
+data EnvEntity = 
+    Variable {
     id :: String,
     pos :: (Int, Int),
-    btype :: Type,
-    params :: [Type]
+    btype :: Type
     }
     | Array {
     id :: String,
@@ -19,16 +19,25 @@ data EnvEntity = Variable {
     btype :: Type,
     arrLength :: [Int]
     }
+    | Function {
+    id :: String,
+    pos :: (Int, Int),
+    btype :: Type,
+    params :: [Type]
+    }
     deriving (Show, Read)
 
 emptyEnv :: EnvT
 emptyEnv = Map.empty
 
 mkVar :: String -> (Int, Int) -> Type -> EnvEntity
-mkVar varName varPos varType = Variable varName varPos varType []
+mkVar varName varPos varType = Variable varName varPos varType
 
 mkArray :: String -> (Int, Int) -> Type -> [Int] -> EnvEntity
 mkArray varName varPos varType arrLength = Array varName varPos varType arrLength
+
+mkFunc :: String -> (Int, Int) -> Type -> [Type] -> EnvEntity
+mkFunc funcName funcPos funcType funcParams = Function funcName funcPos funcType funcParams
 
 -- inserts only if not already in the environment
 insertVar :: String -> (Int, Int) -> Type -> EnvT -> EnvT
@@ -44,7 +53,7 @@ insertArray varName varPos varType arrLength env = if containsEntry varName env
 insertFunc :: String -> (Int, Int) -> Type -> [Type] -> EnvT -> EnvT
 insertFunc funcName funcPos funcType funcParams env = if containsEntry funcName env
     then env
-    else Map.insert funcName (Variable funcName funcPos funcType funcParams) env
+    else Map.insert funcName (mkFunc funcName funcPos funcType funcParams) env
 
 containsEntry :: String -> EnvT -> Bool
 containsEntry varName env = 
