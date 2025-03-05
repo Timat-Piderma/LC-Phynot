@@ -25,6 +25,13 @@ data EnvEntity =
     btype :: Type,
     params :: [Type]
     }
+    | Prototype 
+    {
+    id :: String,
+    pos :: (Int, Int),
+    btype :: Type,
+    params :: [Type]
+    }
     deriving (Show, Read)
 
 emptyEnv :: EnvT
@@ -60,14 +67,27 @@ insertArray varName varPos varType arrLength env = if containsEntry varName env
 
 insertFunc :: String -> (Int, Int) -> Type -> [Type] -> EnvT -> EnvT
 insertFunc funcName funcPos funcType funcParams env = if containsEntry funcName env
-    then env
+    then if containsPrototype funcName env
+        then Map.insert funcName (mkFunc funcName funcPos funcType funcParams) env
+        else env
     else Map.insert funcName (mkFunc funcName funcPos funcType funcParams) env
+
+insertPrototype :: String -> (Int, Int) -> Type -> [Type] -> EnvT -> EnvT
+insertPrototype funcName pos funcType funcParams env = if containsPrototype funcName env
+    then env
+    else Map.insert funcName (Prototype funcName pos funcType funcParams) env
 
 containsEntry :: String -> EnvT -> Bool
 containsEntry varName env = 
     case Map.lookup varName env of
         Just _  -> True  
         Nothing -> False  
+
+containsPrototype :: String -> EnvT -> Bool
+containsPrototype funcName env = 
+    case Map.lookup funcName env of
+        Just (Prototype _ _ _ _)  -> True  
+        _                        -> False
 
 getVarPos :: String -> EnvT -> (Int, Int)
 getVarPos varName env = case Map.lookup varName env of
