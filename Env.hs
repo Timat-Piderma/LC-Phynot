@@ -1,7 +1,7 @@
 module Env where
 import Data.Map as Map
 
---import TAC
+import TAC
 import TypeSystem as TS 
 import AbsPhynot as Abs
 
@@ -11,13 +11,15 @@ data EnvEntity =
     Variable {
     id :: String,
     pos :: (Int, Int),
-    btype :: Type
+    btype :: Type,
+    addr :: Address
     }
     | Array {
     id :: String,
     pos :: (Int, Int),
     btype :: Type,
-    arrLength :: [Int]
+    arrLength :: [Int],
+    addr :: Address
     }
     | Function {
     id :: String,
@@ -32,7 +34,7 @@ data EnvEntity =
     btype :: Type,
     params :: [Type]
     }
-    deriving (Show, Read)
+    deriving (Show)
 
 emptyEnv :: EnvT
 emptyEnv = Map.insert "writeInt" (mkFunc "writeInt" (-1, -1) (Base NONE) [Base INT]) (
@@ -45,25 +47,25 @@ emptyEnv = Map.insert "writeInt" (mkFunc "writeInt" (-1, -1) (Base NONE) [Base I
     Map.insert "readString" (mkFunc "readString" (-1, -1) (Base STRING) []) Map.empty
     )))))))
 
-mkVar :: String -> (Int, Int) -> Type -> EnvEntity
-mkVar varName varPos varType = Variable varName varPos varType
+mkVar :: String -> (Int, Int) -> Type -> Address -> EnvEntity
+mkVar varName varPos varType addr = Variable varName varPos varType addr
 
-mkArray :: String -> (Int, Int) -> Type -> [Int] -> EnvEntity
-mkArray varName varPos varType arrLength = Array varName varPos varType arrLength
+mkArray :: String -> (Int, Int) -> Type -> [Int] -> Address -> EnvEntity
+mkArray varName varPos varType arrLength addr = Array varName varPos varType arrLength addr
 
 mkFunc :: String -> (Int, Int) -> Type -> [Type] -> EnvEntity
-mkFunc funcName funcPos funcType funcParams = Function funcName funcPos funcType funcParams
+mkFunc funcName funcPos funcType funcParams = Env.Function funcName funcPos funcType funcParams
 
 -- inserts only if not already in the environment
-insertVar :: String -> (Int, Int) -> Type -> EnvT -> EnvT
-insertVar varName varPos varType env = if containsEntry varName env
+insertVar :: String -> (Int, Int) -> Type -> Address -> EnvT -> EnvT
+insertVar varName varPos varType addr env= if containsEntry varName env
     then env
-    else Map.insert varName (mkVar varName varPos varType) env 
+    else Map.insert varName (mkVar varName varPos varType addr) env 
 
-insertArray :: String -> (Int, Int) -> Type -> [Int] -> EnvT -> EnvT
-insertArray varName varPos varType arrLength env = if containsEntry varName env
+insertArray :: String -> (Int, Int) -> Type -> [Int] -> Address -> EnvT -> EnvT
+insertArray varName varPos varType arrLength addr env = if containsEntry varName env
     then env
-    else Map.insert varName (mkArray varName varPos varType arrLength) env
+    else Map.insert varName (mkArray varName varPos varType arrLength addr) env
 
 insertFunc :: String -> (Int, Int) -> Type -> [Type] -> EnvT -> EnvT
 insertFunc funcName funcPos funcType funcParams env = if containsEntry funcName env
@@ -129,3 +131,8 @@ getFuncParams :: String -> EnvT -> [Type]
 getFuncParams funcName env = case Map.lookup funcName env of
     Just entry -> params entry
     Nothing     -> [Base (ERROR ("Function '" ++ funcName ++ "' not declared"))]
+
+getAddr :: String -> EnvT -> Address
+getAddr varName env = case Map.lookup varName env of
+    Just entry -> addr entry
+    Nothing     -> error ("Variable '" ++ varName ++ "' not declared")

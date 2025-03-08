@@ -5,20 +5,12 @@
 module Main where
 
 import Prelude
-  ( ($), (.)
-  , Either(..)
-  , Int, (>)
-  , String, (++), concat, unlines
-  , Show, show
-  , IO, (>>), (>>=), mapM_, putStrLn
-  , FilePath
-  , getContents, readFile
-  )
 import System.Environment ( getArgs )
 import System.Exit        ( exitFailure )
 import Control.Monad      ( when )
+import Control.Monad.State ( evalStateT )
 
---import TAC
+import TAC
 import AbsPhynot   
 import LexPhynot 
 import ParPhynot
@@ -45,12 +37,11 @@ run v p s =
       mapM_ (putStrV v . showPosToken . mkPosToken) ts
       putStrLn err
       exitFailure
-    --Right (Result prog errs tac) -> do
-    Right (Result prog errs) -> do
+    Right (Result prog errs tac) -> do
       putStrLn "\nParse Successful!"
       showTree v prog
       showErrors v errs
-      --showTAC v tac
+      showTAC v tac
   where
   ts = myLexer s
   showPosToken ((l,c),t) = concat [ show l, ":", show c, "\t", show t ]
@@ -64,10 +55,10 @@ showErrors :: (Show a, Print a) => Int -> a -> IO ()
 showErrors v tree = do
   putStrV v $ "\n[Errors]\n\n" ++ show tree
 
---showTAC :: Int -> [TACInstruction] -> IO ()
---showTAC v tac = do
-  --putStrV v $ "\n[TAC]\n\n"
-  --mapM_ (putStrV v . show) tac
+showTAC :: Int -> [TACInstruction] -> IO ()
+showTAC v tac = do
+  putStrV v $ "\n[TAC]\n\n"
+  mapM_ (putStrV v . show) tac
 
 usage :: IO ()
 usage = do

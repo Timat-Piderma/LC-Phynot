@@ -9,6 +9,7 @@ module ParPhynot where
 
 import Prelude
 
+import qualified TAC
 import qualified Env as E
 import qualified TypeSystem as TS
 import qualified ErrorsBuilder as Err
@@ -107,6 +108,11 @@ import LexPhynot
 %attribute funcName { String }
 %attribute paramTypes { [TS.Type] }
 
+%attribute addr { TAC.Address }
+%attribute code { [TAC.TACInstruction] }
+
+%attribute state { Int }
+%attribute modifiedState { Int }
 %%
 
 ------------------
@@ -212,10 +218,12 @@ BasicType: 'int'
 -- Program Start --
 -------------------
 
-Program : ListStm 
+Program : ListStm
 { 
-  $$.res = Result (Abs.ProgramStart $1.attr) $1.err;
+  $$.res =  Result (Abs.ProgramStart $1.attr) $1.err $1.code;
+  
   $1.env = E.emptyEnv;
+  $1.state = 1;
 }
 
 ListStm : Stm ';' 
@@ -223,6 +231,10 @@ ListStm : Stm ';'
   $$.attr = (:[]) $1.attr;
   $1.env = $$.env;
   $$.err = $1.err;
+  
+  $$.code = $1.code;
+
+  $1.state = $$.state;
 } 
 | Stm ';' ListStm 
 { 
@@ -230,6 +242,11 @@ ListStm : Stm ';'
   $1.env = $$.env;
   $3.env = $1.modifiedEnv;
   $$.err = $1.err ++ $3.err;
+
+  $$.code = $1.code ++ $3.code;
+
+  $1.state = $$.state;
+  $3.state = $1.modifiedState;
 }
 
 ------------------
@@ -239,7 +256,7 @@ ListStm : Stm ';'
 Stm: BasicType Ident 
 { 
   $$.attr = Abs.VarDeclaration $1.attr $2.attr;
-  $$.modifiedEnv = E.insertVar $2.ident (posLineCol $$.pos) $$.btype $$.env;
+  $$.modifiedEnv = E.insertVar $2.ident (posLineCol $$.pos) $$.btype $$.addr $$.env;
   $$.err = Err.mkDeclErrs $$.env $2.ident (posLineCol $$.pos); 
   $$.ident = $2.ident;
   $$.pos = $2.pos;
@@ -248,17 +265,23 @@ Stm: BasicType Ident
   | BasicType Ident '=' RExp 
 { 
   $$.attr = Abs.VarDeclarationInit $1.attr $2.attr $4.attr;
-  $$.modifiedEnv = E.insertVar $2.ident (posLineCol $$.pos) $$.btype $$.env;
+  $$.modifiedEnv = E.insertVar $2.ident (posLineCol $$.pos) $$.btype $$.addr $$.env;
   $$.err = Err.mkDeclInitErrs $$.btype $4.btype $$.env $2.ident (posLineCol $$.pos) ++ $4.err; 
   $$.ident = $2.ident;
   $$.pos = $2.pos;
   $$.btype = $1.btype;
   $4.env = $$.env; 
+
+  $$.addr = (TAC.generateAddr $1.btype ($2.ident ++ "_" ++ show (fst (posLineCol $2.pos))));
+  $$.code = $4.code ++ [TAC.NullaryOperation $$.addr $4.addr];
+
+  $$.modifiedState = $4.modifiedState;
+  $4.state = $$.state;
 }
   | BasicType Ident ListDim 
 {  
   $$.attr = Abs.ArrayDeclaration $1.attr $2.attr $3.attr;
-  $$.modifiedEnv = E.insertArray $2.ident (posLineCol $$.pos) $$.btype $3.arraydim $$.env;
+  $$.modifiedEnv = E.insertArray $2.ident (posLineCol $$.pos) $$.btype $3.arraydim $$.addr $$.env;
   $$.ident = $2.ident;
   $$.pos = $2.pos;
 
@@ -271,7 +294,7 @@ Stm: BasicType Ident
   | BasicType Ident ListDim '=' RExp 
 { 
   $$.attr = Abs.ArrayDeclarationInit $1.attr $2.attr $3.attr $5.attr; 
-  $$.modifiedEnv = E.insertArray $2.ident (posLineCol $$.pos) $$.btype $3.arraydim $$.env;
+  $$.modifiedEnv = E.insertArray $2.ident (posLineCol $$.pos) $$.btype $3.arraydim $$.addr $$.env;
   $$.ident = $2.ident;
   $$.pos = $2.pos;
 
@@ -289,7 +312,7 @@ Stm: BasicType Ident
   | BasicType '*' Ident 
 {  
   $$.attr = Abs.PointerDeclaration $1.attr $3.attr;
-  $$.modifiedEnv = E.insertVar $3.ident (posLineCol $$.pos) $$.btype $$.env;
+  $$.modifiedEnv = E.insertVar $3.ident (posLineCol $$.pos) $$.btype $$.addr $$.env;
   $$.err = Err.mkDeclErrs $$.env $3.ident (posLineCol $$.pos); 
   $$.ident = $3.ident;
   $$.pos = $3.pos;
@@ -298,7 +321,7 @@ Stm: BasicType Ident
   | BasicType '*' Ident '=' RExp 
 {  
   $$.attr = Abs.PointerDeclarationInit $1.attr $3.attr $5.attr;
-  $$.modifiedEnv = E.insertVar $3.ident (posLineCol $$.pos) $$.btype $$.env;
+  $$.modifiedEnv = E.insertVar $3.ident (posLineCol $$.pos) $$.btype $$.addr $$.env;
   $$.err = (Err.mkPointerDeclInitErrs $$.btype $5.btype $$.env $3.ident (posLineCol $$.pos)) ++ $5.err;
   $$.ident = $3.ident;
   $$.pos = $3.pos;
@@ -315,7 +338,7 @@ Stm: BasicType Ident
   $$.attr = Abs.FunctionPrototype $1.attr $2.attr $4.attr; 
 
   $$.modifiedEnv = E.insertPrototype $2.ident (posLineCol ($2.pos)) $1.btype $4.paramTypes $$.env;
-  $4.env = E.insertVar "return" (posLineCol ($2.pos)) ($$.btype) $$.env;
+  $4.env = E.insertVar "return" (posLineCol ($2.pos)) ($$.btype) $$.addr $$.env;
 
   $4.funcName = $2.ident;
 
@@ -355,7 +378,7 @@ Stm: BasicType Ident
 
   $$.modifiedEnv = E.insertFunc $3.ident (posLineCol $3.pos) $2.btype $5.paramTypes $$.env;
   $8.env = $5.modifiedEnv;
-  $5.env = E.insertFunc $3.ident (posLineCol $$.pos) $2.btype $5.paramTypes (E.insertVar "return" (posLineCol ($3.pos)) ($$.btype) $$.env);
+  $5.env = E.insertFunc $3.ident (posLineCol $$.pos) $2.btype $5.paramTypes (E.insertVar "return" (posLineCol ($3.pos)) ($$.btype) $$.addr $$.env);
 
   $5.funcName = $3.ident;
   $$.btype = $2.btype;
@@ -367,7 +390,7 @@ Stm: BasicType Ident
   $$.attr = Abs.FunctionNoParamDeclaration $2.attr $3.attr $6.attr; 
 
   $$.modifiedEnv = E.insertFunc $3.ident (posLineCol $3.pos) $2.btype [] $$.env;
-  $6.env = E.insertFunc $3.ident (posLineCol $$.pos) $2.btype [] (E.insertVar "return" (posLineCol ($3.pos)) ($$.btype) $$.env);
+  $6.env = E.insertFunc $3.ident (posLineCol $$.pos) $2.btype [] (E.insertVar "return" (posLineCol ($3.pos)) ($$.btype) $$.addr $$.env);
 
   $$.btype = $2.btype;
 
@@ -379,7 +402,7 @@ Stm: BasicType Ident
 
   $$.modifiedEnv = E.insertFunc $3.ident (posLineCol $3.pos) (TS.Base TS.NONE) $5.paramTypes $$.env;
   $8.env = $5.modifiedEnv;
-  $5.env = E.insertFunc $3.ident (posLineCol $$.pos) (TS.Base TS.NONE) $5.paramTypes (E.insertVar "return" (posLineCol ($3.pos)) ($$.btype) E.emptyEnv);
+  $5.env = E.insertFunc $3.ident (posLineCol $$.pos) (TS.Base TS.NONE) $5.paramTypes (E.insertVar "return" (posLineCol ($3.pos)) ($$.btype) $$.addr E.emptyEnv);
 
   $5.funcName = $3.ident;
   $$.btype = (TS.Base TS.NONE);
@@ -391,7 +414,7 @@ Stm: BasicType Ident
   $$.attr = Abs.ProcedureNoParamDeclaration $3.attr $6.attr; 
 
   $$.modifiedEnv = E.insertFunc $3.ident (posLineCol $3.pos) (TS.Base TS.NONE) [] $$.env;
-  $6.env = E.insertFunc $3.ident (posLineCol $$.pos) (TS.Base TS.NONE) [] (E.insertVar "return" (posLineCol ($3.pos)) ($$.btype) E.emptyEnv);
+  $6.env = E.insertFunc $3.ident (posLineCol $$.pos) (TS.Base TS.NONE) [] (E.insertVar "return" (posLineCol ($3.pos)) ($$.btype) $$.addr E.emptyEnv);
 
   $$.btype = (TS.Base TS.NONE);
 
@@ -477,7 +500,7 @@ Stm: BasicType Ident
 {   
     $$.attr = Abs.WhileDo $2.attr $4.attr; 
     $2.env = $$.env;
-    $4.env = E.insertVar "continue" (posLineCol (tokenPosn $1)) (TS.Base TS.BOOL) (E.insertVar("break") (posLineCol (tokenPosn $1)) (TS.Base TS.BOOL) $$.env);
+    $4.env = E.insertVar "continue" (posLineCol (tokenPosn $1)) (TS.Base TS.BOOL) $$.addr (E.insertVar("break") (posLineCol (tokenPosn $1)) (TS.Base TS.BOOL) $$.addr $$.env);
     $$.modifiedEnv = $$.env;
     $$.err = Err.mkWhileErrs $2.btype (posLineCol (tokenPosn $1)) ++ (Err.prettySequenceErr "while" $4.err) ++ $2.err; 
 }
@@ -544,7 +567,7 @@ Param : BasicType Ident
 {  
   $$.attr = Abs.Parameter $1.attr $2.attr; 
 
-  $$.modifiedEnv = E.insertVar $2.ident (posLineCol $$.pos) $1.btype $$.env;
+  $$.modifiedEnv = E.insertVar $2.ident (posLineCol $$.pos) $1.btype $$.addr $$.env;
   $$.pos = $2.pos;
 
   $$.err = Err.mkParamErrs $2.ident $$.funcName $$.env (posLineCol $$.pos);
@@ -745,6 +768,12 @@ RExp : '[' Arr ']'
   $$.ident = $1.ident;
 
   $$.pos = $1.pos;
+
+  $$.addr = $1.addr;
+  $$.code = $1.code;
+
+  $$.modifiedState = $1.modifiedState;
+  $1.state = $$.state;
 }
 
 RExp2
@@ -817,6 +846,12 @@ RExp2
 
   $$.ident = $1.ident;
   $$.pos = $1.pos;
+
+  $$.addr = $1.addr;
+  $$.code = $1.code;  
+  
+  $$.modifiedState = $1.modifiedState;
+  $1.state = $$.state;
 }
 
 RExp3 : RExp3 '+' RExp4 
@@ -830,6 +865,13 @@ RExp3 : RExp3 '+' RExp4
   $3.env = $$.env;
 
   $$.pos = (tokenPosn $2);
+
+  $$.addr = TAC.newtemp $1.modifiedState $$.btype;
+  $$.code = $1.code ++ $3.code ++ [(TAC.BinaryOperation $$.addr $1.addr $3.addr (TAC.Add))];
+
+  $$.modifiedState = 1 + $1.modifiedState;
+  $1.state = $$.state;
+  $3.state = $1.modifiedState;
 }
   | RExp3 '-' RExp4 
 {   
@@ -888,6 +930,12 @@ RExp3 : RExp3 '+' RExp4
 
   $$.ident = $1.ident;
   $$.pos = $1.pos;
+
+  $$.addr = $1.addr;
+  $$.code = $1.code;  
+  
+  $$.modifiedState = $1.modifiedState;
+  $1.state = $$.state;
 }
 
 RExp4 : RExp4 '^' RExp5 
@@ -911,6 +959,12 @@ RExp4 : RExp4 '^' RExp5
 
   $$.ident = $1.ident;
   $$.pos = $1.pos;
+
+  $$.addr = $1.addr;
+  $$.code = $1.code;  
+  
+  $$.modifiedState = $1.modifiedState;
+  $1.state = $$.state;
 }
 
 RExp5 : '&' RExp6 
@@ -956,6 +1010,12 @@ RExp5 : '&' RExp6
 
   $$.ident = $1.ident;
   $$.pos = $1.pos;
+
+  $$.addr = $1.addr;
+  $$.code = $1.code;  
+  
+  $$.modifiedState = $1.modifiedState;
+  $1.state = $$.state;
 }
 
 RExp6 : Integer 
@@ -966,6 +1026,11 @@ RExp6 : Integer
 
   $$.ident = $1.ident;
   $$.pos = $1.pos;
+
+  $$.addr = TAC.generateLit $$.btype (TAC.IntVal $1.attr);
+  $$.code = [];
+
+  $$.modifiedState = $$.state;
 }
   | Double 
 { 
@@ -1013,6 +1078,11 @@ RExp6 : Integer
             else (E.getVarType $1.ident $$.env);
 
   $$.pos = $1.pos;
+
+  $$.addr = E.getAddr $1.ident $$.env;
+  $$.code = [];
+
+  $$.modifiedState = $$.state;
 }
   | Ident ListDim 
 { 
@@ -1075,6 +1145,9 @@ ListRExp : {- empty -}
 
   $$.err = $1.err;
   $$.paramTypes = [$1.btype]; 
+
+  $$.addr = $1.addr;
+  $$.code = $1.code;
 }
   | RExp ',' ListRExp 
 {  
@@ -1084,6 +1157,9 @@ ListRExp : {- empty -}
 
   $$.err = $1.err ++ $3.err;
   $$.paramTypes = $1.btype : $3.paramTypes;
+
+  $$.addr = $1.addr;
+  $$.code = $1.code ++ $3.code;
 }
 
 RExp1 : RExp2 
@@ -1095,15 +1171,21 @@ RExp1 : RExp2
 
   $$.ident = $1.ident;
   $$.pos = $1.pos;
+
+  $$.addr = $1.addr;
+  $$.code = $1.code;  
+  
+  $$.modifiedState = $1.modifiedState;
+  $1.state = $$.state;
 }
 
 {
 
-data Result = Result Abs.Program [String] deriving (Show)
+data Result = Result Abs.Program [String] [TAC.TACInstruction] deriving (Show)
 
 type Err = Either String
 
-happyError :: [Token] -> Err a
+happyError :: [Token] -> Either String a
 happyError ts = Left $
   "syntax error at " ++ tokenPos ts ++
   case ts of
