@@ -1090,6 +1090,11 @@ RExp6 : Integer
 
   $$.ident = $1.ident;
   $$.pos = $1.pos;
+
+  $$.addr = TAC.generateLit $$.btype (TAC.DoubleVal $1.attr);
+  $$.code = [];
+
+  $$.modifiedState = $$.state;
 }
   | String 
 {     
@@ -1099,6 +1104,11 @@ RExp6 : Integer
 
   $$.ident = $1.ident;
   $$.pos = $1.pos;
+
+  $$.addr = TAC.generateLit $$.btype (TAC.StringVal $1.attr);
+  $$.code = [];
+
+  $$.modifiedState = $$.state;
 }
   | Char 
 {  
@@ -1108,6 +1118,11 @@ RExp6 : Integer
 
   $$.ident = $1.ident;
   $$.pos = $1.pos;
+
+  $$.addr = TAC.generateLit $$.btype (TAC.CharVal $1.attr);
+  $$.code = [];
+
+  $$.modifiedState = $$.state;
 }
   | Boolean 
 {  
@@ -1117,6 +1132,13 @@ RExp6 : Integer
 
   $$.ident = $1.ident;
   $$.pos = $1.pos;
+
+  $$.addr = if $1.attr == Abs.Boolean_True
+            then TAC.generateLit $$.btype (TAC.BoolVal True)
+            else TAC.generateLit $$.btype (TAC.BoolVal False);
+  $$.code = [];
+
+  $$.modifiedState = $$.state;
 }
   | Ident 
 { 
