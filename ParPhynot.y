@@ -508,7 +508,8 @@ Stm: BasicType Ident
   $$.code = $2.code ++ [TAC.TacInstruction (TAC.ConditionalJump $$.addr (TAC.newLabel $$.state))] ++ $4.code ++ [(TAC.LabelledInstruction (TAC.newLabel $$.state) TAC.NoOperation)];
 
   $$.modifiedState = $4.modifiedState;
-  $4.state = TAC.incrementLabel $$.state;
+  $2.state = TAC.incrementLabel $$.state;
+  $4.state = $2.modifiedState;
 }
   | 'if' RExp '{' ListStm '}' 'else' '{' ListStm '}' 
 {       
@@ -524,7 +525,8 @@ Stm: BasicType Ident
     ++ [(TAC.LabelledInstruction (TAC.newLabel $$.state) TAC.NoOperation)] ++ $8.code ++ [(TAC.LabelledInstruction (TAC.newLabel (TAC.incrementLabel $$.state)) TAC.NoOperation)];
 
   $$.modifiedState = $8.modifiedState;
-  $4.state = TAC.incrementLabel(TAC.incrementLabel $$.state);
+  $2.state = TAC.incrementLabel (TAC.incrementLabel $$.state);
+  $4.state = $2.modifiedState;
   $8.state = $4.modifiedState;
 }
   | 'while' RExp '{' ListStm '}' 
@@ -540,7 +542,8 @@ Stm: BasicType Ident
     ++ [(TAC.LabelledInstruction (TAC.newLabel (TAC.incrementLabel $$.state)) TAC.NoOperation)];
 
   $$.modifiedState = $4.modifiedState;
-  $4.state = TAC.incrementLabel (TAC.incrementLabel $$.state);
+  $2.state = TAC.incrementLabel (TAC.incrementLabel $$.state);
+  $4.state = $2.modifiedState;
 }
   | 'break' 
 {   
@@ -814,66 +817,72 @@ RExp : '[' Arr ']'
   $1.state = $$.state;
 }
 
-RExp2
-  : RExp2 '==' RExp3 
+RExp2 : RExp2 '==' RExp3 
 {  
-    $$.attr = Abs.Eq $1.attr $3.attr;
-    $$.err = (Err.prettyRelErr (Err.mkRelErrs $1.btype $3.btype (posLineCol $1.pos) (posLineCol $3.pos) (posLineCol $$.pos)) "==")  ++ $1.err ++ $3.err;
-    $$.btype = TS.Base TS.BOOL; 
-    $1.env = $$.env;
-    $3.env = $$.env;
+  $$.attr = Abs.Eq $1.attr $3.attr;
+  $$.err = (Err.prettyRelErr (Err.mkRelErrs $1.btype $3.btype (posLineCol $1.pos) (posLineCol $3.pos) (posLineCol $$.pos)) "==")  ++ $1.err ++ $3.err;
+  $$.btype = TS.Base TS.BOOL; 
+  $1.env = $$.env;
+  $3.env = $$.env;
 
-    $$.pos = (tokenPosn $2);
+  $$.pos = (tokenPosn $2);
+
+  $$.addr = TAC.newtemp $1.modifiedState $$.btype;
+  $$.code = $1.code ++ $3.code ++ [TAC.TacInstruction (TAC.BinaryOperation $$.addr $1.addr $3.addr (TAC.Eq))];
+
+  $$.modifiedState = TAC.incrementTemp $1.modifiedState;
+  $1.state = $$.state;
+  $3.state = $1.modifiedState;
 }
   | RExp2 '!=' RExp3 
 {    
-    $$.attr = Abs.Neq $1.attr $3.attr;
-    $$.err = (Err.prettyRelErr (Err.mkRelErrs $1.btype $3.btype (posLineCol $1.pos) (posLineCol $3.pos) (posLineCol $$.pos)) "!=")  ++ $1.err ++ $3.err;
-    $$.btype = TS.Base TS.BOOL; 
-    $1.env = $$.env;
-    $3.env = $$.env;
+  $$.attr = Abs.Neq $1.attr $3.attr;
+  $$.err = (Err.prettyRelErr (Err.mkRelErrs $1.btype $3.btype (posLineCol $1.pos) (posLineCol $3.pos) (posLineCol $$.pos)) "!=")  ++ $1.err ++ $3.err;
+  $$.btype = TS.Base TS.BOOL; 
+  $1.env = $$.env;
+  $3.env = $$.env;
 
-    $$.pos = (tokenPosn $2);
+  $$.pos = (tokenPosn $2);
 }
   | RExp2 '<' RExp3 
 {    
-    $$.attr = Abs.Lt $1.attr $3.attr;
-    $$.err = (Err.prettyRelErr (Err.mkRelErrs $1.btype $3.btype (posLineCol $1.pos) (posLineCol $3.pos) (posLineCol $$.pos)) "<")  ++ $1.err ++ $3.err;
-    $$.btype = TS.Base TS.BOOL; 
-    $1.env = $$.env;
-    $3.env = $$.env;
+  $$.attr = Abs.Lt $1.attr $3.attr;
+  $$.err = (Err.prettyRelErr (Err.mkRelErrs $1.btype $3.btype (posLineCol $1.pos) (posLineCol $3.pos) (posLineCol $$.pos)) "<")  ++ $1.err ++ $3.err;
+  $$.btype = TS.Base TS.BOOL; 
+  $1.env = $$.env;
+  $3.env = $$.env;
 
-    $$.pos = (tokenPosn $2);
+  $$.pos = (tokenPosn $2);
 }
   | RExp2 '>' RExp3 
 {     
-    $$.attr = Abs.Gt $1.attr $3.attr;
-    $$.err = (Err.prettyRelErr (Err.mkRelErrs $1.btype $3.btype (posLineCol $1.pos) (posLineCol $3.pos) (posLineCol $$.pos)) ">")  ++ $1.err ++ $3.err;
-    $$.btype = TS.Base TS.BOOL; 
-    $1.env = $$.env;
-    $3.env = $$.env;
+  $$.attr = Abs.Gt $1.attr $3.attr;
+  $$.err = (Err.prettyRelErr (Err.mkRelErrs $1.btype $3.btype (posLineCol $1.pos) (posLineCol $3.pos) (posLineCol $$.pos)) ">")  ++ $1.err ++ $3.err;
+  $$.btype = TS.Base TS.BOOL; 
+  $1.env = $$.env;
+  $3.env = $$.env;
 
-    $$.pos = (tokenPosn $2);
+  $$.pos = (tokenPosn $2);
 }
   | RExp2 '<=' RExp3 
 {    
-    $$.attr = Abs.Le $1.attr $3.attr;
-    $$.err = (Err.prettyRelErr (Err.mkRelErrs $1.btype $3.btype (posLineCol $1.pos) (posLineCol $3.pos) (posLineCol $$.pos)) "<=")  ++ $1.err ++ $3.err;
-    $$.btype = TS.Base TS.BOOL; 
-    $1.env = $$.env;
-    $3.env = $$.env;
+  $$.attr = Abs.Le $1.attr $3.attr;
+  $$.err = (Err.prettyRelErr (Err.mkRelErrs $1.btype $3.btype (posLineCol $1.pos) (posLineCol $3.pos) (posLineCol $$.pos)) "<=")  ++ $1.err ++ $3.err;
+  $$.btype = TS.Base TS.BOOL; 
+  $1.env = $$.env;
+  $3.env = $$.env;
 
-    $$.pos = (tokenPosn $2);
+  $$.pos = (tokenPosn $2);
 }
   | RExp2 '>=' RExp3 
 {      
-    $$.attr = Abs.Ge $1.attr $3.attr;
-    $$.err = (Err.prettyRelErr (Err.mkRelErrs $1.btype $3.btype (posLineCol $1.pos) (posLineCol $3.pos) (posLineCol $$.pos)) ">=")  ++ $1.err ++ $3.err;
-    $$.btype = TS.Base TS.BOOL; 
-    $1.env = $$.env;
-    $3.env = $$.env;
+  $$.attr = Abs.Ge $1.attr $3.attr;
+  $$.err = (Err.prettyRelErr (Err.mkRelErrs $1.btype $3.btype (posLineCol $1.pos) (posLineCol $3.pos) (posLineCol $$.pos)) ">=")  ++ $1.err ++ $3.err;
+  $$.btype = TS.Base TS.BOOL; 
+  $1.env = $$.env;
+  $3.env = $$.env;
 
-    $$.pos = (tokenPosn $2);
+  $$.pos = (tokenPosn $2);
 }
   | RExp3 
 { 
