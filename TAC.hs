@@ -25,6 +25,8 @@ data ProgVariable = ProgVariable String
 data Label = Label String
     deriving (Eq, Show)
 
+data TAC = TacInstruction TACInstruction | LabelledInstruction Label TACInstruction
+
 data TACInstruction = BinaryOperation Address Address Address BinaryOp     -- l = r1 bop r2
                     | UnaryOperation Address Address UnaryOp               -- l = uop r
                     | NullaryOperation Address Address                     -- l = r
@@ -34,6 +36,7 @@ data TACInstruction = BinaryOperation Address Address Address BinaryOp     -- l 
                     | IndexedCopyAssignment Address Address Address        -- l = id[r2]  ;  id[r1] = r2
                     | ReferenceAssignment Address Address                  -- l = &id  ;  l1 = *l2  ;  *l = r
                     | Function                                             -- param r ; pcall proc, n  ;  l = fcall fun, n  ;  return  ;  return r
+                    | NoOperation                                          -- nop
     deriving (Eq, Show)
 
 data BinaryOp = Add | Sub | Mul | Exp | Div | Mod
@@ -102,7 +105,10 @@ printAddr (TacLit (CharLit c) _) = show c
 printAddr (TacLit (StringLit s) _) = s
 printAddr (Temporary s _) = s
 
-printTAC :: [TACInstruction] -> String
+printTAC :: [TAC] -> String
 printTAC [] = ""
-printTAC ((BinaryOperation a1 a2 a3 op) : xs) = printAddr a1 ++ " = " ++ printAddr a2 ++ " " ++ printBinaryOp op ++ " " ++ printAddr a3 ++ "\n" ++ printTAC xs
-printTAC ((NullaryOperation a1 a2) : xs) = printAddr a1 ++ " = " ++ printAddr a2 ++ "\n" ++ printTAC xs
+printTAC (LabelledInstruction (Label l) i : xs) = l ++ ":" ++ printTAC (TacInstruction i : xs)
+printTAC (TacInstruction (BinaryOperation a1 a2 a3 op) : xs) = "\t" ++ printAddr a1 ++ " = " ++ printAddr a2 ++ " " ++ printBinaryOp op ++ " " ++ printAddr a3 ++ "\n" ++ printTAC xs
+printTAC (TacInstruction (NullaryOperation a1 a2) : xs) = "\t" ++ printAddr a1 ++ " = " ++ printAddr a2 ++ "\n" ++ printTAC xs
+printTAC (TacInstruction (ConditionalJump a1 (Label l)) : xs) = "\tif " ++ printAddr a1 ++ " goto " ++ l ++ "\n" ++ printTAC xs
+printTAC (TacInstruction (NoOperation) : xs) = "\t\n" ++ printTAC xs
