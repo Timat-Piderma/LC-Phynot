@@ -66,15 +66,24 @@ generateLit bt val = case (bt, val) of
     (TS.Base TS.STRING, StringVal s) -> TacLit (StringLit s) StringType
     _ -> error "Type and value do not match"
 
-type State = Int
+type State = (Int, Int)
+
+incrementTemp :: State -> State
+incrementTemp (k, l) = (k + 1, l)
+
+incrementLabel :: State -> State
+incrementLabel (k, l) = (k, l + 1)
 
 newtemp :: State -> TS.Type -> Address
-newtemp k t = case t of
+newtemp (k, l) t = case t of
     TS.Base TS.INT -> Temporary ("t" ++ show k) IntegerType
     TS.Base TS.FLOAT -> Temporary ("t" ++ show k) FloatType
     TS.Base TS.BOOL -> Temporary ("t" ++ show k) BooleanType
     TS.Base TS.CHAR -> Temporary ("t" ++ show k) CharType
     TS.Base TS.STRING -> Temporary ("t" ++ show k) StringType
+
+newLabel :: State -> Label
+newLabel (k, l) = Label ("L" ++ show l)
 
 printBinaryOp :: BinaryOp -> String
 printBinaryOp TAC.Add = "+"

@@ -111,8 +111,8 @@ import LexPhynot
 %attribute addr { TAC.Address }
 %attribute code { [TAC.TAC] }
 
-%attribute state { Int }
-%attribute modifiedState { Int }
+%attribute state { TAC.State }
+%attribute modifiedState { TAC.State }
 %%
 
 ------------------
@@ -223,7 +223,7 @@ Program : ListStm
   $$.res =  Result (Abs.ProgramStart $1.attr) $1.err $1.code;
   
   $1.env = E.emptyEnv;
-  $1.state = 1;
+  $1.state = (1, 1);
 }
 
 ListStm : Stm ';' 
@@ -505,9 +505,9 @@ Stm: BasicType Ident
   $$.err = Err.mkIfErrs $2.btype (posLineCol (tokenPosn $1)) ++ (Err.prettySequenceErr "if then" $4.err) ++ $2.err;
 
   $$.addr = $2.addr;
-  $$.code = $2.code ++ [TAC.TacInstruction (TAC.ConditionalJump $$.addr (TAC.Label "LL:"))] ++ $4.code ++ [(TAC.LabelledInstruction (TAC.Label "LL:") TAC.NoOperation)];
+  $$.code = $2.code ++ [TAC.TacInstruction (TAC.ConditionalJump $$.addr (TAC.newLabel $$.state))] ++ $4.code ++ [(TAC.LabelledInstruction (TAC.newLabel $$.state) TAC.NoOperation)];
 
-  $$.modifiedState = $4.modifiedState;
+  $$.modifiedState = TAC.incrementLabel $4.modifiedState;
   $4.state = $$.state;
 }
   | 'if' RExp '{' ListStm '}' 'else' '{' ListStm '}' 
@@ -892,7 +892,7 @@ RExp3 : RExp3 '+' RExp4
   $$.addr = TAC.newtemp $1.modifiedState $$.btype;
   $$.code = $1.code ++ $3.code ++ [TAC.TacInstruction (TAC.BinaryOperation $$.addr $1.addr $3.addr (TAC.Add))];
 
-  $$.modifiedState = 1 + $1.modifiedState;
+  $$.modifiedState = TAC.incrementTemp $1.modifiedState;
   $1.state = $$.state;
   $3.state = $1.modifiedState;
 }
@@ -911,7 +911,7 @@ RExp3 : RExp3 '+' RExp4
   $$.addr = TAC.newtemp $1.modifiedState $$.btype;
   $$.code = $1.code ++ $3.code ++ [TAC.TacInstruction (TAC.BinaryOperation $$.addr $1.addr $3.addr (TAC.Sub))];
 
-  $$.modifiedState = 1 + $1.modifiedState;
+  $$.modifiedState = TAC.incrementTemp $1.modifiedState;
   $1.state = $$.state;
   $3.state = $1.modifiedState;
 }
@@ -930,7 +930,7 @@ RExp3 : RExp3 '+' RExp4
   $$.addr = TAC.newtemp $1.modifiedState $$.btype;
   $$.code = $1.code ++ $3.code ++ [TAC.TacInstruction (TAC.BinaryOperation $$.addr $1.addr $3.addr (TAC.Mul))];
 
-  $$.modifiedState = 1 + $1.modifiedState;
+  $$.modifiedState = TAC.incrementTemp $1.modifiedState;
   $1.state = $$.state;
   $3.state = $1.modifiedState;
 }
@@ -949,7 +949,7 @@ RExp3 : RExp3 '+' RExp4
   $$.addr = TAC.newtemp $1.modifiedState $$.btype;
   $$.code = $1.code ++ $3.code ++ [TAC.TacInstruction (TAC.BinaryOperation $$.addr $1.addr $3.addr (TAC.Div))];
 
-  $$.modifiedState = 1 + $1.modifiedState;
+  $$.modifiedState = TAC.incrementTemp $1.modifiedState;
   $1.state = $$.state;
   $3.state = $1.modifiedState;
 }
@@ -968,7 +968,7 @@ RExp3 : RExp3 '+' RExp4
   $$.addr = TAC.newtemp $1.modifiedState $$.btype;
   $$.code = $1.code ++ $3.code ++ [TAC.TacInstruction (TAC.BinaryOperation $$.addr $1.addr $3.addr (TAC.Mod))];
 
-  $$.modifiedState = 1 + $1.modifiedState;
+  $$.modifiedState = TAC.incrementTemp $1.modifiedState;
   $1.state = $$.state;
   $3.state = $1.modifiedState;
 }
@@ -1004,7 +1004,7 @@ RExp4 : RExp4 '^' RExp5
   $$.addr = TAC.newtemp $1.modifiedState $$.btype;
   $$.code = $1.code ++ $3.code ++ [TAC.TacInstruction (TAC.BinaryOperation $$.addr $1.addr $3.addr (TAC.Exp))];
 
-  $$.modifiedState = 1 + $1.modifiedState;
+  $$.modifiedState = TAC.incrementTemp $1.modifiedState;
   $1.state = $$.state;
   $3.state = $1.modifiedState;
 } 
