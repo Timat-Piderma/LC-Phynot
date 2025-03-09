@@ -264,7 +264,7 @@ Stm: BasicType Ident
   $$.pos = $2.pos;
   $$.btype = $1.btype;
 
-  $$.addr = (TAC.generateAddr $1.btype ($2.ident ++ "_" ++ show (fst (posLineCol $2.pos))));
+  $$.addr = (TAC.generateAddr $1.btype ($2.ident ++ "@" ++ show (fst (posLineCol $2.pos))));
   $$.code = [];
 
   $$.modifiedState = $$.state;
@@ -279,7 +279,7 @@ Stm: BasicType Ident
   $$.btype = $1.btype;
   $4.env = $$.env; 
 
-  $$.addr = (TAC.generateAddr $1.btype ($2.ident ++ "_" ++ show (fst (posLineCol $2.pos))));
+  $$.addr = (TAC.generateAddr $1.btype ($2.ident ++ "@" ++ show (fst (posLineCol $2.pos))));
   $$.code = $4.code ++ [TAC.TacInstruction (TAC.NullaryOperation $$.addr $4.addr)];
 
   $$.modifiedState = $4.modifiedState;
@@ -298,7 +298,7 @@ Stm: BasicType Ident
 
   $$.err = Err.mkArrayDeclErrs $$.env $2.ident (posLineCol $$.pos) ++ $3.err;
 
-  $$.addr = (TAC.generateAddr $$.btype ($2.ident ++ "_" ++ show (fst (posLineCol $2.pos))));
+  $$.addr = (TAC.generateAddr $$.btype ($2.ident ++ "@" ++ show (fst (posLineCol $2.pos))));
   $$.code = [];
 
   $$.modifiedState = $$.state;
