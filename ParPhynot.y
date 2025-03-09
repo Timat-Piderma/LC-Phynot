@@ -507,8 +507,8 @@ Stm: BasicType Ident
   $$.addr = $2.addr;
   $$.code = $2.code ++ [TAC.TacInstruction (TAC.ConditionalJump $$.addr (TAC.newLabel $$.state))] ++ $4.code ++ [(TAC.LabelledInstruction (TAC.newLabel $$.state) TAC.NoOperation)];
 
-  $$.modifiedState = TAC.incrementLabel $4.modifiedState;
-  $4.state = $$.state;
+  $$.modifiedState = $4.modifiedState;
+  $4.state = TAC.incrementLabel $$.state;
 }
   | 'if' RExp '{' ListStm '}' 'else' '{' ListStm '}' 
 {       
@@ -520,11 +520,11 @@ Stm: BasicType Ident
   $$.err = Err.mkIfErrs $2.btype (posLineCol (tokenPosn $1)) ++ (Err.prettySequenceErr "if then" $4.err) ++ (Err.prettySequenceErr "else" $8.err) ++ $2.err;
 
   $$.addr = $2.addr;
-  $$.code = $2.code ++ [TAC.TacInstruction (TAC.ConditionalJump $$.addr (TAC.newLabel $$.state))] ++ $4.code ++ [(TAC.TacInstruction (TAC.UnconditionalJump (TAC.newLabel $$.modifiedState)))]
-    ++ [(TAC.LabelledInstruction (TAC.newLabel $$.state) TAC.NoOperation)] ++ $8.code ++ [(TAC.LabelledInstruction (TAC.newLabel $$.modifiedState) TAC.NoOperation)];
+  $$.code = $2.code ++ [TAC.TacInstruction (TAC.ConditionalJump $$.addr (TAC.newLabel $$.state))] ++ $4.code ++ [(TAC.TacInstruction (TAC.UnconditionalJump (TAC.newLabel (TAC.incrementLabel $$.state))))]
+    ++ [(TAC.LabelledInstruction (TAC.newLabel $$.state) TAC.NoOperation)] ++ $8.code ++ [(TAC.LabelledInstruction (TAC.newLabel (TAC.incrementLabel $$.state)) TAC.NoOperation)];
 
-  $$.modifiedState = TAC.incrementLabel $8.modifiedState;
-  $4.state = $$.state;
+  $$.modifiedState = $8.modifiedState;
+  $4.state = TAC.incrementLabel(TAC.incrementLabel $$.state);
   $8.state = $4.modifiedState;
 }
   | 'while' RExp '{' ListStm '}' 
@@ -534,6 +534,13 @@ Stm: BasicType Ident
   $4.env = E.insertVar "continue" (posLineCol (tokenPosn $1)) (TS.Base TS.BOOL) $$.addr (E.insertVar("break") (posLineCol (tokenPosn $1)) (TS.Base TS.BOOL) $$.addr $$.env);
   $$.modifiedEnv = $$.env;
   $$.err = Err.mkWhileErrs $2.btype (posLineCol (tokenPosn $1)) ++ (Err.prettySequenceErr "while" $4.err) ++ $2.err; 
+
+  $$.addr = $2.addr;
+  $$.code = [(TAC.LabelledInstruction (TAC.newLabel $$.state) TAC.NoOperation)] ++ $2.code ++ [TAC.TacInstruction (TAC.ConditionalJump $$.addr (TAC.newLabel (TAC.incrementLabel $$.state)))] ++ $4.code ++ [(TAC.TacInstruction (TAC.UnconditionalJump (TAC.newLabel $$.state)))]
+    ++ [(TAC.LabelledInstruction (TAC.newLabel (TAC.incrementLabel $$.state)) TAC.NoOperation)];
+
+  $$.modifiedState = $4.modifiedState;
+  $4.state = TAC.incrementLabel (TAC.incrementLabel $$.state);
 }
   | 'break' 
 {   
