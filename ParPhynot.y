@@ -396,6 +396,13 @@ Stm: BasicType Ident
   $$.btype = $2.btype;
 
   $$.err = $5.err ++ (Err.mkFuncDeclErrs $2.btype $$.env $3.ident $5.paramTypes (posLineCol ($3.pos))) ++ (Err.prettyFuncErr $8.err $3.ident);
+
+  $$.addr = (TAC.generateAddr $2.btype ($3.ident ++ "@" ++ show (fst (posLineCol $3.pos))));
+  $$.code = [TAC.generateFuncDef $$.addr (E.getAllEntitiesInfo $5.modifiedEnv $3.ident)] ++ $8.code ++ [TAC.TacInstruction (TAC.EndFunction)];
+
+  $$.modifiedState = $8.modifiedState;
+  $8.state = $$.state;
+
 }
   | 'def' BasicType Ident '()' '{' ListStm '}' 
 {  

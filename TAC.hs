@@ -34,7 +34,9 @@ data TACInstruction = BinaryOperation Address Address Address BinaryOp     -- l 
                     | ConditionalJump Address Label                        -- if r goto label
                     | IndexedCopyAssignment Address Address Address        -- l = id[r2]  ;  id[r1] = r2
                     | ReferenceAssignment Address Address                  -- l = &id  ;  l1 = *l2  ;  *l = r
-                    | Function                                             -- param r ; pcall proc, n  ;  l = fcall fun, n  ;  return  ;  return r
+                    | FunctionDef [Address]                                -- param r ; pcall proc, n  ;  l = fcall fun, n  ;  return  ;  return r
+                    | EndFunction
+                    | FunctionParam
                     | NoOperation                                          -- nop
     deriving (Eq, Show)
 
@@ -61,6 +63,9 @@ generateLit bt val = case (bt, val) of
     (TS.Base TS.CHAR, CharVal c) -> TacLit (CharLit c) CharType
     (TS.Base TS.STRING, StringVal s) -> TacLit (StringLit s) StringType
     _ -> error "Type and value do not match"
+
+generateFuncDef :: Address -> [(String, (Int, Int), TS.Type)] -> TAC
+generateFuncDef f d = TacInstruction (FunctionDef (f : map (\(s, (x, y), t) -> generateAddr t (s++"@"++show x)) d))
 
 type State = (Int, Int)
 
@@ -115,4 +120,6 @@ printTAC (TacInstruction (BinaryOperation a1 a2 a3 op) : xs) = "\t" ++ printAddr
 printTAC (TacInstruction (NullaryOperation a1 a2) : xs) = "\t" ++ printAddr a1 ++ " = " ++ printAddr a2 ++ "\n" ++ printTAC xs
 printTAC (TacInstruction (UnconditionalJump (Label l)) : xs) = "\tgoto " ++ l ++ "\n" ++ printTAC xs
 printTAC (TacInstruction (ConditionalJump a1 (Label l)) : xs) = "\tifFalse " ++ printAddr a1 ++ " goto " ++ l ++ "\n" ++ printTAC xs
+printTAC (TacInstruction (FunctionDef (f:addrs)) : xs) = "def " ++ printAddr f ++ " (" ++ concatMap printAddr addrs  ++ ") {\n"++ printTAC xs
+printTAC (TacInstruction EndFunction : xs) = "}\n" ++ printTAC xs
 printTAC (TacInstruction NoOperation : xs) = "\t\n" ++ printTAC xs
