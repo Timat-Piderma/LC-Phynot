@@ -55,7 +55,7 @@ showErrors :: (Show a, Print a) => Int -> a -> IO ()
 showErrors v tree = do
   putStrV v $ "\n[Errors]\n\n" ++ show tree
 
-showTAC :: Int -> [TACInstruction] -> IO ()
+showTAC :: Int -> [TAC] -> IO ()
 showTAC v tac = do
   putStrV v $ "\n[TAC]\n\n" ++ printTAC tac
 
