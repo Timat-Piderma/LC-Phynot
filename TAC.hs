@@ -71,3 +71,16 @@ newtemp k t = case t of
     TS.Base TS.BOOL -> Temporary ("t" ++ show k) BooleanType
     TS.Base TS.CHAR -> Temporary ("t" ++ show k) CharType
     TS.Base TS.STRING -> Temporary ("t" ++ show k) StringType
+
+printAddr :: Address -> String
+printAddr (ProgVar (ProgVariable s) _) = s
+printAddr (TacLit (IntLit i) _) = show i
+printAddr (TacLit (FloatLit d) _) = show d
+printAddr (TacLit (BoolLit b) _) = show b
+printAddr (TacLit (CharLit c) _) = show c
+printAddr (TacLit (StringLit s) _) = s
+printAddr (Temporary s _) = s
+
+printTAC :: [TACInstruction] -> String
+printTAC ((BinaryOperation a1 a2 a3 op) : xs) = printAddr a1 ++ " = " ++ printAddr a2 ++ " + " ++ printAddr a3 ++ "\n" ++ printTAC xs
+printTAC ((NullaryOperation a1 a2) : xs) = printAddr a1 ++ " = " ++ printAddr a2 ++ "\n" ++ printTAC xs

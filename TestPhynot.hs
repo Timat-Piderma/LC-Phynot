@@ -57,8 +57,7 @@ showErrors v tree = do
 
 showTAC :: Int -> [TACInstruction] -> IO ()
 showTAC v tac = do
-  putStrV v $ "\n[TAC]\n\n"
-  mapM_ (putStrV v . show) tac
+  putStrV v $ "\n[TAC]\n\n" ++ printTAC tac
 
 usage :: IO ()
 usage = do
