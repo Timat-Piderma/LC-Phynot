@@ -47,6 +47,13 @@ emptyEnv = Map.insert "writeInt" (mkFunc "writeInt" (-1, -1) (Base NONE) [Base I
     Map.insert "readString" (mkFunc "readString" (-1, -1) (Base STRING) []) Map.empty
     )))))))
 
+getAllEntitiesInfo :: EnvT -> String -> [(String, (Int, Int), Type)]
+getAllEntitiesInfo env funcName = [(Env.id e, pos e, btype e) | e <- Map.elems env, 
+    Env.id e /= "writeInt" && Env.id e /= "writeFloat" && Env.id e /= "writeChar" && 
+    Env.id e /= "writeString" && Env.id e /= "readInt" && Env.id e /= "readFloat" && 
+    Env.id e /= "readChar" && Env.id e /= "readString" && Env.id e /= "return" &&
+    Env.id e /= funcName]
+
 mkVar :: String -> (Int, Int) -> Type -> Address -> EnvEntity
 mkVar varName varPos varType addr = Variable varName varPos varType addr
 
