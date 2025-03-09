@@ -518,6 +518,14 @@ Stm: BasicType Ident
   $8.env = $$.env;
   $$.modifiedEnv = $$.env;
   $$.err = Err.mkIfErrs $2.btype (posLineCol (tokenPosn $1)) ++ (Err.prettySequenceErr "if then" $4.err) ++ (Err.prettySequenceErr "else" $8.err) ++ $2.err;
+
+  $$.addr = $2.addr;
+  $$.code = $2.code ++ [TAC.TacInstruction (TAC.ConditionalJump $$.addr (TAC.newLabel $$.state))] ++ $4.code ++ [(TAC.TacInstruction (TAC.UnconditionalJump (TAC.newLabel $$.modifiedState)))]
+    ++ [(TAC.LabelledInstruction (TAC.newLabel $$.state) TAC.NoOperation)] ++ $8.code ++ [(TAC.LabelledInstruction (TAC.newLabel $$.modifiedState) TAC.NoOperation)];
+
+  $$.modifiedState = TAC.incrementLabel $8.modifiedState;
+  $4.state = $$.state;
+  $8.state = $4.modifiedState;
 }
   | 'while' RExp '{' ListStm '}' 
 {   

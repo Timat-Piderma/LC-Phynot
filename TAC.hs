@@ -119,5 +119,6 @@ printTAC [] = ""
 printTAC (LabelledInstruction (Label l) i : xs) = l ++ ":" ++ printTAC (TacInstruction i : xs)
 printTAC (TacInstruction (BinaryOperation a1 a2 a3 op) : xs) = "\t" ++ printAddr a1 ++ " = " ++ printAddr a2 ++ " " ++ printBinaryOp op ++ " " ++ printAddr a3 ++ "\n" ++ printTAC xs
 printTAC (TacInstruction (NullaryOperation a1 a2) : xs) = "\t" ++ printAddr a1 ++ " = " ++ printAddr a2 ++ "\n" ++ printTAC xs
+printTAC (TacInstruction (UnconditionalJump (Label l)) : xs) = "\tgoto " ++ l ++ "\n" ++ printTAC xs
 printTAC (TacInstruction (ConditionalJump a1 (Label l)) : xs) = "\tif " ++ printAddr a1 ++ " goto " ++ l ++ "\n" ++ printTAC xs
-printTAC (TacInstruction (NoOperation) : xs) = "\t\n" ++ printTAC xs
+printTAC (TacInstruction NoOperation : xs) = "\t\n" ++ printTAC xs
