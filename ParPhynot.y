@@ -109,7 +109,7 @@ import LexPhynot
 %attribute paramTypes { [TS.Type] }
 
 %attribute addr { TAC.Address }
-%attribute code { [TAC.TACInstruction] }
+%attribute code { [TAC.TAC] }
 
 %attribute state { Int }
 %attribute modifiedState { Int }
@@ -235,6 +235,7 @@ ListStm : Stm ';'
   $$.code = $1.code;
 
   $1.state = $$.state;
+  $$.modifiedState = $1.modifiedState;
 } 
 | Stm ';' ListStm 
 { 
@@ -247,6 +248,7 @@ ListStm : Stm ';'
 
   $1.state = $$.state;
   $3.state = $1.modifiedState;
+  $$.modifiedState = $3.modifiedState;
 }
 
 ------------------
@@ -278,7 +280,7 @@ Stm: BasicType Ident
   $4.env = $$.env; 
 
   $$.addr = (TAC.generateAddr $1.btype ($2.ident ++ "_" ++ show (fst (posLineCol $2.pos))));
-  $$.code = $4.code ++ [TAC.NullaryOperation $$.addr $4.addr];
+  $$.code = $4.code ++ [TAC.TacInstruction (TAC.NullaryOperation $$.addr $4.addr)];
 
   $$.modifiedState = $4.modifiedState;
   $4.state = $$.state;
@@ -484,7 +486,7 @@ Stm: BasicType Ident
   $1.env = $$.env;
 
   $$.addr = E.getAddr $1.ident $$.env;
-  $$.code = $3.code ++ [(TAC.NullaryOperation $$.addr $3.addr)];
+  $$.code = $3.code ++ [TAC.TacInstruction (TAC.NullaryOperation $$.addr $3.addr)];
 
   $$.modifiedState = $3.modifiedState;
   $3.state = $$.state;
@@ -496,28 +498,34 @@ Stm: BasicType Ident
 
   | 'if' RExp '{' ListStm '}' 
 {   
-    $$.attr = Abs.IfThen $2.attr $4.attr;
-    $2.env = $$.env;
-    $4.env = $$.env;
-    $$.modifiedEnv = $$.env;
-    $$.err = Err.mkIfErrs $2.btype (posLineCol (tokenPosn $1)) ++ (Err.prettySequenceErr "if then" $4.err) ++ $2.err;
+  $$.attr = Abs.IfThen $2.attr $4.attr;
+  $2.env = $$.env;
+  $4.env = $$.env;
+  $$.modifiedEnv = $$.env;
+  $$.err = Err.mkIfErrs $2.btype (posLineCol (tokenPosn $1)) ++ (Err.prettySequenceErr "if then" $4.err) ++ $2.err;
+
+  $$.addr = $2.addr;
+  $$.code = $2.code ++ [TAC.TacInstruction (TAC.ConditionalJump $$.addr (TAC.Label "LL:"))] ++ $4.code ++ [(TAC.LabelledInstruction (TAC.Label "LL:") TAC.NoOperation)];
+
+  $$.modifiedState = $4.modifiedState;
+  $4.state = $$.state;
 }
   | 'if' RExp '{' ListStm '}' 'else' '{' ListStm '}' 
 {       
-    $$.attr = Abs.IfThenElse $2.attr $4.attr $8.attr;
-    $2.env = $$.env;
-    $4.env = $$.env;
-    $8.env = $$.env;
-    $$.modifiedEnv = $$.env;
-    $$.err = Err.mkIfErrs $2.btype (posLineCol (tokenPosn $1)) ++ (Err.prettySequenceErr "if then" $4.err) ++ (Err.prettySequenceErr "else" $8.err) ++ $2.err;
+  $$.attr = Abs.IfThenElse $2.attr $4.attr $8.attr;
+  $2.env = $$.env;
+  $4.env = $$.env;
+  $8.env = $$.env;
+  $$.modifiedEnv = $$.env;
+  $$.err = Err.mkIfErrs $2.btype (posLineCol (tokenPosn $1)) ++ (Err.prettySequenceErr "if then" $4.err) ++ (Err.prettySequenceErr "else" $8.err) ++ $2.err;
 }
   | 'while' RExp '{' ListStm '}' 
 {   
-    $$.attr = Abs.WhileDo $2.attr $4.attr; 
-    $2.env = $$.env;
-    $4.env = E.insertVar "continue" (posLineCol (tokenPosn $1)) (TS.Base TS.BOOL) $$.addr (E.insertVar("break") (posLineCol (tokenPosn $1)) (TS.Base TS.BOOL) $$.addr $$.env);
-    $$.modifiedEnv = $$.env;
-    $$.err = Err.mkWhileErrs $2.btype (posLineCol (tokenPosn $1)) ++ (Err.prettySequenceErr "while" $4.err) ++ $2.err; 
+  $$.attr = Abs.WhileDo $2.attr $4.attr; 
+  $2.env = $$.env;
+  $4.env = E.insertVar "continue" (posLineCol (tokenPosn $1)) (TS.Base TS.BOOL) $$.addr (E.insertVar("break") (posLineCol (tokenPosn $1)) (TS.Base TS.BOOL) $$.addr $$.env);
+  $$.modifiedEnv = $$.env;
+  $$.err = Err.mkWhileErrs $2.btype (posLineCol (tokenPosn $1)) ++ (Err.prettySequenceErr "while" $4.err) ++ $2.err; 
 }
   | 'break' 
 {   
@@ -882,7 +890,7 @@ RExp3 : RExp3 '+' RExp4
   $$.pos = (tokenPosn $2);
 
   $$.addr = TAC.newtemp $1.modifiedState $$.btype;
-  $$.code = $1.code ++ $3.code ++ [(TAC.BinaryOperation $$.addr $1.addr $3.addr (TAC.Add))];
+  $$.code = $1.code ++ $3.code ++ [TAC.TacInstruction (TAC.BinaryOperation $$.addr $1.addr $3.addr (TAC.Add))];
 
   $$.modifiedState = 1 + $1.modifiedState;
   $1.state = $$.state;
@@ -901,7 +909,7 @@ RExp3 : RExp3 '+' RExp4
   $$.pos = (tokenPosn $2);
 
   $$.addr = TAC.newtemp $1.modifiedState $$.btype;
-  $$.code = $1.code ++ $3.code ++ [(TAC.BinaryOperation $$.addr $1.addr $3.addr (TAC.Sub))];
+  $$.code = $1.code ++ $3.code ++ [TAC.TacInstruction (TAC.BinaryOperation $$.addr $1.addr $3.addr (TAC.Sub))];
 
   $$.modifiedState = 1 + $1.modifiedState;
   $1.state = $$.state;
@@ -920,7 +928,7 @@ RExp3 : RExp3 '+' RExp4
   $$.pos = (tokenPosn $2);
 
   $$.addr = TAC.newtemp $1.modifiedState $$.btype;
-  $$.code = $1.code ++ $3.code ++ [(TAC.BinaryOperation $$.addr $1.addr $3.addr (TAC.Mul))];
+  $$.code = $1.code ++ $3.code ++ [TAC.TacInstruction (TAC.BinaryOperation $$.addr $1.addr $3.addr (TAC.Mul))];
 
   $$.modifiedState = 1 + $1.modifiedState;
   $1.state = $$.state;
@@ -939,7 +947,7 @@ RExp3 : RExp3 '+' RExp4
   $$.pos = (tokenPosn $2);
 
   $$.addr = TAC.newtemp $1.modifiedState $$.btype;
-  $$.code = $1.code ++ $3.code ++ [(TAC.BinaryOperation $$.addr $1.addr $3.addr (TAC.Div))];
+  $$.code = $1.code ++ $3.code ++ [TAC.TacInstruction (TAC.BinaryOperation $$.addr $1.addr $3.addr (TAC.Div))];
 
   $$.modifiedState = 1 + $1.modifiedState;
   $1.state = $$.state;
@@ -958,7 +966,7 @@ RExp3 : RExp3 '+' RExp4
   $$.pos = (tokenPosn $2);
 
   $$.addr = TAC.newtemp $1.modifiedState $$.btype;
-  $$.code = $1.code ++ $3.code ++ [(TAC.BinaryOperation $$.addr $1.addr $3.addr (TAC.Mod))];
+  $$.code = $1.code ++ $3.code ++ [TAC.TacInstruction (TAC.BinaryOperation $$.addr $1.addr $3.addr (TAC.Mod))];
 
   $$.modifiedState = 1 + $1.modifiedState;
   $1.state = $$.state;
@@ -994,7 +1002,7 @@ RExp4 : RExp4 '^' RExp5
   $$.pos = (tokenPosn $2);
 
   $$.addr = TAC.newtemp $1.modifiedState $$.btype;
-  $$.code = $1.code ++ $3.code ++ [(TAC.BinaryOperation $$.addr $1.addr $3.addr (TAC.Exp))];
+  $$.code = $1.code ++ $3.code ++ [TAC.TacInstruction (TAC.BinaryOperation $$.addr $1.addr $3.addr (TAC.Exp))];
 
   $$.modifiedState = 1 + $1.modifiedState;
   $1.state = $$.state;
@@ -1253,7 +1261,7 @@ RExp1 : RExp2
 
 {
 
-data Result = Result Abs.Program [String] [TAC.TACInstruction] deriving (Show)
+data Result = Result Abs.Program [String] [TAC.TAC]
 
 type Err = Either String
 
