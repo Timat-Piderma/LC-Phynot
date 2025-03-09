@@ -261,6 +261,11 @@ Stm: BasicType Ident
   $$.ident = $2.ident;
   $$.pos = $2.pos;
   $$.btype = $1.btype;
+
+  $$.addr = (TAC.generateAddr $1.btype ($2.ident ++ "_" ++ show (fst (posLineCol $2.pos))));
+  $$.code = [];
+
+  $$.modifiedState = $$.state;
 }
   | BasicType Ident '=' RExp 
 { 
@@ -290,6 +295,11 @@ Stm: BasicType Ident
   $3.env = $$.env;  
 
   $$.err = Err.mkArrayDeclErrs $$.env $2.ident (posLineCol $$.pos) ++ $3.err;
+
+  $$.addr = (TAC.generateAddr $$.btype ($2.ident ++ "_" ++ show (fst (posLineCol $2.pos))));
+  $$.code = [];
+
+  $$.modifiedState = $$.state;
 }
   | BasicType Ident ListDim '=' RExp 
 { 
@@ -303,8 +313,7 @@ Stm: BasicType Ident
   $5.env = $$.env; 
 
   $$.err = if TS.isArray $5.btype
-          then Err.mkArrayLenErrs $2.ident $3.arraydim $5.arraydim (posLineCol $$.pos)
-          ++ $5.err
+          then Err.mkArrayLenErrs $2.ident $3.arraydim $5.arraydim (posLineCol $$.pos) ++ $5.err
           else Err.mkArrayDeclInitErrs $$.env $2.ident $$.btype $5.btype (posLineCol $$.pos) ++ $5.err; 
 }
   
@@ -884,6 +893,13 @@ RExp3 : RExp3 '+' RExp4
   $3.env = $$.env;
 
   $$.pos = (tokenPosn $2);
+
+  $$.addr = TAC.newtemp $1.modifiedState $$.btype;
+  $$.code = $1.code ++ $3.code ++ [(TAC.BinaryOperation $$.addr $1.addr $3.addr (TAC.Sub))];
+
+  $$.modifiedState = 1 + $1.modifiedState;
+  $1.state = $$.state;
+  $3.state = $1.modifiedState;
 }
   | RExp3 '*' RExp4 
 {     
@@ -896,6 +912,13 @@ RExp3 : RExp3 '+' RExp4
   $3.env = $$.env;
 
   $$.pos = (tokenPosn $2);
+
+  $$.addr = TAC.newtemp $1.modifiedState $$.btype;
+  $$.code = $1.code ++ $3.code ++ [(TAC.BinaryOperation $$.addr $1.addr $3.addr (TAC.Mul))];
+
+  $$.modifiedState = 1 + $1.modifiedState;
+  $1.state = $$.state;
+  $3.state = $1.modifiedState;
 }
   | RExp3 '/' RExp4 
 {    
@@ -908,6 +931,13 @@ RExp3 : RExp3 '+' RExp4
   $3.env = $$.env;
 
   $$.pos = (tokenPosn $2);
+
+  $$.addr = TAC.newtemp $1.modifiedState $$.btype;
+  $$.code = $1.code ++ $3.code ++ [(TAC.BinaryOperation $$.addr $1.addr $3.addr (TAC.Div))];
+
+  $$.modifiedState = 1 + $1.modifiedState;
+  $1.state = $$.state;
+  $3.state = $1.modifiedState;
 }
   | RExp3 '%' RExp4 
 {    
@@ -920,6 +950,13 @@ RExp3 : RExp3 '+' RExp4
   $3.env = $$.env;
 
   $$.pos = (tokenPosn $2);
+
+  $$.addr = TAC.newtemp $1.modifiedState $$.btype;
+  $$.code = $1.code ++ $3.code ++ [(TAC.BinaryOperation $$.addr $1.addr $3.addr (TAC.Mod))];
+
+  $$.modifiedState = 1 + $1.modifiedState;
+  $1.state = $$.state;
+  $3.state = $1.modifiedState;
 }
   | RExp4 
 {    
@@ -949,6 +986,13 @@ RExp4 : RExp4 '^' RExp5
   $3.env = $$.env;
 
   $$.pos = (tokenPosn $2);
+
+  $$.addr = TAC.newtemp $1.modifiedState $$.btype;
+  $$.code = $1.code ++ $3.code ++ [(TAC.BinaryOperation $$.addr $1.addr $3.addr (TAC.Exp))];
+
+  $$.modifiedState = 1 + $1.modifiedState;
+  $1.state = $$.state;
+  $3.state = $1.modifiedState;
 } 
   | RExp5 
 { 

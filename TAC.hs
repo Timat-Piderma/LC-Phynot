@@ -52,6 +52,7 @@ generateAddr bt s = case bt of
     TS.Base TS.BOOL -> ProgVar (ProgVariable s) BooleanType
     TS.Base TS.CHAR -> ProgVar (ProgVariable s) CharType
     TS.Base TS.STRING -> ProgVar (ProgVariable s) StringType
+    TS.ARRAY _ -> ProgVar (ProgVariable s) MemoryAddressType
 
 generateLit :: TS.Type -> Value -> Address
 generateLit bt val = case (bt, val) of
@@ -72,6 +73,26 @@ newtemp k t = case t of
     TS.Base TS.CHAR -> Temporary ("t" ++ show k) CharType
     TS.Base TS.STRING -> Temporary ("t" ++ show k) StringType
 
+printBinaryOp :: BinaryOp -> String
+printBinaryOp TAC.Add = "+"
+printBinaryOp TAC.Sub = "-"
+printBinaryOp TAC.Mul = "*"
+printBinaryOp TAC.Exp = "^"
+printBinaryOp TAC.Div = "/"
+printBinaryOp TAC.Mod = "%"
+
+printUnaryOp :: UnaryOp -> String
+printUnaryOp TAC.Neg = "-"
+printUnaryOp TAC.Not = "!"
+
+printRelationalOp :: RelationalOp -> String
+printRelationalOp TAC.Eq = "=="
+printRelationalOp TAC.Ne = "!="
+printRelationalOp TAC.Lt = "<"
+printRelationalOp TAC.Le = "<="
+printRelationalOp TAC.Gt = ">"
+printRelationalOp TAC.Ge = ">="
+
 printAddr :: Address -> String
 printAddr (ProgVar (ProgVariable s) _) = s
 printAddr (TacLit (IntLit i) _) = show i
@@ -82,5 +103,6 @@ printAddr (TacLit (StringLit s) _) = s
 printAddr (Temporary s _) = s
 
 printTAC :: [TACInstruction] -> String
-printTAC ((BinaryOperation a1 a2 a3 op) : xs) = printAddr a1 ++ " = " ++ printAddr a2 ++ " + " ++ printAddr a3 ++ "\n" ++ printTAC xs
+printTAC [] = ""
+printTAC ((BinaryOperation a1 a2 a3 op) : xs) = printAddr a1 ++ " = " ++ printAddr a2 ++ " " ++ printBinaryOp op ++ " " ++ printAddr a3 ++ "\n" ++ printTAC xs
 printTAC ((NullaryOperation a1 a2) : xs) = printAddr a1 ++ " = " ++ printAddr a2 ++ "\n" ++ printTAC xs
