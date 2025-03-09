@@ -1268,6 +1268,12 @@ RExp6 : Integer
   $2.env = $$.env;
 
   $$.pos = $2.pos;
+
+  $$.addr = $2.addr;
+  $$.code = $2.code;
+
+  $$.modifiedState = $2.modifiedState;
+  $2.state = $$.state;
 }
 
 ListRExp : {- empty -} 
