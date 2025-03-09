@@ -32,20 +32,16 @@ data TACInstruction = BinaryOperation Address Address Address BinaryOp     -- l 
                     | NullaryOperation Address Address                     -- l = r
                     | UnconditionalJump Label                              -- goto label  
                     | ConditionalJump Address Label                        -- if r goto label
-                    | RelationalJump Address Address Label RelationalOp    -- if r1 rop r2 goto label  ;  ifFalse r goto label
                     | IndexedCopyAssignment Address Address Address        -- l = id[r2]  ;  id[r1] = r2
                     | ReferenceAssignment Address Address                  -- l = &id  ;  l1 = *l2  ;  *l = r
                     | Function                                             -- param r ; pcall proc, n  ;  l = fcall fun, n  ;  return  ;  return r
                     | NoOperation                                          -- nop
     deriving (Eq, Show)
 
-data BinaryOp = Add | Sub | Mul | Exp | Div | Mod
+data BinaryOp = Add | Sub | Mul | Exp | Div | Mod | Eq | Ne | Lt | Le | Gt | Ge
     deriving (Eq, Show)
 
 data UnaryOp = Neg | Not
-    deriving (Eq, Show)
-
-data RelationalOp = Eq | Ne | Lt | Le | Gt | Ge
     deriving (Eq, Show)
 
 generateAddr :: TS.Type -> String -> Address
@@ -92,18 +88,16 @@ printBinaryOp TAC.Mul = "*"
 printBinaryOp TAC.Exp = "^"
 printBinaryOp TAC.Div = "/"
 printBinaryOp TAC.Mod = "%"
+printBinaryOp TAC.Eq = "=="
+printBinaryOp TAC.Ne = "!="
+printBinaryOp TAC.Lt = "<"
+printBinaryOp TAC.Le = "<="
+printBinaryOp TAC.Gt = ">"
+printBinaryOp TAC.Ge = ">="
 
 printUnaryOp :: UnaryOp -> String
 printUnaryOp TAC.Neg = "-"
 printUnaryOp TAC.Not = "!"
-
-printRelationalOp :: RelationalOp -> String
-printRelationalOp TAC.Eq = "=="
-printRelationalOp TAC.Ne = "!="
-printRelationalOp TAC.Lt = "<"
-printRelationalOp TAC.Le = "<="
-printRelationalOp TAC.Gt = ">"
-printRelationalOp TAC.Ge = ">="
 
 printAddr :: Address -> String
 printAddr (ProgVar (ProgVariable s) _) = s
@@ -120,5 +114,5 @@ printTAC (LabelledInstruction (Label l) i : xs) = l ++ ":" ++ printTAC (TacInstr
 printTAC (TacInstruction (BinaryOperation a1 a2 a3 op) : xs) = "\t" ++ printAddr a1 ++ " = " ++ printAddr a2 ++ " " ++ printBinaryOp op ++ " " ++ printAddr a3 ++ "\n" ++ printTAC xs
 printTAC (TacInstruction (NullaryOperation a1 a2) : xs) = "\t" ++ printAddr a1 ++ " = " ++ printAddr a2 ++ "\n" ++ printTAC xs
 printTAC (TacInstruction (UnconditionalJump (Label l)) : xs) = "\tgoto " ++ l ++ "\n" ++ printTAC xs
-printTAC (TacInstruction (ConditionalJump a1 (Label l)) : xs) = "\tif " ++ printAddr a1 ++ " goto " ++ l ++ "\n" ++ printTAC xs
+printTAC (TacInstruction (ConditionalJump a1 (Label l)) : xs) = "\tifFalse " ++ printAddr a1 ++ " goto " ++ l ++ "\n" ++ printTAC xs
 printTAC (TacInstruction NoOperation : xs) = "\t\n" ++ printTAC xs
