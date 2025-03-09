@@ -482,6 +482,12 @@ Stm: BasicType Ident
   
   $3.env = $$.env;
   $1.env = $$.env;
+
+  $$.addr = E.getAddr $1.ident $$.env;
+  $$.code = $3.code ++ [(TAC.NullaryOperation $$.addr $3.addr)];
+
+  $$.modifiedState = $3.modifiedState;
+  $3.state = $$.state;
 }
 
 ----------------------
