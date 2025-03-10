@@ -473,7 +473,7 @@ Stm: BasicType Ident
 
   $$.err = (Err.mkProcedureCallErrs $1.ident $3.paramTypes $$.env (posLineCol $1.pos)) ++ $3.err;
   
-  $$.code = $3.code ++ TAC.generateProcCall (E.getAddr $1.ident $$.env) $3.listAddr;
+  $$.code = $3.code ++ TAC.generateProcCall (E.getAddr $1.ident $$.env) (length $3.attr) $3.listAddr;
 
   $$.modifiedState = $3.modifiedState;
   $3.state = $$.state;
@@ -485,7 +485,7 @@ Stm: BasicType Ident
   
   $$.err = (Err.mkProcedureCallErrs $1.ident [] $$.env (posLineCol $1.pos));
 
-  $$.code = TAC.generateProcCall (E.getAddr $1.ident $$.env) [];
+  $$.code = TAC.generateProcCall (E.getAddr $1.ident $$.env) 0 [];
 
   $$.modifiedState = $$.state;
 }
@@ -1312,9 +1312,10 @@ RExp7 : Integer
   $$.pos = $1.pos;
 
   $$.addr = TAC.newtemp $$.state $$.btype;
-  $$.code = TAC.generateFuncCall $$.addr (E.getAddr $1.ident $$.env) $3.listAddr;
+  $$.code = $3.code ++ TAC.generateFuncCall $$.addr (E.getAddr $1.ident $$.env) (length $3.attr) $3.listAddr;
 
-  $$.modifiedState = TAC.incrementTemp $$.state;
+  $$.modifiedState = TAC.incrementTemp $3.modifiedState;
+  $3.state = $$.state;
 }
   | Ident '()' 
 {  
@@ -1326,7 +1327,7 @@ RExp7 : Integer
   $$.pos = $1.pos;
 
   $$.addr = TAC.newtemp $$.state $$.btype;
-  $$.code = TAC.generateFuncCall $$.addr (E.getAddr $1.ident $$.env) [];
+  $$.code = TAC.generateFuncCall $$.addr (E.getAddr $1.ident $$.env) 0 [];
 
   $$.modifiedState = TAC.incrementTemp $$.state;
 }

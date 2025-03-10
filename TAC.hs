@@ -36,8 +36,8 @@ data TACInstruction = BinaryOperation Address Address Address BinaryOp     -- l 
                     | ReferenceAssignment Address Address                  -- l = &id  ;  l1 = *l2  ;  *l = r
                     | FunctionDef [Address]                                -- pcall proc, n  ;  l = fcall fun, n  ;  return  ;  return r
                     | EndFunction
-                    | FunctionCall Address Address                         -- r = fcall fun
-                    | ProcedureCall Address                                -- pcall proc, n
+                    | FunctionCall Address Address Int                     -- r = fcall fun / n
+                    | ProcedureCall Address Int                            -- pcall proc / n
                     | FunctionParam Address                                -- param r 
                     | NoOperation                                          -- nop
     deriving (Eq, Show)
@@ -70,11 +70,11 @@ generateLit bt val = case (bt, val) of
 generateFuncDef :: Address -> [(String, (Int, Int), TS.Type)] -> TAC
 generateFuncDef f d = TacInstruction (FunctionDef (f : map (\(s, (x, y), t) -> generateAddr t (s++"@"++show x)) d))
 
-generateFuncCall :: Address -> Address -> [Address] -> [TAC]
-generateFuncCall t p d = map (TacInstruction . FunctionParam) d ++ [TacInstruction (TAC.FunctionCall t p)]
+generateFuncCall :: Address -> Address -> Int -> [Address] -> [TAC]
+generateFuncCall t p n d = map (TacInstruction . FunctionParam) d ++ [TacInstruction (TAC.FunctionCall t p n)]
 
-generateProcCall :: Address -> [Address] -> [TAC]
-generateProcCall p d = map (TacInstruction . FunctionParam) d ++ [TacInstruction (TAC.ProcedureCall p)]
+generateProcCall :: Address -> Int -> [Address] -> [TAC]
+generateProcCall p n d = map (TacInstruction . FunctionParam) d ++ [TacInstruction (TAC.ProcedureCall p n)]
 
 type State = (Int, Int)
 
@@ -131,7 +131,7 @@ printTAC (TacInstruction (UnconditionalJump (Label l)) : xs) = "\tgoto " ++ l ++
 printTAC (TacInstruction (ConditionalJump a1 (Label l)) : xs) = "\tifFalse " ++ printAddr a1 ++ " goto " ++ l ++ "\n" ++ printTAC xs
 printTAC (TacInstruction (FunctionDef (f:addrs)) : xs) = "def " ++ printAddr f ++ " (" ++ concatMap printAddr addrs  ++ ") {\n"++ printTAC xs
 printTAC (TacInstruction EndFunction : xs) = "}\n" ++ printTAC xs
-printTAC (TacInstruction (FunctionCall a f) : xs) = "\t" ++ printAddr a ++ " = fcall " ++ printAddr f ++ "\n" ++ printTAC xs
-printTAC (TacInstruction (TAC.ProcedureCall p) : xs) = "\tpcall " ++ printAddr p ++ "\n" ++ printTAC xs
+printTAC (TacInstruction (FunctionCall a f n) : xs) = "\t" ++ printAddr a ++ " = fcall " ++ printAddr f ++ " / " ++ show n ++ "\n" ++ printTAC xs
+printTAC (TacInstruction (TAC.ProcedureCall p n) : xs) = "\tpcall " ++ printAddr p ++ " / " ++ show n ++ "\n" ++ printTAC xs
 printTAC (TacInstruction (FunctionParam a) : xs) = "\tparam " ++ printAddr a ++ "\n" ++ printTAC xs
 printTAC (TacInstruction NoOperation : xs) = "\t\n" ++ printTAC xs
