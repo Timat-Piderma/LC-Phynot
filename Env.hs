@@ -25,7 +25,8 @@ data EnvEntity =
     id :: String,
     pos :: (Int, Int),
     btype :: Type,
-    params :: [Type]
+    params :: [Type],
+    addr :: Address
     }
     | Prototype 
     {
@@ -37,14 +38,14 @@ data EnvEntity =
     deriving (Show)
 
 emptyEnv :: EnvT
-emptyEnv = Map.insert "writeInt" (mkFunc "writeInt" (-1, -1) (Base NONE) [Base INT]) (
-    Map.insert "writeFloat" (mkFunc "writeFloat" (-1, -1) (Base NONE) [Base FLOAT]) (
-    Map.insert "writeChar" (mkFunc "writeChar" (-1, -1) (Base NONE) [Base CHAR]) (
-    Map.insert "writeString" (mkFunc "writeString" (-1, -1) (Base NONE) [Base STRING]) (
-    Map.insert "readInt" (mkFunc "readInt" (-1, -1) (Base INT) []) (
-    Map.insert "readFloat" (mkFunc "readFloat" (-1, -1) (Base FLOAT) []) (
-    Map.insert "readChar" (mkFunc "readChar" (-1, -1) (Base CHAR) []) (
-    Map.insert "readString" (mkFunc "readString" (-1, -1) (Base STRING) []) Map.empty
+emptyEnv = Map.insert "writeInt" (mkFunc "writeInt" (-1, -1) (Base NONE) [Base INT] (ProgVar (ProgVariable "writeInt") MemoryAddressType)) (
+    Map.insert "writeFloat" (mkFunc "writeFloat" (-1, -1) (Base NONE) [Base FLOAT] (ProgVar (ProgVariable "writeFloat") MemoryAddressType)) (
+    Map.insert "writeChar" (mkFunc "writeChar" (-1, -1) (Base NONE) [Base CHAR] (ProgVar (ProgVariable "writeString") MemoryAddressType)) (
+    Map.insert "writeString" (mkFunc "writeString" (-1, -1) (Base NONE) [Base STRING] (ProgVar (ProgVariable "writeChar") MemoryAddressType)) (
+    Map.insert "readInt" (mkFunc "readInt" (-1, -1) (Base INT) [] (ProgVar (ProgVariable "readInt") IntegerType)) (
+    Map.insert "readFloat" (mkFunc "readFloat" (-1, -1) (Base FLOAT) [] (ProgVar (ProgVariable "readFloat") FloatType)) (
+    Map.insert "readChar" (mkFunc "readChar" (-1, -1) (Base CHAR) [] (ProgVar (ProgVariable "readChar") CharType)) (
+    Map.insert "readString" (mkFunc "readString" (-1, -1) (Base STRING) [] (ProgVar (ProgVariable "readString") StringType)) Map.empty
     )))))))
 
 getAllEntitiesInfo :: EnvT -> String -> [(String, (Int, Int), Type)]
@@ -60,8 +61,8 @@ mkVar varName varPos varType addr = Variable varName varPos varType addr
 mkArray :: String -> (Int, Int) -> Type -> [Int] -> Address -> EnvEntity
 mkArray varName varPos varType arrLength addr = Array varName varPos varType arrLength addr
 
-mkFunc :: String -> (Int, Int) -> Type -> [Type] -> EnvEntity
-mkFunc funcName funcPos funcType funcParams = Env.Function funcName funcPos funcType funcParams
+mkFunc :: String -> (Int, Int) -> Type -> [Type] -> Address -> EnvEntity
+mkFunc funcName funcPos funcType funcParams addr = Env.Function funcName funcPos funcType funcParams addr
 
 -- inserts only if not already in the environment
 insertVar :: String -> (Int, Int) -> Type -> Address -> EnvT -> EnvT
@@ -74,12 +75,12 @@ insertArray varName varPos varType arrLength addr env = if containsEntry varName
     then env
     else Map.insert varName (mkArray varName varPos varType arrLength addr) env
 
-insertFunc :: String -> (Int, Int) -> Type -> [Type] -> EnvT -> EnvT
-insertFunc funcName funcPos funcType funcParams env = if containsEntry funcName env
+insertFunc :: String -> (Int, Int) -> Type -> [Type] -> Address -> EnvT -> EnvT
+insertFunc funcName funcPos funcType funcParams addr env = if containsEntry funcName env
     then if containsPrototype funcName env
-        then Map.insert funcName (mkFunc funcName funcPos funcType funcParams) env
+        then Map.insert funcName (mkFunc funcName funcPos funcType funcParams addr) env
         else env
-    else Map.insert funcName (mkFunc funcName funcPos funcType funcParams) env
+    else Map.insert funcName (mkFunc funcName funcPos funcType funcParams addr) env
 
 insertPrototype :: String -> (Int, Int) -> Type -> [Type] -> EnvT -> EnvT
 insertPrototype funcName pos funcType funcParams env = if containsPrototype funcName env

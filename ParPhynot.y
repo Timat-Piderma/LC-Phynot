@@ -110,6 +110,7 @@ import LexPhynot
 %attribute paramTypes { [TS.Type] }
 
 %attribute addr { TAC.Address }
+%attribute listAddr { [TAC.Address] }
 %attribute code { [TAC.TAC] }
 
 %attribute state { TAC.State }
@@ -388,9 +389,9 @@ Stm: BasicType Ident
 {  
   $$.attr = Abs.FunctionDeclaration $2.attr $3.attr $5.attr $8.attr; 
 
-  $$.modifiedEnv = E.insertFunc $3.ident (posLineCol $3.pos) $2.btype $5.paramTypes $$.env;
+  $$.modifiedEnv = E.insertFunc $3.ident (posLineCol $3.pos) $2.btype $5.paramTypes $$.addr $$.env;
   $8.env = $5.modifiedEnv;
-  $5.env = E.insertFunc $3.ident (posLineCol $$.pos) $2.btype $5.paramTypes (E.insertVar "return" (posLineCol ($3.pos)) ($$.btype) $$.addr $$.env);
+  $5.env = E.insertFunc $3.ident (posLineCol $$.pos) $2.btype $5.paramTypes $$.addr (E.insertVar "return" (posLineCol ($3.pos)) ($$.btype) $$.addr $$.env);
 
   $$.pos = $3.pos;
 
@@ -409,8 +410,8 @@ Stm: BasicType Ident
 {  
   $$.attr = Abs.FunctionNoParamDeclaration $2.attr $3.attr $6.attr; 
 
-  $$.modifiedEnv = E.insertFunc $3.ident (posLineCol $3.pos) $2.btype [] $$.env;
-  $6.env = E.insertFunc $3.ident (posLineCol $$.pos) $2.btype [] (E.insertVar "return" (posLineCol ($3.pos)) ($$.btype) $$.addr $$.env);
+  $$.modifiedEnv = E.insertFunc $3.ident (posLineCol $3.pos) $2.btype [] $$.addr $$.env;
+  $6.env = E.insertFunc $3.ident (posLineCol $$.pos) $2.btype [] $$.addr (E.insertVar "return" (posLineCol ($3.pos)) ($$.btype) $$.addr $$.env);
 
   $$.pos = $3.pos;
 
@@ -428,9 +429,9 @@ Stm: BasicType Ident
 {  
   $$.attr = Abs.ProcedureDeclaration $3.attr $5.attr $8.attr; 
 
-  $$.modifiedEnv = E.insertFunc $3.ident (posLineCol $3.pos) (TS.Base TS.NONE) $5.paramTypes $$.env;
+  $$.modifiedEnv = E.insertFunc $3.ident (posLineCol $3.pos) (TS.Base TS.NONE) $5.paramTypes $$.addr $$.env;
   $8.env = $5.modifiedEnv;
-  $5.env = E.insertFunc $3.ident (posLineCol $$.pos) (TS.Base TS.NONE) $5.paramTypes (E.insertVar "return" (posLineCol ($3.pos)) ($$.btype) $$.addr E.emptyEnv);
+  $5.env = E.insertFunc $3.ident (posLineCol $$.pos) (TS.Base TS.NONE) $5.paramTypes $$.addr (E.insertVar "return" (posLineCol ($3.pos)) ($$.btype) $$.addr E.emptyEnv);
 
   $$.pos = $3.pos;
 
@@ -449,8 +450,8 @@ Stm: BasicType Ident
 { 
   $$.attr = Abs.ProcedureNoParamDeclaration $3.attr $6.attr; 
 
-  $$.modifiedEnv = E.insertFunc $3.ident (posLineCol $3.pos) (TS.Base TS.NONE) [] $$.env;
-  $6.env = E.insertFunc $3.ident (posLineCol $$.pos) (TS.Base TS.NONE) [] (E.insertVar "return" (posLineCol ($3.pos)) ($$.btype) $$.addr E.emptyEnv);
+  $$.modifiedEnv = E.insertFunc $3.ident (posLineCol $3.pos) (TS.Base TS.NONE) [] $$.addr $$.env;
+  $6.env = E.insertFunc $3.ident (posLineCol $$.pos) (TS.Base TS.NONE) [] $$.addr (E.insertVar "return" (posLineCol ($3.pos)) ($$.btype) $$.addr E.emptyEnv);
 
   $$.pos = $3.pos;
 
@@ -471,6 +472,11 @@ Stm: BasicType Ident
   $$.modifiedEnv = $$.env;
 
   $$.err = (Err.mkProcedureCallErrs $1.ident $3.paramTypes $$.env (posLineCol $1.pos)) ++ $3.err;
+  
+  $$.code = $3.code ++ TAC.generateProcCall (E.getAddr $1.ident $$.env) $3.listAddr;
+
+  $$.modifiedState = $3.modifiedState;
+  $3.state = $$.state;
 }
   | Ident '()' 
 { 
@@ -478,6 +484,10 @@ Stm: BasicType Ident
   $$.modifiedEnv = $$.env;
   
   $$.err = (Err.mkProcedureCallErrs $1.ident [] $$.env (posLineCol $1.pos));
+
+  $$.code = TAC.generateProcCall (E.getAddr $1.ident $$.env) [];
+
+  $$.modifiedState = $$.state;
 }
   | 'return' RExp 
 {  
@@ -1342,7 +1352,11 @@ ListRExp : {- empty -}
   $$.paramTypes = [$1.btype]; 
 
   $$.addr = $1.addr;
+  $$.listAddr = [$1.addr];
   $$.code = $1.code;
+
+  $$.modifiedState = $1.modifiedState;
+  $1.state = $$.state;
 }
   | RExp ',' ListRExp 
 {  
@@ -1354,7 +1368,12 @@ ListRExp : {- empty -}
   $$.paramTypes = $1.btype : $3.paramTypes;
 
   $$.addr = $1.addr;
+  $$.listAddr = $1.addr : $3.listAddr;
   $$.code = $1.code ++ $3.code;
+
+  $$.modifiedState = $3.modifiedState;
+  $1.state = $$.state;
+  $3.state = $1.modifiedState;
 }
 
 RExp1 : RExp2 
