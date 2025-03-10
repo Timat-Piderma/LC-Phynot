@@ -392,6 +392,8 @@ Stm: BasicType Ident
   $8.env = $5.modifiedEnv;
   $5.env = E.insertFunc $3.ident (posLineCol $$.pos) $2.btype $5.paramTypes (E.insertVar "return" (posLineCol ($3.pos)) ($$.btype) $$.addr $$.env);
 
+  $$.pos = $3.pos;
+
   $5.funcName = $3.ident;
   $$.btype = $2.btype;
 
@@ -402,7 +404,6 @@ Stm: BasicType Ident
 
   $$.modifiedState = $8.modifiedState;
   $8.state = $$.state;
-
 }
   | 'def' BasicType Ident '()' '{' ListStm '}' 
 {  
@@ -411,9 +412,17 @@ Stm: BasicType Ident
   $$.modifiedEnv = E.insertFunc $3.ident (posLineCol $3.pos) $2.btype [] $$.env;
   $6.env = E.insertFunc $3.ident (posLineCol $$.pos) $2.btype [] (E.insertVar "return" (posLineCol ($3.pos)) ($$.btype) $$.addr $$.env);
 
+  $$.pos = $3.pos;
+
   $$.btype = $2.btype;
 
   $$.err = (Err.mkFuncDeclErrs $2.btype $$.env $3.ident [] (posLineCol ($3.pos))) ++ (Err.prettyFuncErr $6.err $3.ident);
+
+  $$.addr = (TAC.generateAddr $2.btype ($3.ident ++ "@" ++ show (fst (posLineCol $3.pos))));
+  $$.code = [TAC.generateFuncDef $$.addr []] ++ $6.code ++ [TAC.TacInstruction (TAC.EndFunction)];
+
+  $$.modifiedState = $6.modifiedState;
+  $6.state = $$.state;
 }
   | 'def' 'None' Ident '(' ListParam ')' '{' ListStm '}' 
 {  
@@ -423,10 +432,18 @@ Stm: BasicType Ident
   $8.env = $5.modifiedEnv;
   $5.env = E.insertFunc $3.ident (posLineCol $$.pos) (TS.Base TS.NONE) $5.paramTypes (E.insertVar "return" (posLineCol ($3.pos)) ($$.btype) $$.addr E.emptyEnv);
 
+  $$.pos = $3.pos;
+
   $5.funcName = $3.ident;
   $$.btype = (TS.Base TS.NONE);
 
   $$.err = $5.err ++ (Err.mkFuncDeclErrs (TS.Base TS.NONE) $$.env $3.ident $5.paramTypes (posLineCol ($3.pos))) ++ (Err.prettyFuncErr $8.err $3.ident);
+
+  $$.addr = (TAC.generateAddr (TS.Base TS.NONE) ($3.ident ++ "@" ++ show (fst (posLineCol $3.pos))));
+  $$.code = [TAC.generateFuncDef $$.addr (E.getAllEntitiesInfo $5.modifiedEnv $3.ident)] ++ $8.code ++ [TAC.TacInstruction (TAC.EndFunction)];
+
+  $$.modifiedState = $8.modifiedState;
+  $8.state = $$.state;
 }
   | 'def' 'None' Ident '()' '{' ListStm '}' 
 { 
@@ -435,9 +452,17 @@ Stm: BasicType Ident
   $$.modifiedEnv = E.insertFunc $3.ident (posLineCol $3.pos) (TS.Base TS.NONE) [] $$.env;
   $6.env = E.insertFunc $3.ident (posLineCol $$.pos) (TS.Base TS.NONE) [] (E.insertVar "return" (posLineCol ($3.pos)) ($$.btype) $$.addr E.emptyEnv);
 
+  $$.pos = $3.pos;
+
   $$.btype = (TS.Base TS.NONE);
 
   $$.err = (Err.mkFuncDeclErrs (TS.Base TS.NONE) $$.env $3.ident [] (posLineCol ($3.pos))) ++ (Err.prettyFuncErr $6.err $3.ident);
+
+  $$.addr = (TAC.generateAddr (TS.Base TS.NONE) ($3.ident ++ "@" ++ show (fst (posLineCol $3.pos))));
+  $$.code = [TAC.generateFuncDef $$.addr []] ++ $6.code ++ [TAC.TacInstruction (TAC.EndFunction)];
+
+  $$.modifiedState = $6.modifiedState;
+  $6.state = $$.state;
 }
   | Ident '(' ListRExp ')' 
 { 

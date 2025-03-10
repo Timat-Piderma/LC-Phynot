@@ -54,6 +54,7 @@ generateAddr bt s = case bt of
     TS.Base TS.CHAR -> ProgVar (ProgVariable s) CharType
     TS.Base TS.STRING -> ProgVar (ProgVariable s) StringType
     TS.ARRAY _ -> ProgVar (ProgVariable s) MemoryAddressType
+    _ -> ProgVar (ProgVariable s) MemoryAddressType
 
 generateLit :: TS.Type -> Value -> Address
 generateLit bt val = case (bt, val) of
