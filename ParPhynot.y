@@ -1310,6 +1310,11 @@ RExp7 : Integer
   $$.err = (Err.mkFuncCallErrs $1.ident $3.paramTypes $$.env (posLineCol $1.pos)) ++ $3.err;
 
   $$.pos = $1.pos;
+
+  $$.addr = TAC.newtemp $$.state $$.btype;
+  $$.code = TAC.generateFuncCall $$.addr (E.getAddr $1.ident $$.env) $3.listAddr;
+
+  $$.modifiedState = TAC.incrementTemp $$.state;
 }
   | Ident '()' 
 {  
@@ -1319,6 +1324,11 @@ RExp7 : Integer
   $$.err = (Err.mkFuncCallErrs $1.ident [] $$.env (posLineCol $1.pos));
 
   $$.pos = $1.pos;
+
+  $$.addr = TAC.newtemp $$.state $$.btype;
+  $$.code = TAC.generateFuncCall $$.addr (E.getAddr $1.ident $$.env) [];
+
+  $$.modifiedState = TAC.incrementTemp $$.state;
 }
   | '(' RExp ')'  
 { 
@@ -1342,6 +1352,8 @@ ListRExp : {- empty -}
 
   $$.err = [];
   $$.paramTypes = [];
+
+  $3.listAddr = [];
 }
   | RExp 
 {    
