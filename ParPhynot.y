@@ -608,6 +608,10 @@ Stm: BasicType Ident
   $$.modifiedEnv = $$.env;
   $$.err = [];
   $$.pos = (tokenPosn $1);
+
+  $$.code = [];  
+  
+  $$.modifiedState = $$.state;
 }
 
 -------------------------
