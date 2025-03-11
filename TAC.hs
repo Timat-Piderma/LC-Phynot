@@ -34,7 +34,7 @@ data TACInstruction = BinaryOperation Address Address Address BinaryOp     -- l 
                     | ConditionalJump Address Label                        -- if r goto label
                     | IndexedCopyAssignment Address Address Address        -- l = id[r2]  ;  id[r1] = r2
                     | ReferenceAssignment Address Address                  -- l = &id  ;  l1 = *l2  ;  *l = r
-                    | FunctionDef [Address]                                -- pcall proc, n  ;  l = fcall fun, n  ;  return  ;  return r
+                    | FunctionDef [Address]                                -- def r1 (r2, r3, ...) {
                     | EndFunction
                     | FunctionCall Address Address Int                     -- r = fcall fun / n
                     | ProcedureCall Address Int                            -- pcall proc / n
@@ -42,7 +42,7 @@ data TACInstruction = BinaryOperation Address Address Address BinaryOp     -- l 
                     | NoOperation                                          -- nop
     deriving (Eq, Show)
 
-data BinaryOp = Add | Sub | Mul | Exp | Div | Mod | Eq | Ne | Lt | Le | Gt | Ge
+data BinaryOp = Add | Sub | Mul | Exp | Div | Mod | Eq | Ne | Lt | Le | Gt | Ge | And | Or
     deriving (Eq, Show)
 
 data UnaryOp = Neg | Not
@@ -108,6 +108,8 @@ printBinaryOp TAC.Lt = "<"
 printBinaryOp TAC.Le = "<="
 printBinaryOp TAC.Gt = ">"
 printBinaryOp TAC.Ge = ">="
+printBinaryOp TAC.And = "&&"
+printBinaryOp TAC.Or = "||"
 
 printUnaryOp :: UnaryOp -> String
 printUnaryOp TAC.Neg = "-"
@@ -126,6 +128,7 @@ printTAC :: [TAC] -> String
 printTAC [] = ""
 printTAC (LabelledInstruction (Label l) i : xs) = l ++ ":" ++ printTAC (TacInstruction i : xs)
 printTAC (TacInstruction (BinaryOperation a1 a2 a3 op) : xs) = "\t" ++ printAddr a1 ++ " = " ++ printAddr a2 ++ " " ++ printBinaryOp op ++ " " ++ printAddr a3 ++ "\n" ++ printTAC xs
+printTAC (TacInstruction (UnaryOperation a1 a2 op) : xs) = "\t" ++ printAddr a1 ++ " = " ++ printUnaryOp op ++ " " ++ printAddr a2 ++ "\n" ++ printTAC xs
 printTAC (TacInstruction (NullaryOperation a1 a2) : xs) = "\t" ++ printAddr a1 ++ " = " ++ printAddr a2 ++ "\n" ++ printTAC xs
 printTAC (TacInstruction (UnconditionalJump (Label l)) : xs) = "\tgoto " ++ l ++ "\n" ++ printTAC xs
 printTAC (TacInstruction (ConditionalJump a1 (Label l)) : xs) = "\tifFalse " ++ printAddr a1 ++ " goto " ++ l ++ "\n" ++ printTAC xs

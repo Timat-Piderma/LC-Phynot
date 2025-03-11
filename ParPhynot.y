@@ -822,6 +822,13 @@ RExp : '[' Arr ']'
   $3.env = $$.env;
 
   $$.pos = (tokenPosn $2);
+
+  $$.addr = TAC.newtemp $1.modifiedState $$.btype;
+  $$.code = $1.code ++ $3.code ++ [TAC.TacInstruction (TAC.BinaryOperation $$.addr $1.addr $3.addr (TAC.Or))];
+
+  $$.modifiedState = TAC.incrementTemp $1.modifiedState;
+  $1.state = $$.state;
+  $3.state = $1.modifiedState;
 }
   | RExp 'and' RExp2 
 {   
@@ -832,6 +839,13 @@ RExp : '[' Arr ']'
   $3.env = $$.env;
 
   $$.pos = (tokenPosn $2);
+
+  $$.addr = TAC.newtemp $1.modifiedState $$.btype;
+  $$.code = $1.code ++ $3.code ++ [TAC.TacInstruction (TAC.BinaryOperation $$.addr $1.addr $3.addr (TAC.And))];
+
+  $$.modifiedState = TAC.incrementTemp $1.modifiedState;
+  $1.state = $$.state;
+  $3.state = $1.modifiedState;
 }
   | 'not' RExp2 
 {  
@@ -841,6 +855,12 @@ RExp : '[' Arr ']'
   $2.env = $$.env; 
 
   $$.pos = (tokenPosn $1); 
+
+  $$.addr = TAC.newtemp $2.modifiedState $$.btype;
+  $$.code = $2.code ++ [TAC.TacInstruction (TAC.UnaryOperation $$.addr $2.addr (TAC.Not))];
+
+  $$.modifiedState = TAC.incrementTemp $2.modifiedState;
+  $2.state = $$.state;
 }
   | RExp1 
 {  
