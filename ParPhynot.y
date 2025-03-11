@@ -115,6 +115,9 @@ import LexPhynot
 
 %attribute state { TAC.State }
 %attribute modifiedState { TAC.State }
+
+%attribute brkjmp { TAC.Label }
+%attribute cntjmp { TAC.Label }
 %%
 
 ------------------
@@ -238,6 +241,9 @@ ListStm : Stm ';'
 
   $1.state = $$.state;
   $$.modifiedState = $1.modifiedState;
+
+  $1.brkjmp = $$.brkjmp;
+  $1.cntjmp = $$.cntjmp;
 } 
 | Stm ';' ListStm 
 { 
@@ -251,6 +257,11 @@ ListStm : Stm ';'
   $1.state = $$.state;
   $3.state = $1.modifiedState;
   $$.modifiedState = $3.modifiedState;
+
+  $1.brkjmp = $$.brkjmp;
+  $1.cntjmp = $$.cntjmp;
+  $3.brkjmp = $$.brkjmp;
+  $3.cntjmp = $$.cntjmp;
 }
 
 ------------------
@@ -553,6 +564,9 @@ Stm: BasicType Ident
   $$.modifiedState = $4.modifiedState;
   $2.state = TAC.incrementLabel $$.state;
   $4.state = $2.modifiedState;
+
+  $4.brkjmp = $$.brkjmp;
+  $4.cntjmp = $$.cntjmp;
 }
   | 'if' RExp '{' ListStm '}' 'else' '{' ListStm '}' 
 {       
@@ -571,6 +585,11 @@ Stm: BasicType Ident
   $2.state = TAC.incrementLabel (TAC.incrementLabel $$.state);
   $4.state = $2.modifiedState;
   $8.state = $4.modifiedState;
+
+  $4.brkjmp = $$.brkjmp;
+  $4.cntjmp = $$.cntjmp;
+  $8.brkjmp = $$.brkjmp;
+  $8.cntjmp = $$.cntjmp;
 }
   | 'while' RExp '{' ListStm '}' 
 {   
@@ -581,12 +600,18 @@ Stm: BasicType Ident
   $$.err = Err.mkWhileErrs $2.btype (posLineCol (tokenPosn $1)) ++ (Err.prettySequenceErr "while" $4.err) ++ $2.err; 
 
   $$.addr = $2.addr;
-  $$.code = [(TAC.LabelledInstruction (TAC.newLabel $$.state) TAC.NoOperation)] ++ $2.code ++ [TAC.TacInstruction (TAC.ConditionalJump $$.addr (TAC.newLabel (TAC.incrementLabel $$.state)))] ++ $4.code ++ [(TAC.TacInstruction (TAC.UnconditionalJump (TAC.newLabel $$.state)))]
+  $$.code = [(TAC.LabelledInstruction $$.cntjmp TAC.NoOperation)] ++ $2.code ++ [TAC.TacInstruction (TAC.ConditionalJump $$.addr $$.brkjmp)] ++ $4.code ++ [(TAC.TacInstruction (TAC.UnconditionalJump (TAC.newLabel $$.state)))]
     ++ [(TAC.LabelledInstruction (TAC.newLabel (TAC.incrementLabel $$.state)) TAC.NoOperation)];
 
   $$.modifiedState = $4.modifiedState;
   $2.state = TAC.incrementLabel (TAC.incrementLabel $$.state);
   $4.state = $2.modifiedState;
+
+  $$.brkjmp = (TAC.newLabel (TAC.incrementLabel $$.state));
+  $$.cntjmp = TAC.newLabel $$.state;
+
+  $4.brkjmp = $$.brkjmp;
+  $4.cntjmp = $$.cntjmp;
 }
   | 'break' 
 {   
@@ -594,6 +619,10 @@ Stm: BasicType Ident
   $$.modifiedEnv = $$.env;
   $$.err = Err.mkJumpStatementErrs "break" $$.env (posLineCol $$.pos);
   $$.pos = (tokenPosn $1);
+
+  $$.modifiedState = $$.state;
+
+  $$.code = [TAC.TacInstruction(TAC.UnconditionalJump $$.brkjmp)];
 }
   | 'continue' 
 {   
@@ -601,6 +630,10 @@ Stm: BasicType Ident
   $$.modifiedEnv = $$.env;
   $$.err = Err.mkJumpStatementErrs "continue" $$.env (posLineCol $$.pos);
   $$.pos = (tokenPosn $1);
+
+  $$.modifiedState = $$.state;
+
+  $$.code = [TAC.TacInstruction(TAC.UnconditionalJump $$.cntjmp)];
 }
   | 'pass' 
 {  
