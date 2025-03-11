@@ -1197,6 +1197,12 @@ RExp6 : '&' RExp7
   $$.btype = TS.mathtype $2.btype;
 
   $$.pos = $2.pos; 
+
+  $$.addr = TAC.newtemp $2.modifiedState $$.btype;
+  $$.code = $2.code ++ [TAC.TacInstruction (TAC.UnaryOperation $$.addr $2.addr (TAC.Neg))];
+
+  $$.modifiedState = TAC.incrementTemp $2.modifiedState;
+  $2.state = $$.state;
 }
   | RExp7
 { 
