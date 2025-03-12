@@ -49,6 +49,17 @@ sup _ (Base (ERROR s))            = Base (ERROR s)
 
 sup t1 t2                         = Base (ERROR ("Type mismatch: '" ++ typeToString t1 ++ "' and '" ++ typeToString t2 ++ "' are not compatible"))
 
+getTypeSize :: Type -> Int
+getTypeSize (Base INT) = 4
+getTypeSize (Base FLOAT) = 8
+getTypeSize (Base BOOL) = 1
+getTypeSize (Base CHAR) = 1
+getTypeSize (Base STRING) = 4
+getTypeSize (Base NONE) = 0
+getTypeSize (ARRAY t) = 4
+getTypeSize (POINTER t) = 4
+getTypeSize (Base (ERROR _)) = 0
+
 getArrayCurrentType :: Type -> Int -> Type
 getArrayCurrentType (Base (ERROR s)) _ = Base (ERROR s)
 getArrayCurrentType t 0           = t
