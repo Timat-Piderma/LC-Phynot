@@ -312,7 +312,7 @@ Stm: BasicType Ident
   $$.err = Err.mkArrayDeclErrs $$.env $2.ident (posLineCol $$.pos) ++ $3.err;
 
   $$.addr = (TAC.generateAddr $$.btype ($2.ident ++ "@" ++ show (fst (posLineCol $2.pos))));
-  $$.code = [];
+  $$.code = TAC.generateArrayEmpty $$.addr $3.arraydim $1.btype;
 
   $$.modifiedState = $$.state;
 }
@@ -330,6 +330,11 @@ Stm: BasicType Ident
   $$.err = if TS.isArray $5.btype
           then Err.mkArrayLenErrs $2.ident $3.arraydim $5.arraydim (posLineCol $$.pos) ++ $5.err
           else Err.mkArrayDeclInitErrs $$.env $2.ident $$.btype $5.btype (posLineCol $$.pos) ++ $5.err; 
+
+  $$.addr = (TAC.generateAddr $$.btype ($2.ident ++ "@" ++ show (fst (posLineCol $2.pos))));
+  $$.code = $5.code ++ TAC.generateArray $$.addr $3.arraydim $1.btype $5.listAddr;
+
+  $$.modifiedState = $$.state;
 }
   
   
@@ -765,6 +770,12 @@ Arr : ListArrEntry
   $$.err = $1.err;
 
   $$.arraydim = length $1.attr : $1.arraydim;
+
+  $$.listAddr = $1.listAddr;
+  $$.code = $1.code;
+
+  $$.modifiedState = $1.modifiedState;
+  $1.state = $$.state;
 }
 
 ArrEntry : RExp 
@@ -782,6 +793,15 @@ ArrEntry : RExp
                 else [];
 
   $$.arraytype = $1.btype;
+
+  $$.listAddr = if TS.isArray $1.btype
+                then $1.listAddr
+                else [$1.addr];
+                
+  $$.code = $1.code;
+
+  $$.modifiedState = $1.modifiedState;
+  $1.state = $$.state;
 }
 
 ListArrEntry: ArrEntry { 
@@ -795,6 +815,11 @@ ListArrEntry: ArrEntry {
 
   $$.arraydim = $1.arraydim;
 
+  $$.listAddr = $1.listAddr;
+  $$.code = $1.code;
+
+  $$.modifiedState = $1.modifiedState;
+  $1.state = $$.state;
 } 
   | ArrEntry ',' ListArrEntry 
 { 
@@ -817,6 +842,12 @@ ListArrEntry: ArrEntry {
 
   $$.arraydim = zipWith max $1.arraydim $3.arraydim;
 
+  $$.listAddr = $1.listAddr ++ $3.listAddr;
+  $$.code = $1.code ++ $3.code;
+
+  $$.modifiedState = $3.modifiedState;
+  $1.state = $$.state;
+  $3.state = $1.modifiedState;
 }
 
 ----------------------
@@ -869,6 +900,12 @@ RExp : '[' Arr ']'
   $$.arraydim = $2.arraydim;
 
   $$.err = $2.err;
+
+  $$.listAddr = $2.listAddr;
+  $$.code = $2.code;
+
+  $$.modifiedState = $2.modifiedState;
+  $2.state = $$.state;
 }
   | RExp 'or' RExp2 
 {   

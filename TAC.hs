@@ -34,7 +34,6 @@ data TACInstruction = BinaryOperation Address Address Address BinaryOp     -- l 
                     | UnconditionalJump Label                              -- goto label  
                     | ConditionalJump Address Label                        -- if r goto label
                     | IndexedCopyAssignment Address Address Address        -- l = id[r2]  ;  id[r1] = r2
-                    | ReferenceAssignment Address Address                  -- l = &id  ;  l1 = *l2  ;  *l = r
                     | FunctionDef [Address]                                -- def r1 (r2, r3, ...) {
                     | EndFunction
                     | Return Address                                       -- return r
@@ -69,6 +68,32 @@ generateLit bt val = case (bt, val) of
     (TS.Base TS.CHAR, CharVal c) -> TacLit (CharLit c) CharType
     (TS.Base TS.STRING, StringVal s) -> TacLit (StringLit s) StringType
     _ -> error "Type and value do not match"
+
+generateArrayEmpty :: Address -> [Int] -> TS.Type -> [TAC]
+generateArrayEmpty a x t  = case t of
+    (TS.Base TS.INT) -> generateArrayEmpty' a (product x) (TS.getTypeSize t) t (IntVal 0) 0
+    (TS.Base TS.FLOAT) -> generateArrayEmpty' a (product x) (TS.getTypeSize t) t (DoubleVal 0) 0
+    (TS.Base TS.BOOL) -> generateArrayEmpty' a (product x) (TS.getTypeSize t) t (BoolVal False) 0
+    (TS.Base TS.CHAR) -> generateArrayEmpty' a (product x) (TS.getTypeSize t) t (CharVal '0') 0
+    (TS.Base TS.STRING) -> generateArrayEmpty' a (product x) (TS.getTypeSize t) t (StringVal "") 0
+
+generateArrayEmpty' :: Address -> Int -> Int -> TS.Type -> Value -> Int -> [TAC]
+generateArrayEmpty' a 0 size t val c = []
+generateArrayEmpty' a x size t val c = TacInstruction (IndexedCopyAssignment a (generateLit (TS.Base TS.INT) (IntVal (toInteger (c * size)))) (generateLit t val))
+    : generateArrayEmpty' a (x-1) size t val (c+1)
+
+generateArray :: Address -> [Int] -> TS.Type -> [Address] -> [TAC]
+generateArray a x t vals = case t of
+    (TS.Base TS.INT) -> generateArray' a (product x) (TS.getTypeSize t) vals 0
+    (TS.Base TS.FLOAT) -> generateArray' a (product x) (TS.getTypeSize t) vals 0
+    (TS.Base TS.BOOL) -> generateArray' a (product x) (TS.getTypeSize t) vals 0
+    (TS.Base TS.CHAR) -> generateArray' a (product x) (TS.getTypeSize t) vals 0
+    (TS.Base TS.STRING) -> generateArray' a (product x) (TS.getTypeSize t) vals 0
+
+generateArray' :: Address -> Int -> Int -> [Address] -> Int -> [TAC]
+generateArray' a 0 size vals c = []
+generateArray' a x size vals  c = TacInstruction (IndexedCopyAssignment a (generateLit (TS.Base TS.INT) (IntVal (toInteger (c * size))) ) (head vals))
+    : generateArray' a (x-1) size (tail vals) (c+1)
 
 generateFuncDef :: Address -> [(String, (Int, Int), TS.Type)] -> TAC
 generateFuncDef f d = TacInstruction (FunctionDef (f : map (\(s, (x, y), t) -> generateAddr t (s++"@"++show x)) d))
@@ -140,6 +165,7 @@ printTAC (TacInstruction (UnaryOperation a1 a2 op) : xs) = "\t" ++ printAddr a1 
 printTAC (TacInstruction (NullaryOperation a1 a2) : xs) = "\t" ++ printAddr a1 ++ " = " ++ printAddr a2 ++ "\n" ++ printTAC xs
 printTAC (TacInstruction (UnconditionalJump (Label l)) : xs) = "\tgoto " ++ l ++ "\n" ++ printTAC xs
 printTAC (TacInstruction (ConditionalJump a1 (Label l)) : xs) = "\tifFalse " ++ printAddr a1 ++ " goto " ++ l ++ "\n" ++ printTAC xs
+printTAC (TacInstruction (IndexedCopyAssignment a1 a2 a3) : xs) = "\t" ++ printAddr a1 ++ "[" ++ printAddr a2 ++ "] = " ++ printAddr a3 ++ "\n" ++ printTAC xs
 printTAC (TacInstruction (FunctionDef (f:addrs)) : xs) = "def " ++ printAddr f ++ " (" ++ concatMap printAddr addrs  ++ ") {\n"++ printTAC xs
 printTAC (TacInstruction EndFunction : xs) = "}\n" ++ printTAC xs
 printTAC (TacInstruction (TAC.Return a) : xs) = "\treturn " ++ printAddr a ++ "\n" ++ printTAC xs
@@ -148,4 +174,3 @@ printTAC (TacInstruction (FunctionCall a f n) : xs) = "\t" ++ printAddr a ++ " =
 printTAC (TacInstruction (TAC.ProcedureCall p n) : xs) = "\tpcall " ++ printAddr p ++ " / " ++ show n ++ "\n" ++ printTAC xs
 printTAC (TacInstruction (FunctionParam a) : xs) = "\tparam " ++ printAddr a ++ "\n" ++ printTAC xs
 printTAC (TacInstruction NoOperation : xs) = "\t\n" ++ printTAC xs
-printTAC (x:xs) = show x ++ printTAC xs
