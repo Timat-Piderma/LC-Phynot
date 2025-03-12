@@ -33,7 +33,7 @@ data TACInstruction = BinaryOperation Address Address Address BinaryOp     -- l 
                     | NullaryOperation Address Address                     -- l = r
                     | UnconditionalJump Label                              -- goto label  
                     | ConditionalJump Address Label                        -- if r goto label
-                    | IndexedCopyAssignment Address Address Address        -- l = id[r2]  ;  id[r1] = r2
+                    | IndexedCopyAssignment Address Address Address        -- id[r1] = r2
                     | FunctionDef [Address]                                -- def r1 (r2, r3, ...) {
                     | EndFunction
                     | Return Address                                       -- return r
@@ -69,6 +69,10 @@ generateLit bt val = case (bt, val) of
     (TS.Base TS.STRING, StringVal s) -> TacLit (StringLit s) StringType
     _ -> error "Type and value do not match"
 
+mkArrayIndex :: Int -> [Int] -> [Int] -> Int -> Int
+mkArrayIndex tsize [] _ tot = tot
+mkArrayIndex tsize index arrsize tot = mkArrayIndex tsize (tail index) (tail arrsize) (head index * product (tail arrsize) * tsize + tot)
+
 generateArrayEmpty :: Address -> [Int] -> TS.Type -> [TAC]
 generateArrayEmpty a x t  = case t of
     (TS.Base TS.INT) -> generateArrayEmpty' a (product x) (TS.getTypeSize t) t (IntVal 0) 0
@@ -92,7 +96,7 @@ generateArray a x t vals = case t of
 
 generateArray' :: Address -> Int -> Int -> [Address] -> Int -> [TAC]
 generateArray' a 0 size vals c = []
-generateArray' a x size vals  c = TacInstruction (IndexedCopyAssignment a (generateLit (TS.Base TS.INT) (IntVal (toInteger (c * size))) ) (head vals))
+generateArray' a x size vals  c = TacInstruction (IndexedCopyAssignment a (generateLit (TS.Base TS.INT) (IntVal (toInteger (c * size)))) (head vals))
     : generateArray' a (x-1) size (tail vals) (c+1)
 
 generateFuncDef :: Address -> [(String, (Int, Int), TS.Type)] -> TAC
