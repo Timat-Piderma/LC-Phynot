@@ -334,7 +334,8 @@ Stm: BasicType Ident
   $$.addr = (TAC.generateAddr $$.btype ($2.ident ++ "@" ++ show (fst (posLineCol $2.pos))));
   $$.code = $5.code ++ TAC.generateArray $$.addr $3.arraydim $1.btype $5.listAddr;
 
-  $$.modifiedState = $$.state;
+  $$.modifiedState = $5.modifiedState;
+  $5.state = $$.state;
 }
   
   
