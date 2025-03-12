@@ -510,6 +510,11 @@ Stm: BasicType Ident
   $$.err = (Err.mkReturnErrs $$.env $2.btype ( posLineCol $$.pos)) ++ $2.err;
 
   $$.pos = (tokenPosn $1);
+
+  $$.code = $2.code ++ [TAC.TacInstruction (TAC.Return $2.addr)];
+
+  $$.modifiedState = $2.modifiedState;
+  $2.state = $$.state;
 }
   | 'return' 
 { 
@@ -519,6 +524,10 @@ Stm: BasicType Ident
 
   $$.err = (Err.mkReturnErrs $$.env $$.btype ( posLineCol $$.pos));
   $$.pos = (tokenPosn $1);
+
+  $$.code = [TAC.TacInstruction (TAC.ReturnVoid)];
+
+  $$.modifiedState = $$.state;
 }
 
 ----------------

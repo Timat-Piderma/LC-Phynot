@@ -36,6 +36,8 @@ data TACInstruction = BinaryOperation Address Address Address BinaryOp     -- l 
                     | ReferenceAssignment Address Address                  -- l = &id  ;  l1 = *l2  ;  *l = r
                     | FunctionDef [Address]                                -- def r1 (r2, r3, ...) {
                     | EndFunction
+                    | Return Address                                       -- return r
+                    | ReturnVoid                                           -- return
                     | FunctionCall Address Address Int                     -- r = fcall fun / n
                     | ProcedureCall Address Int                            -- pcall proc / n
                     | FunctionParam Address                                -- param r 
@@ -134,6 +136,8 @@ printTAC (TacInstruction (UnconditionalJump (Label l)) : xs) = "\tgoto " ++ l ++
 printTAC (TacInstruction (ConditionalJump a1 (Label l)) : xs) = "\tifFalse " ++ printAddr a1 ++ " goto " ++ l ++ "\n" ++ printTAC xs
 printTAC (TacInstruction (FunctionDef (f:addrs)) : xs) = "def " ++ printAddr f ++ " (" ++ concatMap printAddr addrs  ++ ") {\n"++ printTAC xs
 printTAC (TacInstruction EndFunction : xs) = "}\n" ++ printTAC xs
+printTAC (TacInstruction (TAC.Return a) : xs) = "\treturn " ++ printAddr a ++ "\n" ++ printTAC xs
+printTAC (TacInstruction ReturnVoid : xs) = "\treturn\n" ++ printTAC xs
 printTAC (TacInstruction (FunctionCall a f n) : xs) = "\t" ++ printAddr a ++ " = fcall " ++ printAddr f ++ " / " ++ show n ++ "\n" ++ printTAC xs
 printTAC (TacInstruction (TAC.ProcedureCall p n) : xs) = "\tpcall " ++ printAddr p ++ " / " ++ show n ++ "\n" ++ printTAC xs
 printTAC (TacInstruction (FunctionParam a) : xs) = "\tparam " ++ printAddr a ++ "\n" ++ printTAC xs
