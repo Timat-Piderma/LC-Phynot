@@ -341,6 +341,11 @@ Stm: BasicType Ident
   $$.ident = $3.ident;
   $$.pos = $3.pos;
   $$.btype = (TS.POINTER $1.btype);
+
+  $$.addr = (TAC.generateAddr $1.btype ($3.ident ++ "@" ++ show (fst (posLineCol $3.pos))));
+  $$.code = [];
+
+  $$.modifiedState = $$.state;
 }
   | BasicType '*' Ident '=' RExp 
 {  
@@ -351,6 +356,12 @@ Stm: BasicType Ident
   $$.pos = $3.pos;
   $$.btype = (TS.POINTER $1.btype) ;
   $5.env = $$.env; 
+
+  $$.addr = (TAC.generateAddr $1.btype ($3.ident ++ "@" ++ show (fst (posLineCol $3.pos))));
+  $$.code = $5.code ++ [TAC.TacInstruction (TAC.NullaryOperation $$.addr $5.addr)];
+
+  $$.modifiedState = $5.modifiedState;
+  $5.state = $$.state;
 }
 
 ---------------
