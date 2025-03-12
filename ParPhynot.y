@@ -565,8 +565,12 @@ Stm: BasicType Ident
   $3.env = $$.env;
   $1.env = $$.env;
 
-  $$.addr = E.getAddr $1.ident $$.env;
-  $$.code = $3.code ++ [TAC.TacInstruction (TAC.NullaryOperation $$.addr $3.addr)];
+  $$.code = if TS.isArray (E.getArrayType $1.ident $$.env)
+          then if TS.isArray $3.btype
+              then $3.code ++ TAC.generateArray $1.addr $3.arraydim (TS.getArrayCurrentType $3.btype $3.arraylen) $3.listAddr
+              else $3.code ++ [TAC.TacInstruction (TAC.IndexedCopyAssignment $1.addr 
+            (TAC.generateLit (TS.Base TS.INT) (TAC.IntVal (toInteger (TAC.mkArrayIndex (TS.getTypeSize $1.btype) $1.arraydim (E.getArrayLength $1.ident $$.env) 0)))) $3.addr)]
+          else $3.code ++ [TAC.TacInstruction (TAC.NullaryOperation $1.addr $3.addr)];
 
   $$.modifiedState = $3.modifiedState;
   $3.state = $$.state;
@@ -864,6 +868,8 @@ LExp: Ident
             else E.getVarType $1.ident $$.env;
   $$.pos = $1.pos;
 
+  $$.addr = E.getAddr $1.ident $$.env;
+
   $$.err = [];
 }
   | Ident ListDim 
@@ -877,11 +883,16 @@ LExp: Ident
             else if TS.isERROR (TS.getArrayCurrentType (E.getArrayType $1.ident $$.env) (length($2.arraydim)))
               then Err.mkError ("Array " ++ $$.ident ++" has " ++ show(E.getArrayDim $$.ident $$.env) ++ " dimension/s but there are " ++ show (length($2.arraydim)) ++ " indexes") (posLineCol $1.pos)
               else TS.getArrayCurrentType (E.getArrayType $1.ident $$.env) (length($2.arraydim));
+  $$.pos = $1.pos;
 
   $2.arraytype = (E.getArrayType $1.ident $$.env);
 
+  $$.arraydim = $2.arraydim;
+
+  $$.addr = E.getAddr $1.ident $$.env;
+
   $$.err = $2.err;
-  $$.pos = $1.pos;
+
 }
 
 -----------------------
