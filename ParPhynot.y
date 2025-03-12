@@ -1232,6 +1232,12 @@ RExp6 : '&' RExp7
             else (TS.ADDRESS $2.btype);
             
   $$.pos = $2.pos;
+
+  $$.addr = TAC.newtemp $2.modifiedState $$.btype;
+  $$.code = $2.code ++ [TAC.TacInstruction (TAC.UnaryOperation $$.addr $2.addr (TAC.Ref))];
+
+  $$.modifiedState = TAC.incrementTemp $2.modifiedState;
+  $2.state = $$.state;
 } 
   | '*' RExp7 
 { 
@@ -1244,6 +1250,12 @@ RExp6 : '&' RExp7
             else TS.getDereferencedType $2.btype;
 
   $$.pos = $2.pos;
+
+  $$.addr = TAC.newtemp $2.modifiedState $$.btype;
+  $$.code = $2.code ++ [TAC.TacInstruction (TAC.UnaryOperation $$.addr $2.addr (TAC.Deref))];
+
+  $$.modifiedState = TAC.incrementTemp $2.modifiedState;
+  $2.state = $$.state;
 }
   | '-' RExp7 
 { 

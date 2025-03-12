@@ -26,6 +26,7 @@ data Label = Label String
     deriving (Eq, Show)
 
 data TAC = TacInstruction TACInstruction | LabelledInstruction Label TACInstruction
+    deriving (Eq, Show)
 
 data TACInstruction = BinaryOperation Address Address Address BinaryOp     -- l = r1 bop r2
                     | UnaryOperation Address Address UnaryOp               -- l = uop r
@@ -47,7 +48,7 @@ data TACInstruction = BinaryOperation Address Address Address BinaryOp     -- l 
 data BinaryOp = Add | Sub | Mul | Exp | Div | Mod | Eq | Ne | Lt | Le | Gt | Ge | And | Or
     deriving (Eq, Show)
 
-data UnaryOp = Neg | Not
+data UnaryOp = Neg | Not | Ref | Deref
     deriving (Eq, Show)
 
 generateAddr :: TS.Type -> String -> Address
@@ -93,6 +94,9 @@ newtemp (k, l) t = case t of
     TS.Base TS.BOOL -> Temporary ("t" ++ show k) BooleanType
     TS.Base TS.CHAR -> Temporary ("t" ++ show k) CharType
     TS.Base TS.STRING -> Temporary ("t" ++ show k) StringType
+    TS.ADDRESS _ -> Temporary ("t" ++ show k) MemoryAddressType
+    TS.POINTER _ -> Temporary ("t" ++ show k) MemoryAddressType
+
 
 newLabel :: State -> Label
 newLabel (k, l) = Label ("L" ++ show l)
@@ -116,6 +120,8 @@ printBinaryOp TAC.Or = "||"
 printUnaryOp :: UnaryOp -> String
 printUnaryOp TAC.Neg = "-"
 printUnaryOp TAC.Not = "!"
+printUnaryOp TAC.Ref = "&"
+printUnaryOp TAC.Deref = "*"
 
 printAddr :: Address -> String
 printAddr (ProgVar (ProgVariable s) _) = s
@@ -142,3 +148,4 @@ printTAC (TacInstruction (FunctionCall a f n) : xs) = "\t" ++ printAddr a ++ " =
 printTAC (TacInstruction (TAC.ProcedureCall p n) : xs) = "\tpcall " ++ printAddr p ++ " / " ++ show n ++ "\n" ++ printTAC xs
 printTAC (TacInstruction (FunctionParam a) : xs) = "\tparam " ++ printAddr a ++ "\n" ++ printTAC xs
 printTAC (TacInstruction NoOperation : xs) = "\t\n" ++ printTAC xs
+printTAC (x:xs) = show x ++ printTAC xs
