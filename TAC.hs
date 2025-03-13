@@ -33,7 +33,8 @@ data TACInstruction = BinaryOperation Address Address Address BinaryOp     -- l 
                     | NullaryOperation Address Address                     -- l = r
                     | UnconditionalJump Label                              -- goto label  
                     | ConditionalJump Address Label                        -- if r goto label
-                    | IndexedCopyAssignment Address Address Address        -- id[r1] = r2
+                    | IndexedAssignment Address Address Address            -- id[r1] = r2
+                    | IndexedCopyAssignment Address Address Address        -- r1 = id[r2]
                     | FunctionDef [Address]                                -- def r1 (r2, r3, ...) {
                     | EndFunction
                     | Return Address                                       -- return r
@@ -83,7 +84,7 @@ generateArrayEmpty a x t  = case t of
 
 generateArrayEmpty' :: Address -> Int -> Int -> TS.Type -> Value -> Int -> [TAC]
 generateArrayEmpty' a 0 size t val c = []
-generateArrayEmpty' a x size t val c = TacInstruction (IndexedCopyAssignment a (generateLit (TS.Base TS.INT) (IntVal (toInteger (c * size)))) (generateLit t val))
+generateArrayEmpty' a x size t val c = TacInstruction (IndexedAssignment a (generateLit (TS.Base TS.INT) (IntVal (toInteger (c * size)))) (generateLit t val))
     : generateArrayEmpty' a (x-1) size t val (c+1)
 
 generateArray :: Address -> [Int] -> TS.Type -> [Address] -> [TAC]
@@ -96,7 +97,7 @@ generateArray a x t vals = case t of
 
 generateArray' :: Address -> Int -> Int -> [Address] -> Int -> [TAC]
 generateArray' a 0 size vals c = []
-generateArray' a x size vals  c = TacInstruction (IndexedCopyAssignment a (generateLit (TS.Base TS.INT) (IntVal (toInteger (c * size)))) (head vals))
+generateArray' a x size vals  c = TacInstruction (IndexedAssignment a (generateLit (TS.Base TS.INT) (IntVal (toInteger (c * size)))) (head vals))
     : generateArray' a (x-1) size (tail vals) (c+1)
 
 generateFuncDef :: Address -> [(String, (Int, Int), TS.Type)] -> TAC
@@ -169,7 +170,8 @@ printTAC (TacInstruction (UnaryOperation a1 a2 op) : xs) = "\t" ++ printAddr a1 
 printTAC (TacInstruction (NullaryOperation a1 a2) : xs) = "\t" ++ printAddr a1 ++ " = " ++ printAddr a2 ++ "\n" ++ printTAC xs
 printTAC (TacInstruction (UnconditionalJump (Label l)) : xs) = "\tgoto " ++ l ++ "\n" ++ printTAC xs
 printTAC (TacInstruction (ConditionalJump a1 (Label l)) : xs) = "\tifFalse " ++ printAddr a1 ++ " goto " ++ l ++ "\n" ++ printTAC xs
-printTAC (TacInstruction (IndexedCopyAssignment a1 a2 a3) : xs) = "\t" ++ printAddr a1 ++ "[" ++ printAddr a2 ++ "] = " ++ printAddr a3 ++ "\n" ++ printTAC xs
+printTAC (TacInstruction (IndexedAssignment a1 a2 a3) : xs) = "\t" ++ printAddr a1 ++ "[" ++ printAddr a2 ++ "] = " ++ printAddr a3 ++ "\n" ++ printTAC xs
+printTAC (TacInstruction (IndexedCopyAssignment a1 a2 a3) : xs) = "\t" ++ printAddr a1 ++ " = " ++ printAddr a2 ++ "[" ++ printAddr a3 ++ "]\n" ++ printTAC xs
 printTAC (TacInstruction (FunctionDef (f:addrs)) : xs) = "def " ++ printAddr f ++ " (" ++ concatMap printAddr addrs  ++ ") {\n"++ printTAC xs
 printTAC (TacInstruction EndFunction : xs) = "}\n" ++ printTAC xs
 printTAC (TacInstruction (TAC.Return a) : xs) = "\treturn " ++ printAddr a ++ "\n" ++ printTAC xs

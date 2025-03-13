@@ -568,7 +568,7 @@ Stm: BasicType Ident
   $$.code = if TS.isArray (E.getArrayType $1.ident $$.env)
           then if TS.isArray $3.btype
               then $3.code ++ TAC.generateArray $1.addr $3.arraydim (TS.getArrayCurrentType $3.btype $3.arraylen) $3.listAddr
-              else $3.code ++ [TAC.TacInstruction (TAC.IndexedCopyAssignment $1.addr 
+              else $3.code ++ [TAC.TacInstruction (TAC.IndexedAssignment $1.addr 
             (TAC.generateLit (TS.Base TS.INT) (TAC.IntVal (toInteger (TAC.mkArrayIndex (TS.getTypeSize $1.btype) $1.arraydim (E.getArrayLength $1.ident $$.env) 0)))) $3.addr)]
           else $3.code ++ [TAC.TacInstruction (TAC.NullaryOperation $1.addr $3.addr)];
 
@@ -739,6 +739,9 @@ Dim : '[' RExp ']'
   $$.arraylen = if TS.isInt $2.btype 
               then read $2.ident :: Int 
               else 0;
+
+  $$.modifiedState = $2.modifiedState;
+  $2.state = $$.state;
 }
 
 ListDim : Dim 
@@ -750,6 +753,9 @@ ListDim : Dim
   $$.arraydim = [$1.arraylen];
 
   $$.err = $1.err;
+
+  $$.modifiedState = $1.modifiedState;
+  $1.state = $$.state;
 } 
 | Dim ListDim 
 {  
@@ -762,6 +768,10 @@ ListDim : Dim
   $2.arraytype = $$.arraytype;
 
   $$.err = $1.err ++ $2.err;
+
+  $$.modifiedState = $2.modifiedState;
+  $1.state = $$.state;
+  $2.state = $1.modifiedState;
 }
 
 Arr : ListArrEntry 
@@ -1444,6 +1454,14 @@ RExp7 : Integer
 
   $$.err = $2.err;
   $$.pos = $1.pos;
+
+  $$.addr = TAC.newtemp $2.modifiedState $$.btype;
+  $$.code = [TAC.TacInstruction (TAC.IndexedCopyAssignment $$.addr (E.getAddr $1.ident $$.env) (TAC.generateLit (TS.Base TS.INT) 
+    (TAC.IntVal (toInteger (TAC.mkArrayIndex (TS.getTypeSize (TS.getArrayCurrentType (E.getArrayType $1.ident $$.env) (E.getArrayDim $1.ident $$.env))) 
+    $2.arraydim (E.getArrayLength $1.ident $$.env) 0)))))];
+
+  $$.modifiedState = TAC.incrementTemp $2.modifiedState;
+  $2.state = $$.state;
 }
   | Ident '(' ListRExp ')' 
 {  
