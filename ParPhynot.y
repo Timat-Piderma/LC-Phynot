@@ -383,6 +383,9 @@ Stm: BasicType Ident
 
   $4.funcName = $2.ident;
 
+  $$.code = [];
+  $$.modifiedState = $$.state;
+
   $$.err = $4.err ++ (Err.mkPrototypeErrs $1.btype $$.env $2.ident $4.paramTypes (posLineCol ($2.pos)));
 
 }
@@ -391,6 +394,9 @@ Stm: BasicType Ident
   $$.attr = Abs.FunctionNoParamPrototype $1.attr $2.attr; 
   
   $$.modifiedEnv = E.insertPrototype $2.ident (posLineCol ($2.pos)) $1.btype [] $$.env;
+
+  $$.code = [];
+  $$.modifiedState = $$.state;
 
   $$.err = (Err.mkPrototypeErrs $2.btype $$.env $2.ident [] (posLineCol ($2.pos)));
 }
@@ -403,6 +409,9 @@ Stm: BasicType Ident
 
   $4.funcName = $2.ident;
 
+  $$.code = [];
+  $$.modifiedState = $$.state;
+
   $$.err = $4.err ++ (Err.mkPrototypeErrs (TS.Base TS.NONE) $$.env $2.ident $4.paramTypes (posLineCol ($2.pos)));
 }
   | 'None' Ident '()' 
@@ -410,6 +419,9 @@ Stm: BasicType Ident
   $$.attr = Abs.ProcedureNoParamPrototype $2.attr; 
   
   $$.modifiedEnv = E.insertPrototype $2.ident (posLineCol ($2.pos)) (TS.Base TS.NONE) [] $$.env;
+
+  $$.code = [];
+  $$.modifiedState = $$.state;
 
   $$.err = (Err.mkPrototypeErrs (TS.Base TS.NONE) $$.env $2.ident [] (posLineCol ($2.pos)));
 }
