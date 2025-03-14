@@ -39,9 +39,12 @@ run v p s =
       exitFailure
     Right (Result prog errs tac) -> do
       putStrLn "\nParse Successful!"
+      
       showTree v prog
+      putStrLn "\n[Errors]\n"
       showErrors v errs
-      showTAC v tac
+      putStrLn "\n[TAC]\n"
+      if null errs then showTAC v tac else putStrLn "TAC not generated: errors found.\n"
   where
   ts = myLexer s
   showPosToken ((l,c),t) = concat [ show l, ":", show c, "\t", show t ]
@@ -53,11 +56,11 @@ showTree v tree = do
 
 showErrors :: (Show a, Print a) => Int -> a -> IO ()
 showErrors v tree = do
-  putStrV v $ "\n[Errors]\n\n" ++ show tree
+  putStrV v $ show tree
 
 showTAC :: Int -> [TAC] -> IO ()
 showTAC v tac = do
-  putStrV v $ "\n[TAC]\n\n" ++ printTAC tac
+  putStrV v $ printTAC tac
 
 usage :: IO ()
 usage = do
