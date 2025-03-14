@@ -730,7 +730,7 @@ Param : BasicType Ident
 {  
   $$.attr = Abs.Parameter $1.attr $2.attr; 
 
-  $$.modifiedEnv = E.insertVar $2.ident (posLineCol $$.pos) $1.btype $$.addr $$.env;
+  $$.modifiedEnv = E.insertVar $2.ident (posLineCol $$.pos) $1.btype (TAC.generateAddr $$.btype ($2.ident ++ "@" ++ show (fst (posLineCol $2.pos)))) $$.env;
   $$.pos = $2.pos;
 
   $$.err = Err.mkParamErrs $2.ident $$.funcName $$.env (posLineCol $$.pos);
