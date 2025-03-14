@@ -28,28 +28,105 @@ data Label = Label String
 data TAC = TacInstruction TACInstruction | LabelledInstruction Label TACInstruction
     deriving (Eq, Show)
 
-data TACInstruction = BinaryOperation Address Address Address BinaryOp     -- l = r1 bop r2
-                    | UnaryOperation Address Address UnaryOp               -- l = uop r
-                    | NullaryOperation Address Address                     -- l = r
-                    | UnconditionalJump Label                              -- goto label  
-                    | ConditionalJump Address Label                        -- if r goto label
-                    | IndexedAssignment Address Address Address            -- id[r1] = r2
-                    | IndexedCopyAssignment Address Address Address        -- r1 = id[r2]
-                    | FunctionDef [Address]                                -- def r1 (r2, r3, ...) {
+data TACInstruction = BinaryOperation TACBasicType Address Address Address TypedBinaryOp    -- l = r1 bop r2
+                    | UnaryOperation Address Address UnaryOp                                -- l = uop r
+                    | NullaryOperation Address Address                                      -- l = r
+                    | UnconditionalJump Label                                               -- goto label  
+                    | ConditionalJump Address Label                                         -- if r goto label
+                    | IndexedAssignment Address Address Address                             -- id[r1] = r2
+                    | IndexedCopyAssignment Address Address Address                         -- r1 = id[r2]
+                    | FunctionDef [Address]                                                 -- def r1 (r2, r3, ...) {
                     | EndFunction
-                    | Return Address                                       -- return r
-                    | ReturnVoid                                           -- return
-                    | FunctionCall Address Address Int                     -- r = fcall fun / n
-                    | ProcedureCall Address Int                            -- pcall proc / n
-                    | FunctionParam Address                                -- param r 
-                    | NoOperation                                          -- nop
+                    | Return Address                                                        -- return r
+                    | ReturnVoid                                                            -- return
+                    | FunctionCall Address Address Int                                      -- r = fcall fun / n
+                    | ProcedureCall Address Int                                             -- pcall proc / n
+                    | FunctionParam Address                                                 -- param r 
+                    | NoOperation                                                           -- nop
     deriving (Eq, Show)
 
 data BinaryOp = Add | Sub | Mul | Exp | Div | Mod | Eq | Ne | Lt | Le | Gt | Ge | And | Or
     deriving (Eq, Show)
 
+data TypedBinaryOp = AddInt | SubInt | MulInt | DivInt | ExpInt | 
+                    AddFloat | SubFloat | MulFloat | DivFloat | ExpFloat |
+                    EqInt | EqFloat | EqBool | EqChar | EqString |
+                    NeInt | NeFloat | NeBool | NeChar | NeString |
+                    LtInt | LtFloat | LtChar | LeInt | LeFloat | LeChar |
+                    GtInt | GtFloat | GtChar | GeInt | GeFloat | GeChar |
+                    AndBool | OrBool
+    deriving (Eq, Show)
+
 data UnaryOp = Neg | Not | Ref | Deref
     deriving (Eq, Show)
+
+toTacType :: TS.Type -> TACBasicType
+toTacType t = case t of
+    TS.Base TS.INT -> IntegerType
+    TS.Base TS.FLOAT -> FloatType
+    TS.Base TS.BOOL -> BooleanType
+    TS.Base TS.CHAR -> CharType
+    TS.Base TS.STRING -> StringType
+    TS.ADDRESS _ -> MemoryAddressType
+    TS.POINTER _ -> MemoryAddressType
+
+binop :: TS.Type -> BinaryOp -> TypedBinaryOp
+binop t TAC.Add = case t of
+    TS.Base TS.INT -> AddInt
+    TS.Base TS.FLOAT -> AddFloat
+
+binop t TAC.Sub = case t of
+    TS.Base TS.INT -> SubInt
+    TS.Base TS.FLOAT -> SubFloat
+
+binop t TAC.Mul = case t of
+    TS.Base TS.INT -> MulInt
+    TS.Base TS.FLOAT -> MulFloat
+
+binop t TAC.Div = case t of
+    TS.Base TS.INT -> DivInt
+    TS.Base TS.FLOAT -> DivFloat
+
+binop t TAC.Exp = case t of
+    TS.Base TS.INT -> ExpInt
+    TS.Base TS.FLOAT -> ExpFloat
+
+binop t TAC.Eq = case t of
+    TS.Base TS.INT -> EqInt
+    TS.Base TS.FLOAT -> EqFloat
+    TS.Base TS.BOOL -> EqBool
+    TS.Base TS.CHAR -> EqChar
+    TS.Base TS.STRING -> EqString
+
+binop t TAC.Ne = case t of
+    TS.Base TS.INT -> NeInt
+    TS.Base TS.FLOAT -> NeFloat
+    TS.Base TS.BOOL -> NeBool
+    TS.Base TS.CHAR -> NeChar
+    TS.Base TS.STRING -> NeString
+
+binop t TAC.Lt = case t of
+    TS.Base TS.INT -> LtInt
+    TS.Base TS.FLOAT -> LtFloat
+    TS.Base TS.CHAR -> LtChar
+
+binop t TAC.Le = case t of
+    TS.Base TS.INT -> LeInt
+    TS.Base TS.FLOAT -> LeFloat
+    TS.Base TS.CHAR -> LeChar
+
+binop t TAC.Gt = case t of
+    TS.Base TS.INT -> GtInt
+    TS.Base TS.FLOAT -> GtFloat
+    TS.Base TS.CHAR -> GtChar
+
+binop t TAC.Ge = case t of
+    TS.Base TS.INT -> GeInt
+    TS.Base TS.FLOAT -> GeFloat
+    TS.Base TS.CHAR -> GeChar
+
+binop _ TAC.And = AndBool
+binop _ TAC.Or = OrBool
 
 generateAddr :: TS.Type -> String -> Address
 generateAddr bt s = case bt of
@@ -131,21 +208,52 @@ newtemp (k, l) t = case t of
 newLabel :: State -> Label
 newLabel (k, l) = Label ("L" ++ show l)
 
-printBinaryOp :: BinaryOp -> String
-printBinaryOp TAC.Add = "+"
-printBinaryOp TAC.Sub = "-"
-printBinaryOp TAC.Mul = "*"
-printBinaryOp TAC.Exp = "^"
-printBinaryOp TAC.Div = "/"
-printBinaryOp TAC.Mod = "%"
-printBinaryOp TAC.Eq = "=="
-printBinaryOp TAC.Ne = "!="
-printBinaryOp TAC.Lt = "<"
-printBinaryOp TAC.Le = "<="
-printBinaryOp TAC.Gt = ">"
-printBinaryOp TAC.Ge = ">="
-printBinaryOp TAC.And = "&&"
-printBinaryOp TAC.Or = "||"
+tacTypeToString :: TACBasicType -> String
+tacTypeToString IntegerType = "int"
+tacTypeToString FloatType = "float"
+tacTypeToString BooleanType = "bool"
+tacTypeToString CharType = "char"
+tacTypeToString StringType = "string"
+tacTypeToString MemoryAddressType = "memory"
+
+printBinaryOp :: TypedBinaryOp -> String
+printBinaryOp AddInt = "add_int"
+printBinaryOp SubInt = "sub_int"
+printBinaryOp MulInt = "mul_int"
+printBinaryOp DivInt = "div_int"
+printBinaryOp ExpInt = "exp_int"
+printBinaryOp AddFloat = "add_float"
+printBinaryOp SubFloat = "sub_float"
+printBinaryOp MulFloat = "mul_float"
+printBinaryOp DivFloat = "div_float"
+printBinaryOp ExpFloat = "exp_float"
+
+printBinaryOp EqInt = "eq_int"
+printBinaryOp EqFloat = "eq_float"
+printBinaryOp EqBool = "eq_bool"
+printBinaryOp EqChar = "eq_char"
+printBinaryOp EqString = "eq_string"
+
+printBinaryOp NeInt = "ne_int"
+printBinaryOp NeFloat = "ne_float"
+printBinaryOp NeBool = "ne_bool"
+printBinaryOp NeChar = "ne_char"
+printBinaryOp NeString = "ne_string"
+printBinaryOp LtInt = "lt_int"
+printBinaryOp LtFloat = "lt_float"
+printBinaryOp LtChar = "lt_char"
+printBinaryOp LeInt = "le_int"
+printBinaryOp LeFloat = "le_float"
+printBinaryOp LeChar = "le_char"
+printBinaryOp GtInt = "gt_int"
+printBinaryOp GtFloat = "gt_float"
+printBinaryOp GtChar = "gt_char"
+printBinaryOp GeInt = "ge_int"
+printBinaryOp GeFloat = "ge_float"
+printBinaryOp GeChar = "ge_char"
+
+printBinaryOp AndBool = "and_bool"
+printBinaryOp OrBool = "or_bool"
 
 printUnaryOp :: UnaryOp -> String
 printUnaryOp TAC.Neg = "-"
@@ -162,21 +270,30 @@ printAddr (TacLit (CharLit c) _) = show c
 printAddr (TacLit (StringLit s) _) = s
 printAddr (Temporary s _) = s
 
+printTypedAddr :: Address -> String
+printTypedAddr (ProgVar (ProgVariable s) t) = tacTypeToString t ++ "_" ++ s
+printTypedAddr (TacLit (IntLit i) _) = "int_" ++ show i
+printTypedAddr (TacLit (FloatLit d) _) = "float_" ++ show d
+printTypedAddr (TacLit (BoolLit b) _) = "bool_" ++ show b
+printTypedAddr (TacLit (CharLit c) _) = "char_" ++ show c
+printTypedAddr (TacLit (StringLit s) _) = "string_" ++ s
+printTypedAddr (Temporary s t) = tacTypeToString t ++ "_" ++ s
+
 printTAC :: [TAC] -> String
 printTAC [] = ""
 printTAC (LabelledInstruction (Label l) i : xs) = l ++ ":" ++ printTAC (TacInstruction i : xs)
-printTAC (TacInstruction (BinaryOperation a1 a2 a3 op) : xs) = "\t" ++ printAddr a1 ++ " = " ++ printAddr a2 ++ " " ++ printBinaryOp op ++ " " ++ printAddr a3 ++ "\n" ++ printTAC xs
-printTAC (TacInstruction (UnaryOperation a1 a2 op) : xs) = "\t" ++ printAddr a1 ++ " = " ++ printUnaryOp op ++ " " ++ printAddr a2 ++ "\n" ++ printTAC xs
-printTAC (TacInstruction (NullaryOperation a1 a2) : xs) = "\t" ++ printAddr a1 ++ " = " ++ printAddr a2 ++ "\n" ++ printTAC xs
+printTAC (TacInstruction (BinaryOperation t a1 a2 a3 op) : xs) = "\t" ++ printAddr a1 ++ " = " ++ printTypedAddr a2 ++ " " ++ printBinaryOp op ++ " " ++ printTypedAddr a3 ++ "\n" ++ printTAC xs
+printTAC (TacInstruction (UnaryOperation a1 a2 op) : xs) = "\t" ++ printAddr a1 ++ " = " ++ printUnaryOp op ++ " " ++ printTypedAddr a2 ++ "\n" ++ printTAC xs
+printTAC (TacInstruction (NullaryOperation a1 a2) : xs) = "\t" ++ printAddr a1 ++ " = " ++ printTypedAddr a2 ++ "\n" ++ printTAC xs
 printTAC (TacInstruction (UnconditionalJump (Label l)) : xs) = "\tgoto " ++ l ++ "\n" ++ printTAC xs
 printTAC (TacInstruction (ConditionalJump a1 (Label l)) : xs) = "\tifFalse " ++ printAddr a1 ++ " goto " ++ l ++ "\n" ++ printTAC xs
-printTAC (TacInstruction (IndexedAssignment a1 a2 a3) : xs) = "\t" ++ printAddr a1 ++ "[" ++ printAddr a2 ++ "] = " ++ printAddr a3 ++ "\n" ++ printTAC xs
-printTAC (TacInstruction (IndexedCopyAssignment a1 a2 a3) : xs) = "\t" ++ printAddr a1 ++ " = " ++ printAddr a2 ++ "[" ++ printAddr a3 ++ "]\n" ++ printTAC xs
-printTAC (TacInstruction (FunctionDef (f:addrs)) : xs) = "def " ++ printAddr f ++ " (" ++ concatMap printAddr addrs  ++ ") {\n"++ printTAC xs
+printTAC (TacInstruction (IndexedAssignment a1 a2 a3) : xs) = "\t" ++ printAddr a1 ++ "[" ++ printAddr a2 ++ "] = " ++ printTypedAddr a3 ++ "\n" ++ printTAC xs
+printTAC (TacInstruction (IndexedCopyAssignment a1 a2 a3) : xs) = "\t" ++ printAddr a1 ++ " = " ++ printTypedAddr a2 ++ "[" ++ printAddr a3 ++ "]\n" ++ printTAC xs
+printTAC (TacInstruction (FunctionDef (f:addrs)) : xs) = "def " ++ printAddr f ++ " (" ++ concatMap printTypedAddr addrs  ++ ") {\n"++ printTAC xs
 printTAC (TacInstruction EndFunction : xs) = "}\n" ++ printTAC xs
-printTAC (TacInstruction (TAC.Return a) : xs) = "\treturn " ++ printAddr a ++ "\n" ++ printTAC xs
+printTAC (TacInstruction (TAC.Return a) : xs) = "\treturn " ++ printTypedAddr a ++ "\n" ++ printTAC xs
 printTAC (TacInstruction ReturnVoid : xs) = "\treturn\n" ++ printTAC xs
-printTAC (TacInstruction (FunctionCall a f n) : xs) = "\t" ++ printAddr a ++ " = fcall " ++ printAddr f ++ " / " ++ show n ++ "\n" ++ printTAC xs
-printTAC (TacInstruction (TAC.ProcedureCall p n) : xs) = "\tpcall " ++ printAddr p ++ " / " ++ show n ++ "\n" ++ printTAC xs
-printTAC (TacInstruction (FunctionParam a) : xs) = "\tparam " ++ printAddr a ++ "\n" ++ printTAC xs
+printTAC (TacInstruction (FunctionCall a f n) : xs) = "\t" ++ printAddr a ++ " = fcall " ++ printTypedAddr f ++ " / " ++ show n ++ "\n" ++ printTAC xs
+printTAC (TacInstruction (TAC.ProcedureCall p n) : xs) = "\tpcall " ++ printTypedAddr p ++ " / " ++ show n ++ "\n" ++ printTAC xs
+printTAC (TacInstruction (FunctionParam a) : xs) = "\tparam " ++ printTypedAddr a ++ "\n" ++ printTAC xs
 printTAC (TacInstruction NoOperation : xs) = "\t\n" ++ printTAC xs
