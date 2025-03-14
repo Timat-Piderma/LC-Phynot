@@ -10,7 +10,7 @@ data Address = ProgVar{ progVar :: ProgVariable, addrBT :: TACBasicType}
             | Temporary{ tempName :: String, addrBT :: TACBasicType}
     deriving (Eq, Show)
 
-data TACBasicType = IntegerType | FloatType | CharType | BooleanType | StringType | MemoryAddressType
+data TACBasicType = IntegerType | FloatType | CharType | BooleanType | StringType | MemoryAddressType | NoneType
     deriving (Eq, Show)
 
 data Literal = IntLit Integer | FloatLit Double | BoolLit Bool | CharLit Char | StringLit String
@@ -135,6 +135,7 @@ generateAddr bt s = case bt of
     TS.Base TS.BOOL -> ProgVar (ProgVariable s) BooleanType
     TS.Base TS.CHAR -> ProgVar (ProgVariable s) CharType
     TS.Base TS.STRING -> ProgVar (ProgVariable s) StringType
+    TS.Base TS.NONE -> ProgVar (ProgVariable s) NoneType
     TS.ARRAY _ -> ProgVar (ProgVariable s) MemoryAddressType
     _ -> ProgVar (ProgVariable s) MemoryAddressType
 
@@ -214,6 +215,7 @@ tacTypeToString FloatType = "float"
 tacTypeToString BooleanType = "bool"
 tacTypeToString CharType = "char"
 tacTypeToString StringType = "string"
+tacTypeToString NoneType = "none"
 tacTypeToString MemoryAddressType = "memory"
 
 printBinaryOp :: TypedBinaryOp -> String
@@ -289,10 +291,10 @@ printTAC (TacInstruction (UnconditionalJump (Label l)) : xs) = "\tgoto " ++ l ++
 printTAC (TacInstruction (ConditionalJump a1 (Label l)) : xs) = "\tifFalse " ++ printAddr a1 ++ " goto " ++ l ++ "\n" ++ printTAC xs
 printTAC (TacInstruction (IndexedAssignment a1 a2 a3) : xs) = "\t" ++ printAddr a1 ++ "[" ++ printAddr a2 ++ "] = " ++ printTypedAddr a3 ++ "\n" ++ printTAC xs
 printTAC (TacInstruction (IndexedCopyAssignment a1 a2 a3) : xs) = "\t" ++ printAddr a1 ++ " = " ++ printTypedAddr a2 ++ "[" ++ printAddr a3 ++ "]\n" ++ printTAC xs
-printTAC (TacInstruction (FunctionDef (f:addrs)) : xs) = "def " ++ printAddr f ++ " (" ++ concatMap printTypedAddr addrs  ++ ") {\n"++ printTAC xs
+printTAC (TacInstruction (FunctionDef (f:addrs)) : xs) = "def " ++ printTypedAddr f ++ " (" ++ concatMap printTypedAddr addrs  ++ ") {\n"++ printTAC xs
 printTAC (TacInstruction EndFunction : xs) = "}\n" ++ printTAC xs
 printTAC (TacInstruction (TAC.Return a) : xs) = "\treturn " ++ printTypedAddr a ++ "\n" ++ printTAC xs
-printTAC (TacInstruction ReturnVoid : xs) = "\treturn\n" ++ printTAC xs
+printTAC (TacInstruction ReturnVoid : xs) = "\treturn_none\n" ++ printTAC xs
 printTAC (TacInstruction (FunctionCall a f n) : xs) = "\t" ++ printAddr a ++ " = fcall " ++ printTypedAddr f ++ " / " ++ show n ++ "\n" ++ printTAC xs
 printTAC (TacInstruction (TAC.ProcedureCall p n) : xs) = "\tpcall " ++ printTypedAddr p ++ " / " ++ show n ++ "\n" ++ printTAC xs
 printTAC (TacInstruction (FunctionParam a) : xs) = "\tparam " ++ printTypedAddr a ++ "\n" ++ printTAC xs
