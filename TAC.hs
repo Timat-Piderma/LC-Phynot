@@ -148,6 +148,10 @@ generateLit bt val = case (bt, val) of
     (TS.Base TS.STRING, StringVal s) -> TacLit (StringLit s) StringType
     _ -> error "Type and value do not match"
 
+isTACLit :: Address -> Bool
+isTACLit (TacLit _ _) = True
+isTACLit _ = False
+
 mkArrayIndex :: Int -> [Int] -> [Int] -> Int -> Int
 mkArrayIndex tsize [] _ tot = tot
 mkArrayIndex tsize index arrsize tot = mkArrayIndex tsize (tail index) (tail arrsize) (head index * product (tail arrsize) * tsize + tot)
@@ -204,6 +208,7 @@ newtemp (k, l) t = case t of
     TS.Base TS.STRING -> Temporary ("t" ++ show k) StringType
     TS.ADDRESS _ -> Temporary ("t" ++ show k) MemoryAddressType
     TS.POINTER _ -> Temporary ("t" ++ show k) MemoryAddressType
+    _ -> Temporary ("t" ++ show k) MemoryAddressType
 
 
 newLabel :: State -> Label
