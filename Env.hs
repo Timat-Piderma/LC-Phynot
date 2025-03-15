@@ -14,6 +14,12 @@ data EnvEntity =
     btype :: Type,
     addr :: Address
     }
+    |Constant {
+    id :: String,
+    pos :: (Int, Int),
+    btype :: Type,
+    addr :: Address
+    }
     | Array {
     id :: String,
     pos :: (Int, Int),
@@ -69,6 +75,11 @@ insertVar :: String -> (Int, Int) -> Type -> Address -> EnvT -> EnvT
 insertVar varName varPos varType addr env= if containsEntry varName env
     then env
     else Map.insert varName (mkVar varName varPos varType addr) env 
+
+insertConst :: String -> (Int, Int) -> Type -> Address -> EnvT -> EnvT
+insertConst cosName varPos varType addr env = if containsEntry cosName env
+    then env
+    else Map.insert cosName (Constant cosName varPos varType addr) env
 
 insertArray :: String -> (Int, Int) -> Type -> [Int] -> Address -> EnvT -> EnvT
 insertArray varName varPos varType arrLength addr env = if containsEntry varName env

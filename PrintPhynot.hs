@@ -169,6 +169,7 @@ instance Print AbsPhynot.Stm where
     AbsPhynot.ArrayDeclarationInit basictype id_ dims rexp -> prPrec i 0 (concatD [prt 0 basictype, prt 0 id_, prt 0 dims, doc (showString "="), prt 0 rexp])
     AbsPhynot.PointerDeclaration basictype id_ -> prPrec i 0 (concatD [prt 0 basictype, doc (showString "*"), prt 0 id_])
     AbsPhynot.PointerDeclarationInit basictype id_ rexp -> prPrec i 0 (concatD [prt 0 basictype, doc (showString "*"), prt 0 id_, doc (showString "="), prt 0 rexp])
+    AbsPhynot.ConstantDeclaration basictype id_ rexp -> prPrec i 0 (concatD [doc (showString "const"), prt 0 basictype, prt 0 id_, doc (showString "="), prt 0 rexp])
     AbsPhynot.FunctionPrototype basictype id_ params -> prPrec i 0 (concatD [prt 0 basictype, prt 0 id_, doc (showString "("), prt 0 params, doc (showString ")")])
     AbsPhynot.FunctionNoParamPrototype basictype id_ -> prPrec i 0 (concatD [prt 0 basictype, prt 0 id_, doc (showString "()")])
     AbsPhynot.ProcedurePrototype id_ params -> prPrec i 0 (concatD [doc (showString "None"), prt 0 id_, doc (showString "("), prt 0 params, doc (showString ")")])

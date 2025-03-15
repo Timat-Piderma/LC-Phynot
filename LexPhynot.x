@@ -176,15 +176,16 @@ resWords =
              (b "<" 13 (b ";" 12 N N) N) (b "==" 16 (b "=" 15 N N) N))
           (b "None" 20
              (b "False" 19 (b ">=" 18 N N) N) (b "String" 21 N N))))
-    (b "float" 33
+    (b "else" 33
        (b "break" 28
           (b "^" 25
              (b "]" 24 (b "[" 23 N N) N) (b "bool" 27 (b "and" 26 N N) N))
-          (b "def" 31
-             (b "continue" 30 (b "char" 29 N N) N) (b "else" 32 N N)))
-       (b "pass" 38
-          (b "not" 36 (b "int" 35 (b "if" 34 N N) N) (b "or" 37 N N))
-          (b "{" 41 (b "while" 40 (b "return" 39 N N) N) (b "}" 42 N N))))
+          (b "continue" 31
+             (b "const" 30 (b "char" 29 N N) N) (b "def" 32 N N)))
+       (b "pass" 39
+          (b "int" 36
+             (b "if" 35 (b "float" 34 N N) N) (b "or" 38 (b "not" 37 N N) N))
+          (b "{" 42 (b "while" 41 (b "return" 40 N N) N) (b "}" 43 N N))))
   where
   b s n = B bs (TS bs n)
     where

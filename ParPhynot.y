@@ -73,19 +73,20 @@ import LexPhynot
   'bool'     { PT _ (TS _ 27) }
   'break'    { PT _ (TS _ 28) }
   'char'     { PT _ (TS _ 29) }
-  'continue' { PT _ (TS _ 30) }
-  'def'      { PT _ (TS _ 31) }
-  'else'     { PT _ (TS _ 32) }
-  'float'    { PT _ (TS _ 33) }
-  'if'       { PT _ (TS _ 34) }
-  'int'      { PT _ (TS _ 35) }
-  'not'      { PT _ (TS _ 36) }
-  'or'       { PT _ (TS _ 37) }
-  'pass'     { PT _ (TS _ 38) }
-  'return'   { PT _ (TS _ 39) }
-  'while'    { PT _ (TS _ 40) }
-  '{'        { PT _ (TS _ 41) }
-  '}'        { PT _ (TS _ 42) }
+  'const'    { PT _ (TS _ 30) }
+  'continue' { PT _ (TS _ 31) }
+  'def'      { PT _ (TS _ 32) }
+  'else'     { PT _ (TS _ 33) }
+  'float'    { PT _ (TS _ 34) }
+  'if'       { PT _ (TS _ 35) }
+  'int'      { PT _ (TS _ 36) }
+  'not'      { PT _ (TS _ 37) }
+  'or'       { PT _ (TS _ 38) }
+  'pass'     { PT _ (TS _ 39) }
+  'return'   { PT _ (TS _ 40) }
+  'while'    { PT _ (TS _ 41) }
+  '{'        { PT _ (TS _ 42) }
+  '}'        { PT _ (TS _ 43) }
   L_Ident    { PT _ (TV _)   }
   L_charac   { PT _ (TC _)   }
   L_doubl    { PT _ (TD _)   }
@@ -369,6 +370,24 @@ Stm: BasicType Ident
   $$.modifiedState = $5.modifiedState;
   $5.state = $$.state;
 }
+  | 'const' BasicType Ident '=' RExp
+{
+  $$.attr = Abs.ConstantDeclaration $2.attr $3.attr $5.attr;
+  $$.modifiedEnv = E.insertConst $3.ident (posLineCol $3.pos) $2.btype $$.addr $$.env;
+  $5.env = $$.env;
+  $$.err = if TAC.isTACLit $5.addr
+          then (Err.mkConstDeclErrs $2.btype $5.btype $$.env $3.ident (posLineCol $3.pos)) ++ $5.err
+          else [Err.mkStringError("Constant can only be initialized with a literal value")(posLineCol $3.pos)] ++ $5.err;
+  $$.ident = $2.ident;
+  $$.pos = $3.pos;
+  $$.btype = $2.btype;
+
+  $$.addr = $5.addr;
+  $$.code = [];
+
+  $$.modifiedState = $5.modifiedState;
+  $5.state = $$.state;
+}
 
 ---------------
 -- Functions --
@@ -471,7 +490,7 @@ Stm: BasicType Ident
 
   $$.modifiedEnv = E.insertFunc $3.ident (posLineCol $3.pos) (TS.Base TS.NONE) $5.paramTypes $$.addr $$.env;
   $8.env = $5.modifiedEnv;
-  $5.env = E.insertFunc $3.ident (posLineCol $$.pos) (TS.Base TS.NONE) $5.paramTypes $$.addr (E.insertVar "return" (posLineCol ($3.pos)) ($$.btype) $$.addr E.emptyEnv);
+  $5.env = E.insertFunc $3.ident (posLineCol $$.pos) (TS.Base TS.NONE) $5.paramTypes $$.addr (E.insertVar "return" (posLineCol ($3.pos)) ($$.btype) $$.addr $$.env);
 
   $$.pos = $3.pos;
 
@@ -491,7 +510,7 @@ Stm: BasicType Ident
   $$.attr = Abs.ProcedureNoParamDeclaration $3.attr $6.attr; 
 
   $$.modifiedEnv = E.insertFunc $3.ident (posLineCol $3.pos) (TS.Base TS.NONE) [] $$.addr $$.env;
-  $6.env = E.insertFunc $3.ident (posLineCol $$.pos) (TS.Base TS.NONE) [] $$.addr (E.insertVar "return" (posLineCol ($3.pos)) ($$.btype) $$.addr E.emptyEnv);
+  $6.env = E.insertFunc $3.ident (posLineCol $$.pos) (TS.Base TS.NONE) [] $$.addr (E.insertVar "return" (posLineCol ($3.pos)) ($$.btype) $$.addr $$.env);
 
   $$.pos = $3.pos;
 

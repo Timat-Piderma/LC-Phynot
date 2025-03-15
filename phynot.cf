@@ -25,6 +25,7 @@ ArrayDeclaration.               Stm ::= BasicType Ident [Dim];
 ArrayDeclarationInit.           Stm ::= BasicType Ident [Dim] "=" RExp; 
 PointerDeclaration.             Stm ::= BasicType "*" Ident;
 PointerDeclarationInit.         Stm ::= BasicType "*" Ident "=" RExp;
+ConstantDeclaration.            Stm ::= "const" BasicType Ident "=" RExp;
 
 ---------------
 -- Functions --

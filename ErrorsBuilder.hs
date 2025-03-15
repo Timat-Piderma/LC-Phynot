@@ -57,6 +57,12 @@ mkDeclInitErrs varType initType env varName pos
     | sup varType initType == varType = []
     | otherwise = [ mkStringError ("Type mismatch: can't convert " ++ typeToString initType ++ " to " ++ typeToString varType) pos]
 
+mkConstDeclErrs :: Type -> Type -> EnvT -> String -> (Int, Int) -> [String]
+mkConstDeclErrs cosType initType env cosName pos
+    | containsEntry cosName env = [mkStringError ("Costant value '" ++ cosName ++ "' already declared at: " ++ show (getVarPos cosName env)) pos]
+    | sup cosType initType == cosType = []
+    | otherwise = [ mkStringError ("Type mismatch: can't convert " ++ typeToString initType ++ " to " ++ typeToString cosType) pos]
+
 mkArrayDeclErrs :: EnvT -> String -> (Int, Int) -> [String]
 mkArrayDeclErrs env varName pos
     | containsEntry varName env = [mkStringError ("Variable '" ++ varName ++ "' already declared at: " ++ show (getVarPos varName env)) pos]
