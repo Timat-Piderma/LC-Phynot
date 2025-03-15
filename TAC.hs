@@ -70,63 +70,63 @@ toTacType t = case t of
     TS.ADDRESS _ -> MemoryAddressType
     TS.POINTER _ -> MemoryAddressType
 
-binop :: TS.Type -> BinaryOp -> TypedBinaryOp
-binop t TAC.Add = case t of
+toTypedBinaryOp :: TS.Type -> BinaryOp -> TypedBinaryOp
+toTypedBinaryOp t TAC.Add = case t of
     TS.Base TS.INT -> AddInt
     TS.Base TS.FLOAT -> AddFloat
 
-binop t TAC.Sub = case t of
+toTypedBinaryOp t TAC.Sub = case t of
     TS.Base TS.INT -> SubInt
     TS.Base TS.FLOAT -> SubFloat
 
-binop t TAC.Mul = case t of
+toTypedBinaryOp t TAC.Mul = case t of
     TS.Base TS.INT -> MulInt
     TS.Base TS.FLOAT -> MulFloat
 
-binop t TAC.Div = case t of
+toTypedBinaryOp t TAC.Div = case t of
     TS.Base TS.INT -> DivInt
     TS.Base TS.FLOAT -> DivFloat
 
-binop t TAC.Exp = case t of
+toTypedBinaryOp t TAC.Exp = case t of
     TS.Base TS.INT -> ExpInt
     TS.Base TS.FLOAT -> ExpFloat
 
-binop t TAC.Eq = case t of
+toTypedBinaryOp t TAC.Eq = case t of
     TS.Base TS.INT -> EqInt
     TS.Base TS.FLOAT -> EqFloat
     TS.Base TS.BOOL -> EqBool
     TS.Base TS.CHAR -> EqChar
     TS.Base TS.STRING -> EqString
 
-binop t TAC.Ne = case t of
+toTypedBinaryOp t TAC.Ne = case t of
     TS.Base TS.INT -> NeInt
     TS.Base TS.FLOAT -> NeFloat
     TS.Base TS.BOOL -> NeBool
     TS.Base TS.CHAR -> NeChar
     TS.Base TS.STRING -> NeString
 
-binop t TAC.Lt = case t of
+toTypedBinaryOp t TAC.Lt = case t of
     TS.Base TS.INT -> LtInt
     TS.Base TS.FLOAT -> LtFloat
     TS.Base TS.CHAR -> LtChar
 
-binop t TAC.Le = case t of
+toTypedBinaryOp t TAC.Le = case t of
     TS.Base TS.INT -> LeInt
     TS.Base TS.FLOAT -> LeFloat
     TS.Base TS.CHAR -> LeChar
 
-binop t TAC.Gt = case t of
+toTypedBinaryOp t TAC.Gt = case t of
     TS.Base TS.INT -> GtInt
     TS.Base TS.FLOAT -> GtFloat
     TS.Base TS.CHAR -> GtChar
 
-binop t TAC.Ge = case t of
+toTypedBinaryOp t TAC.Ge = case t of
     TS.Base TS.INT -> GeInt
     TS.Base TS.FLOAT -> GeFloat
     TS.Base TS.CHAR -> GeChar
 
-binop _ TAC.And = AndBool
-binop _ TAC.Or = OrBool
+toTypedBinaryOp _ TAC.And = AndBool
+toTypedBinaryOp _ TAC.Or = OrBool
 
 generateAddr :: TS.Type -> String -> Address
 generateAddr bt s = case bt of

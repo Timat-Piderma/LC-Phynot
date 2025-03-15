@@ -952,7 +952,7 @@ RExp : '[' Arr ']'
   $$.pos = (tokenPosn $2);
 
   $$.addr = TAC.newtemp $1.modifiedState $$.btype;
-  $$.code = $1.code ++ $3.code ++ [TAC.TacInstruction (TAC.BinaryOperation (TAC.toTacType $$.btype) $$.addr $1.addr $3.addr (TAC.binop $$.btype TAC.Or))];
+  $$.code = $1.code ++ $3.code ++ [TAC.TacInstruction (TAC.BinaryOperation (TAC.toTacType $$.btype) $$.addr $1.addr $3.addr (TAC.toTypedBinaryOp $$.btype TAC.Or))];
 
   $$.modifiedState = TAC.incrementTemp $1.modifiedState;
   $1.state = $$.state;
@@ -969,7 +969,7 @@ RExp : '[' Arr ']'
   $$.pos = (tokenPosn $2);
 
   $$.addr = TAC.newtemp $1.modifiedState $$.btype;
-  $$.code = $1.code ++ $3.code ++ [TAC.TacInstruction (TAC.BinaryOperation (TAC.toTacType $$.btype) $$.addr $1.addr $3.addr (TAC.binop $$.btype TAC.And))];
+  $$.code = $1.code ++ $3.code ++ [TAC.TacInstruction (TAC.BinaryOperation (TAC.toTacType $$.btype) $$.addr $1.addr $3.addr (TAC.toTypedBinaryOp $$.btype TAC.And))];
 
   $$.modifiedState = TAC.incrementTemp $1.modifiedState;
   $1.state = $$.state;
@@ -1019,7 +1019,7 @@ RExp2 : RExp2 '==' RExp3
   $$.pos = (tokenPosn $2);
 
   $$.addr = TAC.newtemp $1.modifiedState $$.btype;
-  $$.code = $1.code ++ $3.code ++ [TAC.TacInstruction (TAC.BinaryOperation (TAC.toTacType (TS.sup $1.btype $3.btype)) $$.addr $1.addr $3.addr (TAC.binop (TS.sup $1.btype $3.btype) TAC.Eq))];
+  $$.code = $1.code ++ $3.code ++ [TAC.TacInstruction (TAC.BinaryOperation (TAC.toTacType (TS.sup $1.btype $3.btype)) $$.addr $1.addr $3.addr (TAC.toTypedBinaryOp (TS.sup $1.btype $3.btype) TAC.Eq))];
 
   $$.modifiedState = TAC.incrementTemp $1.modifiedState;
   $1.state = $$.state;
@@ -1036,7 +1036,7 @@ RExp2 : RExp2 '==' RExp3
   $$.pos = (tokenPosn $2);
 
   $$.addr = TAC.newtemp $1.modifiedState $$.btype;
-  $$.code = $1.code ++ $3.code ++ [TAC.TacInstruction (TAC.BinaryOperation (TAC.toTacType (TS.sup $1.btype $3.btype)) $$.addr $1.addr $3.addr (TAC.binop (TS.sup $1.btype $3.btype) TAC.Ne))];
+  $$.code = $1.code ++ $3.code ++ [TAC.TacInstruction (TAC.BinaryOperation (TAC.toTacType (TS.sup $1.btype $3.btype)) $$.addr $1.addr $3.addr (TAC.toTypedBinaryOp (TS.sup $1.btype $3.btype) TAC.Ne))];
 
   $$.modifiedState = TAC.incrementTemp $1.modifiedState;
   $1.state = $$.state;
@@ -1053,7 +1053,7 @@ RExp2 : RExp2 '==' RExp3
   $$.pos = (tokenPosn $2);
 
   $$.addr = TAC.newtemp $1.modifiedState $$.btype;
-  $$.code = $1.code ++ $3.code ++ [TAC.TacInstruction (TAC.BinaryOperation (TAC.toTacType (TS.sup $1.btype $3.btype)) $$.addr $1.addr $3.addr (TAC.binop (TS.sup $1.btype $3.btype) TAC.Lt))];
+  $$.code = $1.code ++ $3.code ++ [TAC.TacInstruction (TAC.BinaryOperation (TAC.toTacType (TS.sup $1.btype $3.btype)) $$.addr $1.addr $3.addr (TAC.toTypedBinaryOp (TS.sup $1.btype $3.btype) TAC.Lt))];
 
   $$.modifiedState = TAC.incrementTemp $1.modifiedState;
   $1.state = $$.state;
@@ -1070,7 +1070,7 @@ RExp2 : RExp2 '==' RExp3
   $$.pos = (tokenPosn $2);
 
   $$.addr = TAC.newtemp $1.modifiedState $$.btype;
-  $$.code = $1.code ++ $3.code ++ [TAC.TacInstruction (TAC.BinaryOperation (TAC.toTacType (TS.sup $1.btype $3.btype)) $$.addr $1.addr $3.addr (TAC.binop (TS.sup $1.btype $3.btype) TAC.Gt))];
+  $$.code = $1.code ++ $3.code ++ [TAC.TacInstruction (TAC.BinaryOperation (TAC.toTacType (TS.sup $1.btype $3.btype)) $$.addr $1.addr $3.addr (TAC.toTypedBinaryOp (TS.sup $1.btype $3.btype) TAC.Gt))];
 
   $$.modifiedState = TAC.incrementTemp $1.modifiedState;
   $1.state = $$.state;
@@ -1087,7 +1087,7 @@ RExp2 : RExp2 '==' RExp3
   $$.pos = (tokenPosn $2);
 
   $$.addr = TAC.newtemp $1.modifiedState $$.btype;
-  $$.code = $1.code ++ $3.code ++ [TAC.TacInstruction (TAC.BinaryOperation (TAC.toTacType (TS.sup $1.btype $3.btype)) $$.addr $1.addr $3.addr (TAC.binop (TS.sup $1.btype $3.btype) TAC.Le))];
+  $$.code = $1.code ++ $3.code ++ [TAC.TacInstruction (TAC.BinaryOperation (TAC.toTacType (TS.sup $1.btype $3.btype)) $$.addr $1.addr $3.addr (TAC.toTypedBinaryOp (TS.sup $1.btype $3.btype) TAC.Le))];
 
   $$.modifiedState = TAC.incrementTemp $1.modifiedState;
   $1.state = $$.state;
@@ -1104,7 +1104,7 @@ RExp2 : RExp2 '==' RExp3
   $$.pos = (tokenPosn $2);
   
   $$.addr = TAC.newtemp $1.modifiedState $$.btype;
-  $$.code = $1.code ++ $3.code ++ [TAC.TacInstruction (TAC.BinaryOperation (TAC.toTacType (TS.sup $1.btype $3.btype)) $$.addr $1.addr $3.addr (TAC.binop (TS.sup $1.btype $3.btype) TAC.Ge))];
+  $$.code = $1.code ++ $3.code ++ [TAC.TacInstruction (TAC.BinaryOperation (TAC.toTacType (TS.sup $1.btype $3.btype)) $$.addr $1.addr $3.addr (TAC.toTypedBinaryOp (TS.sup $1.btype $3.btype) TAC.Ge))];
 
   $$.modifiedState = TAC.incrementTemp $1.modifiedState;
   $1.state = $$.state;
@@ -1140,7 +1140,7 @@ RExp3 : RExp3 '+' RExp4
   $$.pos = (tokenPosn $2);
 
   $$.addr = TAC.newtemp $1.modifiedState $$.btype;
-  $$.code = $1.code ++ $3.code ++ [TAC.TacInstruction (TAC.BinaryOperation (TAC.toTacType $$.btype) $$.addr $1.addr $3.addr (TAC.binop $$.btype TAC.Add))];
+  $$.code = $1.code ++ $3.code ++ [TAC.TacInstruction (TAC.BinaryOperation (TAC.toTacType $$.btype) $$.addr $1.addr $3.addr (TAC.toTypedBinaryOp $$.btype TAC.Add))];
 
   $$.modifiedState = TAC.incrementTemp $1.modifiedState;
   $1.state = $$.state;
@@ -1159,7 +1159,7 @@ RExp3 : RExp3 '+' RExp4
   $$.pos = (tokenPosn $2);
 
   $$.addr = TAC.newtemp $1.modifiedState $$.btype;
-  $$.code = $1.code ++ $3.code ++ [TAC.TacInstruction (TAC.BinaryOperation (TAC.toTacType $$.btype) $$.addr $1.addr $3.addr (TAC.binop $$.btype TAC.Sub))];
+  $$.code = $1.code ++ $3.code ++ [TAC.TacInstruction (TAC.BinaryOperation (TAC.toTacType $$.btype) $$.addr $1.addr $3.addr (TAC.toTypedBinaryOp $$.btype TAC.Sub))];
 
   $$.modifiedState = TAC.incrementTemp $1.modifiedState;
   $1.state = $$.state;
@@ -1195,7 +1195,7 @@ RExp4 : RExp4 '*' RExp5
   $$.pos = (tokenPosn $2);
 
   $$.addr = TAC.newtemp $1.modifiedState $$.btype;
-  $$.code = $1.code ++ $3.code ++ [TAC.TacInstruction (TAC.BinaryOperation (TAC.toTacType $$.btype) $$.addr $1.addr $3.addr (TAC.binop $$.btype TAC.Mul))];
+  $$.code = $1.code ++ $3.code ++ [TAC.TacInstruction (TAC.BinaryOperation (TAC.toTacType $$.btype) $$.addr $1.addr $3.addr (TAC.toTypedBinaryOp $$.btype TAC.Mul))];
 
   $$.modifiedState = TAC.incrementTemp $1.modifiedState;
   $1.state = $$.state;
@@ -1214,7 +1214,7 @@ RExp4 : RExp4 '*' RExp5
   $$.pos = (tokenPosn $2);
 
   $$.addr = TAC.newtemp $1.modifiedState $$.btype;
-  $$.code = $1.code ++ $3.code ++ [TAC.TacInstruction (TAC.BinaryOperation (TAC.toTacType $$.btype) $$.addr $1.addr $3.addr (TAC.binop $$.btype TAC.Div))];
+  $$.code = $1.code ++ $3.code ++ [TAC.TacInstruction (TAC.BinaryOperation (TAC.toTacType $$.btype) $$.addr $1.addr $3.addr (TAC.toTypedBinaryOp $$.btype TAC.Div))];
 
   $$.modifiedState = TAC.incrementTemp $1.modifiedState;
   $1.state = $$.state;
@@ -1233,7 +1233,7 @@ RExp4 : RExp4 '*' RExp5
   $$.pos = (tokenPosn $2);
 
   $$.addr = TAC.newtemp $1.modifiedState $$.btype;
-  $$.code = $1.code ++ $3.code ++ [TAC.TacInstruction (TAC.BinaryOperation (TAC.toTacType $$.btype) $$.addr $1.addr $3.addr (TAC.binop $$.btype TAC.Mod))];
+  $$.code = $1.code ++ $3.code ++ [TAC.TacInstruction (TAC.BinaryOperation (TAC.toTacType $$.btype) $$.addr $1.addr $3.addr (TAC.toTypedBinaryOp $$.btype TAC.Mod))];
 
   $$.modifiedState = TAC.incrementTemp $1.modifiedState;
   $1.state = $$.state;
@@ -1269,7 +1269,7 @@ RExp5 : RExp5 '^' RExp6
   $$.pos = (tokenPosn $2);
 
   $$.addr = TAC.newtemp $1.modifiedState $$.btype;
-  $$.code = $1.code ++ $3.code ++ [TAC.TacInstruction (TAC.BinaryOperation (TAC.toTacType $$.btype) $$.addr $1.addr $3.addr (TAC.binop $$.btype TAC.Exp))];
+  $$.code = $1.code ++ $3.code ++ [TAC.TacInstruction (TAC.BinaryOperation (TAC.toTacType $$.btype) $$.addr $1.addr $3.addr (TAC.toTypedBinaryOp $$.btype TAC.Exp))];
 
   $$.modifiedState = TAC.incrementTemp $1.modifiedState;
   $1.state = $$.state;
