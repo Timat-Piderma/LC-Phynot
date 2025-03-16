@@ -396,11 +396,12 @@ Stm: BasicType Ident
 { 
   $$.attr = Abs.FunctionPrototype $1.attr $2.attr $4.attr; 
 
-  $$.modifiedEnv = E.insertPrototype $2.ident (posLineCol ($2.pos)) $1.btype $4.paramTypes $$.env;
+  $$.modifiedEnv = E.insertPrototype $2.ident (posLineCol ($2.pos)) $1.btype $4.paramTypes $$.addr $$.env;
   $4.env = E.insertVar "return" (posLineCol ($2.pos)) ($$.btype) $$.addr $$.env;
 
   $4.funcName = $2.ident;
 
+  $$.addr = (TAC.generateAddr $1.btype ($2.ident ++ "@" ++ show (fst (posLineCol $2.pos))));
   $$.code = [];
   $$.modifiedState = $$.state;
 
@@ -411,8 +412,9 @@ Stm: BasicType Ident
 { 
   $$.attr = Abs.FunctionNoParamPrototype $1.attr $2.attr; 
   
-  $$.modifiedEnv = E.insertPrototype $2.ident (posLineCol ($2.pos)) $1.btype [] $$.env;
+  $$.modifiedEnv = E.insertPrototype $2.ident (posLineCol ($2.pos)) $1.btype [] $$.addr $$.env;
 
+  $$.addr = (TAC.generateAddr $1.btype ($2.ident ++ "@" ++ show (fst (posLineCol $2.pos))));
   $$.code = [];
   $$.modifiedState = $$.state;
 
@@ -422,11 +424,12 @@ Stm: BasicType Ident
 { 
   $$.attr = Abs.ProcedurePrototype $2.attr $4.attr; 
   
-  $$.modifiedEnv = E.insertPrototype $2.ident (posLineCol ($2.pos)) (TS.Base TS.NONE) $4.paramTypes $$.env;
+  $$.modifiedEnv = E.insertPrototype $2.ident (posLineCol ($2.pos)) (TS.Base TS.NONE) $4.paramTypes $$.addr $$.env;
   $4.env = $$.modifiedEnv;
 
   $4.funcName = $2.ident;
 
+  $$.addr = (TAC.generateAddr (TS.Base TS.NONE) ($2.ident ++ "@" ++ show (fst (posLineCol $2.pos))));
   $$.code = [];
   $$.modifiedState = $$.state;
 
@@ -436,8 +439,9 @@ Stm: BasicType Ident
 { 
   $$.attr = Abs.ProcedureNoParamPrototype $2.attr; 
   
-  $$.modifiedEnv = E.insertPrototype $2.ident (posLineCol ($2.pos)) (TS.Base TS.NONE) [] $$.env;
+  $$.modifiedEnv = E.insertPrototype $2.ident (posLineCol ($2.pos)) (TS.Base TS.NONE) [] $$.addr $$.env;
 
+  $$.addr = (TAC.generateAddr (TS.Base TS.NONE) ($2.ident ++ "@" ++ show (fst (posLineCol $2.pos))));
   $$.code = [];
   $$.modifiedState = $$.state;
 

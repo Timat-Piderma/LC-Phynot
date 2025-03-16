@@ -39,7 +39,8 @@ data EnvEntity =
     id :: String,
     pos :: (Int, Int),
     btype :: Type,
-    params :: [Type]
+    params :: [Type],
+    addr :: Address
     }
     deriving (Show)
 
@@ -93,10 +94,10 @@ insertFunc funcName funcPos funcType funcParams addr env = if containsEntry func
         else env
     else Map.insert funcName (mkFunc funcName funcPos funcType funcParams addr) env
 
-insertPrototype :: String -> (Int, Int) -> Type -> [Type] -> EnvT -> EnvT
-insertPrototype funcName pos funcType funcParams env = if containsPrototype funcName env
+insertPrototype :: String -> (Int, Int) -> Type -> [Type] -> Address -> EnvT -> EnvT
+insertPrototype funcName pos funcType funcParams addr env = if containsPrototype funcName env
     then env
-    else Map.insert funcName (Prototype funcName pos funcType funcParams) env
+    else Map.insert funcName (Prototype funcName pos funcType funcParams addr) env
 
 containsEntry :: String -> EnvT -> Bool
 containsEntry varName env = 
@@ -107,7 +108,7 @@ containsEntry varName env =
 containsPrototype :: String -> EnvT -> Bool
 containsPrototype funcName env = 
     case Map.lookup funcName env of
-        Just (Prototype _ _ _ _)  -> True  
+        Just (Prototype _ _ _ _ _)  -> True  
         _                        -> False
 
 getVarPos :: String -> EnvT -> (Int, Int)
