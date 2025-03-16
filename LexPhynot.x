@@ -28,7 +28,7 @@ $u = [. \n]          -- universal: any character
 
 -- Symbols and non-identifier-like reserved words
 
-@rsyms = \; | \= | \* | \( | \) | \( \) | \{ | \} | \, | \[ | \] | \= \= | \! \= | \< | \> | \< \= | \> \= | \+ | \- | \/ | \% | \^ | \&
+@rsyms = \; | \= | \* | \( | \) | \{ | \} | \, | \[ | \] | \= \= | \! \= | \< | \> | \< \= | \> \= | \+ | \- | \/ | \% | \^ | \&
 
 :-
 
@@ -166,26 +166,25 @@ eitherResIdent tv s = treeFind resWords
 -- | The keywords and symbols of the language organized as binary search tree.
 resWords :: BTree
 resWords =
-  b "True" 22
-    (b "/" 11
-       (b ")" 6
-          (b "&" 3 (b "%" 2 (b "!=" 1 N N) N) (b "()" 5 (b "(" 4 N N) N))
-          (b "," 9 (b "+" 8 (b "*" 7 N N) N) (b "-" 10 N N)))
-       (b ">" 17
-          (b "<=" 14
-             (b "<" 13 (b ";" 12 N N) N) (b "==" 16 (b "=" 15 N N) N))
-          (b "None" 20
-             (b "False" 19 (b ">=" 18 N N) N) (b "String" 21 N N))))
-    (b "else" 33
-       (b "break" 28
-          (b "^" 25
-             (b "]" 24 (b "[" 23 N N) N) (b "bool" 27 (b "and" 26 N N) N))
-          (b "continue" 31
-             (b "const" 30 (b "char" 29 N N) N) (b "def" 32 N N)))
-       (b "pass" 39
-          (b "int" 36
-             (b "if" 35 (b "float" 34 N N) N) (b "or" 38 (b "not" 37 N N) N))
-          (b "{" 42 (b "while" 41 (b "return" 40 N N) N) (b "}" 43 N N))))
+  b "[" 22
+    (b ";" 11
+       (b "*" 6
+          (b "&" 3 (b "%" 2 (b "!=" 1 N N) N) (b ")" 5 (b "(" 4 N N) N))
+          (b "-" 9 (b "," 8 (b "+" 7 N N) N) (b "/" 10 N N)))
+       (b ">=" 17
+          (b "=" 14
+             (b "<=" 13 (b "<" 12 N N) N) (b ">" 16 (b "==" 15 N N) N))
+          (b "String" 20
+             (b "None" 19 (b "False" 18 N N) N) (b "True" 21 N N))))
+    (b "float" 33
+       (b "char" 28
+          (b "and" 25
+             (b "^" 24 (b "]" 23 N N) N) (b "break" 27 (b "bool" 26 N N) N))
+          (b "def" 31
+             (b "continue" 30 (b "const" 29 N N) N) (b "else" 32 N N)))
+       (b "pass" 38
+          (b "not" 36 (b "int" 35 (b "if" 34 N N) N) (b "or" 37 N N))
+          (b "{" 41 (b "while" 40 (b "return" 39 N N) N) (b "}" 42 N N))))
   where
   b s n = B bs (TS bs n)
     where

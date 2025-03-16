@@ -47,45 +47,44 @@ import LexPhynot
   '%'        { PT _ (TS _ 2)  }
   '&'        { PT _ (TS _ 3)  }
   '('        { PT _ (TS _ 4)  }
-  '()'       { PT _ (TS _ 5)  }
-  ')'        { PT _ (TS _ 6)  }
-  '*'        { PT _ (TS _ 7)  }
-  '+'        { PT _ (TS _ 8)  }
-  ','        { PT _ (TS _ 9)  }
-  '-'        { PT _ (TS _ 10) }
-  '/'        { PT _ (TS _ 11) }
-  ';'        { PT _ (TS _ 12) }
-  '<'        { PT _ (TS _ 13) }
-  '<='       { PT _ (TS _ 14) }
-  '='        { PT _ (TS _ 15) }
-  '=='       { PT _ (TS _ 16) }
-  '>'        { PT _ (TS _ 17) }
-  '>='       { PT _ (TS _ 18) }
-  'False'    { PT _ (TS _ 19) }
-  'None'     { PT _ (TS _ 20) }
-  'String'   { PT _ (TS _ 21) }
-  'True'     { PT _ (TS _ 22) }
-  '['        { PT _ (TS _ 23) }
-  ']'        { PT _ (TS _ 24) }
-  '^'        { PT _ (TS _ 25) }
-  'and'      { PT _ (TS _ 26) }
-  'bool'     { PT _ (TS _ 27) }
-  'break'    { PT _ (TS _ 28) }
-  'char'     { PT _ (TS _ 29) }
-  'const'    { PT _ (TS _ 30) }
-  'continue' { PT _ (TS _ 31) }
-  'def'      { PT _ (TS _ 32) }
-  'else'     { PT _ (TS _ 33) }
-  'float'    { PT _ (TS _ 34) }
-  'if'       { PT _ (TS _ 35) }
-  'int'      { PT _ (TS _ 36) }
-  'not'      { PT _ (TS _ 37) }
-  'or'       { PT _ (TS _ 38) }
-  'pass'     { PT _ (TS _ 39) }
-  'return'   { PT _ (TS _ 40) }
-  'while'    { PT _ (TS _ 41) }
-  '{'        { PT _ (TS _ 42) }
-  '}'        { PT _ (TS _ 43) }
+  ')'        { PT _ (TS _ 5)  }
+  '*'        { PT _ (TS _ 6)  }
+  '+'        { PT _ (TS _ 7)  }
+  ','        { PT _ (TS _ 8)  }
+  '-'        { PT _ (TS _ 9)  }
+  '/'        { PT _ (TS _ 10) }
+  ';'        { PT _ (TS _ 11) }
+  '<'        { PT _ (TS _ 12) }
+  '<='       { PT _ (TS _ 13) }
+  '='        { PT _ (TS _ 14) }
+  '=='       { PT _ (TS _ 15) }
+  '>'        { PT _ (TS _ 16) }
+  '>='       { PT _ (TS _ 17) }
+  'False'    { PT _ (TS _ 18) }
+  'None'     { PT _ (TS _ 19) }
+  'String'   { PT _ (TS _ 20) }
+  'True'     { PT _ (TS _ 21) }
+  '['        { PT _ (TS _ 22) }
+  ']'        { PT _ (TS _ 23) }
+  '^'        { PT _ (TS _ 24) }
+  'and'      { PT _ (TS _ 25) }
+  'bool'     { PT _ (TS _ 26) }
+  'break'    { PT _ (TS _ 27) }
+  'char'     { PT _ (TS _ 28) }
+  'const'    { PT _ (TS _ 29) }
+  'continue' { PT _ (TS _ 30) }
+  'def'      { PT _ (TS _ 31) }
+  'else'     { PT _ (TS _ 32) }
+  'float'    { PT _ (TS _ 33) }
+  'if'       { PT _ (TS _ 34) }
+  'int'      { PT _ (TS _ 35) }
+  'not'      { PT _ (TS _ 36) }
+  'or'       { PT _ (TS _ 37) }
+  'pass'     { PT _ (TS _ 38) }
+  'return'   { PT _ (TS _ 39) }
+  'while'    { PT _ (TS _ 40) }
+  '{'        { PT _ (TS _ 41) }
+  '}'        { PT _ (TS _ 42) }
   L_Ident    { PT _ (TV _)   }
   L_charac   { PT _ (TC _)   }
   L_doubl    { PT _ (TD _)   }
@@ -408,18 +407,6 @@ Stm: BasicType Ident
   $$.err = $4.err ++ (Err.mkPrototypeErrs $1.btype $$.env $2.ident $4.paramTypes (posLineCol ($2.pos)));
 
 }
-  | BasicType Ident '()' 
-{ 
-  $$.attr = Abs.FunctionNoParamPrototype $1.attr $2.attr; 
-  
-  $$.modifiedEnv = E.insertPrototype $2.ident (posLineCol ($2.pos)) $1.btype [] $$.addr $$.env;
-
-  $$.addr = (TAC.generateAddr $1.btype ($2.ident ++ "@" ++ show (fst (posLineCol $2.pos))));
-  $$.code = [];
-  $$.modifiedState = $$.state;
-
-  $$.err = (Err.mkPrototypeErrs $2.btype $$.env $2.ident [] (posLineCol ($2.pos)));
-}
   | 'None' Ident '(' ListParam ')' 
 { 
   $$.attr = Abs.ProcedurePrototype $2.attr $4.attr; 
@@ -434,18 +421,6 @@ Stm: BasicType Ident
   $$.modifiedState = $$.state;
 
   $$.err = $4.err ++ (Err.mkPrototypeErrs (TS.Base TS.NONE) $$.env $2.ident $4.paramTypes (posLineCol ($2.pos)));
-}
-  | 'None' Ident '()' 
-{ 
-  $$.attr = Abs.ProcedureNoParamPrototype $2.attr; 
-  
-  $$.modifiedEnv = E.insertPrototype $2.ident (posLineCol ($2.pos)) (TS.Base TS.NONE) [] $$.addr $$.env;
-
-  $$.addr = (TAC.generateAddr (TS.Base TS.NONE) ($2.ident ++ "@" ++ show (fst (posLineCol $2.pos))));
-  $$.code = [];
-  $$.modifiedState = $$.state;
-
-  $$.err = (Err.mkPrototypeErrs (TS.Base TS.NONE) $$.env $2.ident [] (posLineCol ($2.pos)));
 }
   | 'def' BasicType Ident '(' ListParam ')' '{' ListStm '}' 
 {  
@@ -468,25 +443,6 @@ Stm: BasicType Ident
   $$.modifiedState = $8.modifiedState;
   $8.state = $$.state;
 }
-  | 'def' BasicType Ident '()' '{' ListStm '}' 
-{  
-  $$.attr = Abs.FunctionNoParamDeclaration $2.attr $3.attr $6.attr; 
-
-  $$.modifiedEnv = E.insertFunc $3.ident (posLineCol $3.pos) $2.btype [] $$.addr $$.env;
-  $6.env = E.insertFunc $3.ident (posLineCol $$.pos) $2.btype [] $$.addr (E.insertVar "return" (posLineCol ($3.pos)) ($$.btype) $$.addr $$.env);
-
-  $$.pos = $3.pos;
-
-  $$.btype = $2.btype;
-
-  $$.err = (Err.mkFuncDeclErrs $2.btype $$.env $3.ident [] (posLineCol ($3.pos))) ++ (Err.prettyFuncErr $6.err $3.ident);
-
-  $$.addr = (TAC.generateAddr $2.btype ($3.ident ++ "@" ++ show (fst (posLineCol $3.pos))));
-  $$.code = [TAC.generateFuncDef $$.addr []] ++ $6.code ++ [TAC.TacInstruction (TAC.EndFunction)];
-
-  $$.modifiedState = $6.modifiedState;
-  $6.state = $$.state;
-}
   | 'def' 'None' Ident '(' ListParam ')' '{' ListStm '}' 
 {  
   $$.attr = Abs.ProcedureDeclaration $3.attr $5.attr $8.attr; 
@@ -508,25 +464,6 @@ Stm: BasicType Ident
   $$.modifiedState = $8.modifiedState;
   $8.state = $$.state;
 }
-  | 'def' 'None' Ident '()' '{' ListStm '}' 
-{ 
-  $$.attr = Abs.ProcedureNoParamDeclaration $3.attr $6.attr; 
-
-  $$.modifiedEnv = E.insertFunc $3.ident (posLineCol $3.pos) (TS.Base TS.NONE) [] $$.addr $$.env;
-  $6.env = E.insertFunc $3.ident (posLineCol $$.pos) (TS.Base TS.NONE) [] $$.addr (E.insertVar "return" (posLineCol ($3.pos)) ($$.btype) $$.addr $$.env);
-
-  $$.pos = $3.pos;
-
-  $$.btype = (TS.Base TS.NONE);
-
-  $$.err = (Err.mkFuncDeclErrs (TS.Base TS.NONE) $$.env $3.ident [] (posLineCol ($3.pos))) ++ (Err.prettyFuncErr $6.err $3.ident);
-
-  $$.addr = (TAC.generateAddr (TS.Base TS.NONE) ($3.ident ++ "@" ++ show (fst (posLineCol $3.pos))));
-  $$.code = [TAC.generateFuncDef $$.addr []] ++ $6.code ++ [TAC.TacInstruction (TAC.EndFunction)];
-
-  $$.modifiedState = $6.modifiedState;
-  $6.state = $$.state;
-}
   | Ident '(' ListRExp ')' 
 { 
   $$.attr = Abs.ProcedureCall $1.attr $3.attr;
@@ -539,17 +476,6 @@ Stm: BasicType Ident
 
   $$.modifiedState = $3.modifiedState;
   $3.state = $$.state;
-}
-  | Ident '()' 
-{ 
-  $$.attr = Abs.ProcedureCallNoParam $1.attr;
-  $$.modifiedEnv = $$.env;
-  
-  $$.err = (Err.mkProcedureCallErrs $1.ident [] $$.env (posLineCol $1.pos));
-
-  $$.code = TAC.generateProcCall (E.getAddr $1.ident $$.env) 0 [];
-
-  $$.modifiedState = $$.state;
 }
   | 'return' RExp 
 {  
@@ -1513,20 +1439,6 @@ RExp6 : Integer
   $$.modifiedState = TAC.incrementTemp $3.modifiedState;
   $3.state = $$.state;
 }
-  | Ident '()' 
-{  
-  $$.attr = Abs.FuncCallNoParam $1.attr;
-
-  $$.btype = (E.getFuncType $1.ident $$.env);
-  $$.err = (Err.mkFuncCallErrs $1.ident [] $$.env (posLineCol $1.pos));
-
-  $$.pos = $1.pos;
-
-  $$.addr = TAC.newtemp $$.state $$.btype;
-  $$.code = TAC.generateFuncCall $$.addr (E.getAddr $1.ident $$.env) 0 [];
-
-  $$.modifiedState = TAC.incrementTemp $$.state;
-}
   | '(' RExp ')'  
 { 
   $$.attr =  $2.attr;
@@ -1550,7 +1462,9 @@ ListRExp : {- empty -}
   $$.err = [];
   $$.paramTypes = [];
 
-  $3.listAddr = [];
+  $$.code = [];
+
+  $$.listAddr = [];
 }
   | RExp 
 {    

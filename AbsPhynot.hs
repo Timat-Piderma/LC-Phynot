@@ -33,15 +33,10 @@ data Stm
     | PointerDeclarationInit BasicType Ident RExp
     | ConstantDeclaration BasicType Ident RExp
     | FunctionPrototype BasicType Ident [Param]
-    | FunctionNoParamPrototype BasicType Ident
     | ProcedurePrototype Ident [Param]
-    | ProcedureNoParamPrototype Ident
     | FunctionDeclaration BasicType Ident [Param] [Stm]
-    | FunctionNoParamDeclaration BasicType Ident [Stm]
     | ProcedureDeclaration Ident [Param] [Stm]
-    | ProcedureNoParamDeclaration Ident [Stm]
     | ProcedureCall Ident [RExp]
-    | ProcedureCallNoParam Ident
     | Return RExp
     | ReturnNone
     | Assignment LExp RExp
@@ -96,7 +91,6 @@ data RExp
     | VarValue Ident
     | ArrayIndexValue Ident [Dim]
     | FuncCall Ident [RExp]
-    | FuncCallNoParam Ident
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
 newtype Ident = Ident String

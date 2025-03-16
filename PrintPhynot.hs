@@ -171,15 +171,10 @@ instance Print AbsPhynot.Stm where
     AbsPhynot.PointerDeclarationInit basictype id_ rexp -> prPrec i 0 (concatD [prt 0 basictype, doc (showString "*"), prt 0 id_, doc (showString "="), prt 0 rexp])
     AbsPhynot.ConstantDeclaration basictype id_ rexp -> prPrec i 0 (concatD [doc (showString "const"), prt 0 basictype, prt 0 id_, doc (showString "="), prt 0 rexp])
     AbsPhynot.FunctionPrototype basictype id_ params -> prPrec i 0 (concatD [prt 0 basictype, prt 0 id_, doc (showString "("), prt 0 params, doc (showString ")")])
-    AbsPhynot.FunctionNoParamPrototype basictype id_ -> prPrec i 0 (concatD [prt 0 basictype, prt 0 id_, doc (showString "()")])
     AbsPhynot.ProcedurePrototype id_ params -> prPrec i 0 (concatD [doc (showString "None"), prt 0 id_, doc (showString "("), prt 0 params, doc (showString ")")])
-    AbsPhynot.ProcedureNoParamPrototype id_ -> prPrec i 0 (concatD [doc (showString "None"), prt 0 id_, doc (showString "()")])
     AbsPhynot.FunctionDeclaration basictype id_ params stms -> prPrec i 0 (concatD [doc (showString "def"), prt 0 basictype, prt 0 id_, doc (showString "("), prt 0 params, doc (showString ")"), doc (showString "{"), prt 0 stms, doc (showString "}")])
-    AbsPhynot.FunctionNoParamDeclaration basictype id_ stms -> prPrec i 0 (concatD [doc (showString "def"), prt 0 basictype, prt 0 id_, doc (showString "()"), doc (showString "{"), prt 0 stms, doc (showString "}")])
     AbsPhynot.ProcedureDeclaration id_ params stms -> prPrec i 0 (concatD [doc (showString "def"), doc (showString "None"), prt 0 id_, doc (showString "("), prt 0 params, doc (showString ")"), doc (showString "{"), prt 0 stms, doc (showString "}")])
-    AbsPhynot.ProcedureNoParamDeclaration id_ stms -> prPrec i 0 (concatD [doc (showString "def"), doc (showString "None"), prt 0 id_, doc (showString "()"), doc (showString "{"), prt 0 stms, doc (showString "}")])
     AbsPhynot.ProcedureCall id_ rexps -> prPrec i 0 (concatD [prt 0 id_, doc (showString "("), prt 0 rexps, doc (showString ")")])
-    AbsPhynot.ProcedureCallNoParam id_ -> prPrec i 0 (concatD [prt 0 id_, doc (showString "()")])
     AbsPhynot.Return rexp -> prPrec i 0 (concatD [doc (showString "return"), prt 0 rexp])
     AbsPhynot.ReturnNone -> prPrec i 0 (concatD [doc (showString "return")])
     AbsPhynot.Assignment lexp rexp -> prPrec i 0 (concatD [prt 0 lexp, doc (showString "="), prt 0 rexp])
@@ -255,7 +250,6 @@ instance Print AbsPhynot.RExp where
     AbsPhynot.VarValue id_ -> prPrec i 6 (concatD [prt 0 id_])
     AbsPhynot.ArrayIndexValue id_ dims -> prPrec i 6 (concatD [prt 0 id_, prt 0 dims])
     AbsPhynot.FuncCall id_ rexps -> prPrec i 6 (concatD [prt 0 id_, doc (showString "("), prt 0 rexps, doc (showString ")")])
-    AbsPhynot.FuncCallNoParam id_ -> prPrec i 6 (concatD [prt 0 id_, doc (showString "()")])
 
 instance Print [AbsPhynot.RExp] where
   prt _ [] = concatD []

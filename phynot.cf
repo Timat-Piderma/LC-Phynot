@@ -32,15 +32,10 @@ ConstantDeclaration.            Stm ::= "const" BasicType Ident "=" RExp;
 ---------------
 
 FunctionPrototype.              Stm ::= BasicType Ident "(" [Param] ")";
-FunctionNoParamPrototype.       Stm ::= BasicType Ident "()";
 ProcedurePrototype.             Stm ::= "None" Ident "(" [Param] ")";
-ProcedureNoParamPrototype.      Stm ::= "None" Ident "()";
 FunctionDeclaration.            Stm ::= "def" BasicType Ident "(" [Param] ")" "{" [Stm] "}";
-FunctionNoParamDeclaration.     Stm ::= "def" BasicType Ident "()" "{" [Stm] "}";
 ProcedureDeclaration.           Stm ::= "def" "None" Ident "(" [Param] ")" "{" [Stm] "}";
-ProcedureNoParamDeclaration.    Stm ::= "def" "None" Ident "()" "{" [Stm] "}";
 ProcedureCall.                  Stm ::= Ident "(" [RExp] ")";
-ProcedureCallNoParam.           Stm ::= Ident "()";
 Return.                         Stm ::= "return" RExp;
 ReturnNone.                     Stm ::= "return";
 
@@ -126,7 +121,6 @@ VarValue.                       RExp6 ::= Ident;
     
 ArrayIndexValue.                RExp6 ::= Ident [Dim];
 FuncCall.                       RExp6 ::= Ident "(" [RExp] ")";
-FuncCallNoParam.                RExp6 ::= Ident "()";
 separator RExp ","; 
     
 coercions RExp 6;   
