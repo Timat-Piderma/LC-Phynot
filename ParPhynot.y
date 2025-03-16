@@ -32,14 +32,13 @@ import LexPhynot
 %name pListArrEntry ListArrEntry
 %name pLExp LExp
 %name pRExp RExp
+%name pRExp1 RExp1
 %name pRExp2 RExp2
 %name pRExp3 RExp3
 %name pRExp4 RExp4
 %name pRExp5 RExp5
 %name pRExp6 RExp6
-%name pRExp7 RExp7
 %name pListRExp ListRExp
-%name pRExp1 RExp1
 -- no lexer declaration
 %monad { Err } { (>>=) } { return }
 %tokentype {Token}
@@ -960,7 +959,7 @@ RExp : '[' Arr ']'
   $$.modifiedState = $2.modifiedState;
   $2.state = $$.state;
 }
-  | RExp 'or' RExp2 
+  | RExp 'or' RExp1 
 {   
   $$.attr = Abs.Or $1.attr $3.attr;
   $$.err = (Err.prettyRelErr (Err.mkBoolRelErrs $1.btype $3.btype (posLineCol $1.pos) (posLineCol $3.pos) (posLineCol $$.pos)) "or")  ++ $1.err ++ $3.err;
@@ -977,7 +976,7 @@ RExp : '[' Arr ']'
   $1.state = $$.state;
   $3.state = $1.modifiedState;
 }
-  | RExp 'and' RExp2 
+  | RExp 'and' RExp1 
 {   
   $$.attr = Abs.And $1.attr $3.attr;
   $$.err = (Err.prettyRelErr (Err.mkBoolRelErrs $1.btype $3.btype (posLineCol $1.pos) (posLineCol $3.pos) (posLineCol $$.pos)) "and")  ++ $1.err ++ $3.err;
@@ -994,7 +993,7 @@ RExp : '[' Arr ']'
   $1.state = $$.state;
   $3.state = $1.modifiedState;
 }
-  | 'not' RExp2 
+  | 'not' RExp1 
 {  
   $$.attr = Abs.Not $2.attr;
   $$.err =  (Err.mkNotErrs $2.btype (posLineCol $$.pos)) ++ $2.err;
@@ -1027,7 +1026,7 @@ RExp : '[' Arr ']'
   $1.state = $$.state;
 }
 
-RExp2 : RExp2 '==' RExp3 
+RExp1 : RExp1 '==' RExp2 
 {  
   $$.attr = Abs.Eq $1.attr $3.attr;
   $$.err = (Err.prettyRelErr (Err.mkRelErrs $1.btype $3.btype (posLineCol $1.pos) (posLineCol $3.pos) (posLineCol $$.pos)) "==")  ++ $1.err ++ $3.err;
@@ -1044,7 +1043,7 @@ RExp2 : RExp2 '==' RExp3
   $1.state = $$.state;
   $3.state = $1.modifiedState;
 }
-  | RExp2 '!=' RExp3 
+  | RExp1 '!=' RExp2 
 {    
   $$.attr = Abs.Neq $1.attr $3.attr;
   $$.err = (Err.prettyRelErr (Err.mkRelErrs $1.btype $3.btype (posLineCol $1.pos) (posLineCol $3.pos) (posLineCol $$.pos)) "!=")  ++ $1.err ++ $3.err;
@@ -1061,7 +1060,7 @@ RExp2 : RExp2 '==' RExp3
   $1.state = $$.state;
   $3.state = $1.modifiedState;
 }
-  | RExp2 '<' RExp3 
+  | RExp1 '<' RExp2 
 {    
   $$.attr = Abs.Lt $1.attr $3.attr;
   $$.err = (Err.prettyRelErr (Err.mkRelErrs $1.btype $3.btype (posLineCol $1.pos) (posLineCol $3.pos) (posLineCol $$.pos)) "<")  ++ $1.err ++ $3.err;
@@ -1078,7 +1077,7 @@ RExp2 : RExp2 '==' RExp3
   $1.state = $$.state;
   $3.state = $1.modifiedState;
 }
-  | RExp2 '>' RExp3 
+  | RExp1 '>' RExp2 
 {     
   $$.attr = Abs.Gt $1.attr $3.attr;
   $$.err = (Err.prettyRelErr (Err.mkRelErrs $1.btype $3.btype (posLineCol $1.pos) (posLineCol $3.pos) (posLineCol $$.pos)) ">")  ++ $1.err ++ $3.err;
@@ -1095,7 +1094,7 @@ RExp2 : RExp2 '==' RExp3
   $1.state = $$.state;
   $3.state = $1.modifiedState;
 }
-  | RExp2 '<=' RExp3 
+  | RExp1 '<=' RExp2 
 {    
   $$.attr = Abs.Le $1.attr $3.attr;
   $$.err = (Err.prettyRelErr (Err.mkRelErrs $1.btype $3.btype (posLineCol $1.pos) (posLineCol $3.pos) (posLineCol $$.pos)) "<=")  ++ $1.err ++ $3.err;
@@ -1112,7 +1111,7 @@ RExp2 : RExp2 '==' RExp3
   $1.state = $$.state;
   $3.state = $1.modifiedState;
 }
-  | RExp2 '>=' RExp3 
+  | RExp1 '>=' RExp2 
 {      
   $$.attr = Abs.Ge $1.attr $3.attr;
   $$.err = (Err.prettyRelErr (Err.mkRelErrs $1.btype $3.btype (posLineCol $1.pos) (posLineCol $3.pos) (posLineCol $$.pos)) ">=")  ++ $1.err ++ $3.err;
@@ -1129,7 +1128,7 @@ RExp2 : RExp2 '==' RExp3
   $1.state = $$.state;
   $3.state = $1.modifiedState;
 }
-  | RExp3 
+  | RExp2 
 { 
   $$.attr = $1.attr; 
   $$.err = $1.err;
@@ -1146,7 +1145,7 @@ RExp2 : RExp2 '==' RExp3
   $1.state = $$.state;
 }
 
-RExp3 : RExp3 '+' RExp4 
+RExp2 : RExp2 '+' RExp3 
 {  
   $$.attr = Abs.Add $1.attr $3.attr;
   $$.err = $1.err ++ $3.err;
@@ -1165,7 +1164,7 @@ RExp3 : RExp3 '+' RExp4
   $1.state = $$.state;
   $3.state = $1.modifiedState;
 }
-  | RExp3 '-' RExp4 
+  | RExp2 '-' RExp3 
 {   
   $$.attr = Abs.Sub $1.attr $3.attr;
   $$.err = $1.err ++ $3.err;
@@ -1184,7 +1183,7 @@ RExp3 : RExp3 '+' RExp4
   $1.state = $$.state;
   $3.state = $1.modifiedState;
 }
-  | RExp4 
+  | RExp3 
 {
   $$.attr = $1.attr;
   $$.err = $1.err;
@@ -1201,7 +1200,7 @@ RExp3 : RExp3 '+' RExp4
   $1.state = $$.state;
 }
 
-RExp4 : RExp4 '*' RExp5 
+RExp3 : RExp3 '*' RExp4 
 {
   $$.attr = Abs.Mul $1.attr $3.attr;
   $$.err = $1.err ++ $3.err;
@@ -1220,7 +1219,7 @@ RExp4 : RExp4 '*' RExp5
   $1.state = $$.state;
   $3.state = $1.modifiedState;
 }
-  | RExp4 '/' RExp5 
+  | RExp3 '/' RExp4 
 { 
   $$.attr = Abs.Div $1.attr $3.attr;
   $$.err = $1.err ++ $3.err;
@@ -1239,7 +1238,7 @@ RExp4 : RExp4 '*' RExp5
   $1.state = $$.state;
   $3.state = $1.modifiedState;
 }
-  | RExp4 '%' RExp5 
+  | RExp3 '%' RExp4 
 {    
   $$.attr = Abs.Mod $1.attr $3.attr;
   $$.err = $1.err ++ $3.err;
@@ -1258,7 +1257,7 @@ RExp4 : RExp4 '*' RExp5
   $1.state = $$.state;
   $3.state = $1.modifiedState;
 }
-  | RExp5 
+  | RExp4 
 {    
   $$.attr = $1.attr; 
   $$.err = $1.err;
@@ -1275,7 +1274,7 @@ RExp4 : RExp4 '*' RExp5
   $1.state = $$.state;
 }
 
-RExp5 : RExp5 '^' RExp6 
+RExp4 : RExp4 '^' RExp5 
 { 
   $$.attr = Abs.Pow $1.attr $3.attr;
   $$.err = $1.err ++ $3.err;
@@ -1294,7 +1293,7 @@ RExp5 : RExp5 '^' RExp6
   $1.state = $$.state;
   $3.state = $1.modifiedState;
 } 
-  | RExp6 
+  | RExp5 
 { 
   $$.attr = $1.attr;
   $$.err = $1.err;
@@ -1311,7 +1310,7 @@ RExp5 : RExp5 '^' RExp6
   $1.state = $$.state;
 }
 
-RExp6 : '&' RExp7 
+RExp5 : '&' RExp6 
 {     
   $$.attr = Abs.PointerRef $2.attr; 
   $2.env = $$.env;
@@ -1329,7 +1328,7 @@ RExp6 : '&' RExp7
   $$.modifiedState = TAC.incrementTemp $2.modifiedState;
   $2.state = $$.state;
 } 
-  | '*' RExp7 
+  | '*' RExp6 
 { 
   $$.attr = Abs.DereferenceVal $2.attr;
   $2.env = $$.env;
@@ -1347,7 +1346,7 @@ RExp6 : '&' RExp7
   $$.modifiedState = TAC.incrementTemp $2.modifiedState;
   $2.state = $$.state;
 }
-  | '-' RExp7 
+  | '-' RExp6 
 { 
   $$.attr = Abs.Neg $2.attr; 
   $2.env = $$.env;
@@ -1363,7 +1362,7 @@ RExp6 : '&' RExp7
   $$.modifiedState = TAC.incrementTemp $2.modifiedState;
   $2.state = $$.state;
 }
-  | RExp7
+  | RExp6
 { 
   $$.attr = $1.attr; 
   $$.err = $1.err;
@@ -1380,7 +1379,7 @@ RExp6 : '&' RExp7
   $1.state = $$.state;
 }
 
-RExp7 : Integer 
+RExp6 : Integer 
 { 
   $$.attr = Abs.IntValue $1.attr; 
   $$.err = $1.err;
@@ -1580,23 +1579,6 @@ ListRExp : {- empty -}
   $$.modifiedState = $3.modifiedState;
   $1.state = $$.state;
   $3.state = $1.modifiedState;
-}
-
-RExp1 : RExp2 
-{ 
-  $$.attr = $1.attr;
-  $$.err = $1.err;
-  $$.btype = $1.btype;
-  $1.env = $$.env;
-
-  $$.ident = $1.ident;
-  $$.pos = $1.pos;
-
-  $$.addr = $1.addr;
-  $$.code = $1.code;  
-  
-  $$.modifiedState = $1.modifiedState;
-  $1.state = $$.state;
 }
 
 {

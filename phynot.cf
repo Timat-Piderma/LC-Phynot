@@ -93,41 +93,41 @@ LArray.                         LExp ::= Ident [Dim];
 
 ArrayStructure.                 RExp ::= "[" Arr "]";
     
-Or.                             RExp ::= RExp "or" RExp2;
-And.                            RExp ::= RExp "and" RExp2;
-Not.                            RExp ::= "not" RExp2;
+Or.                             RExp ::= RExp "or" RExp1;
+And.                            RExp ::= RExp "and" RExp1;
+Not.                            RExp ::= "not" RExp1;
     
-Eq.                             RExp2 ::= RExp2 "==" RExp3;
-Neq.                            RExp2 ::= RExp2 "!=" RExp3;
-Lt.                             RExp2 ::= RExp2 "<" RExp3;
-Gt.                             RExp2 ::= RExp2 ">" RExp3;
-Le.                             RExp2 ::= RExp2 "<=" RExp3;
-Ge.                             RExp2 ::= RExp2 ">=" RExp3;
+Eq.                             RExp1 ::= RExp1 "==" RExp2;
+Neq.                            RExp1 ::= RExp1 "!=" RExp2;
+Lt.                             RExp1 ::= RExp1 "<" RExp2;
+Gt.                             RExp1 ::= RExp1 ">" RExp2;
+Le.                             RExp1 ::= RExp1 "<=" RExp2;
+Ge.                             RExp1 ::= RExp1 ">=" RExp2;
 
-Add.                            RExp3 ::= RExp3 "+" RExp4;
-Sub.                            RExp3 ::= RExp3 "-" RExp4;
+Add.                            RExp2 ::= RExp2 "+" RExp3;
+Sub.                            RExp2 ::= RExp2 "-" RExp3;
     
-Mul.                            RExp4 ::= RExp4 "*" RExp5;
-Div.                            RExp4 ::= RExp4 "/" RExp5;
-Mod.                            RExp4 ::= RExp4 "%" RExp5;
+Mul.                            RExp3 ::= RExp3 "*" RExp4;
+Div.                            RExp3 ::= RExp3 "/" RExp4;
+Mod.                            RExp3 ::= RExp3 "%" RExp4;
 
-Pow.                            RExp5 ::= RExp5 "^" RExp6;
+Pow.                            RExp4 ::= RExp4 "^" RExp5;
 
-PointerRef.                     RExp6 ::= "&" RExp7;
-DereferenceVal.                 RExp6 ::= "*" RExp7;
-Neg.                            RExp6 ::= "-" RExp7;
+PointerRef.                     RExp5 ::= "&" RExp6;
+DereferenceVal.                 RExp5 ::= "*" RExp6;
+Neg.                            RExp5 ::= "-" RExp6;
 
-IntValue.                       RExp7 ::= Integer;
-FloatValue.                     RExp7 ::= Double;
-StringValue.                    RExp7 ::= String;
-CharValue.                      RExp7 ::= Char;
-BooleanValue.                   RExp7 ::= Boolean;
-VarValue.                       RExp7 ::= Ident;
+IntValue.                       RExp6 ::= Integer;
+FloatValue.                     RExp6 ::= Double;
+StringValue.                    RExp6 ::= String;
+CharValue.                      RExp6 ::= Char;
+BooleanValue.                   RExp6 ::= Boolean;
+VarValue.                       RExp6 ::= Ident;
     
-ArrayIndexValue.                RExp7 ::= Ident [Dim];
-FuncCall.                       RExp7 ::= Ident "(" [RExp] ")";
-FuncCallNoParam.                RExp7 ::= Ident "()";
+ArrayIndexValue.                RExp6 ::= Ident [Dim];
+FuncCall.                       RExp6 ::= Ident "(" [RExp] ")";
+FuncCallNoParam.                RExp6 ::= Ident "()";
 separator RExp ","; 
     
-coercions RExp 7;   
+coercions RExp 6;   
     
