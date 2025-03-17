@@ -296,7 +296,7 @@ printTAC (TacInstruction (UnconditionalJump (Label l)) : xs) = "\tgoto " ++ l ++
 printTAC (TacInstruction (ConditionalJump a1 (Label l)) : xs) = "\tifFalse " ++ printAddr a1 ++ " goto " ++ l ++ "\n" ++ printTAC xs
 printTAC (TacInstruction (IndexedAssignment a1 a2 a3) : xs) = "\t" ++ printAddr a1 ++ "[" ++ printAddr a2 ++ "] = " ++ printTypedAddr a3 ++ "\n" ++ printTAC xs
 printTAC (TacInstruction (IndexedCopyAssignment a1 a2 a3) : xs) = "\t" ++ printAddr a1 ++ " = " ++ printTypedAddr a2 ++ "[" ++ printAddr a3 ++ "]\n" ++ printTAC xs
-printTAC (TacInstruction (FunctionDef (f:addrs)) : xs) = "def " ++ printTypedAddr f ++ " (" ++ concatMap printTypedAddr addrs  ++ ") {\n"++ printTAC xs
+printTAC (TacInstruction (FunctionDef (f:addrs)) : xs) = "def " ++ printTypedAddr f ++ " (" ++ unwords (map printTypedAddr addrs)  ++ ") {\n"++ printTAC xs
 printTAC (TacInstruction EndFunction : xs) = "}\n" ++ printTAC xs
 printTAC (TacInstruction (TAC.Return a) : xs) = "\treturn " ++ printTypedAddr a ++ "\n" ++ printTAC xs
 printTAC (TacInstruction ReturnVoid : xs) = "\treturn_none\n" ++ printTAC xs
