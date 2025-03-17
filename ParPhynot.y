@@ -1436,7 +1436,7 @@ RExp6 : Integer
   $$.addr = TAC.newtemp $$.state $$.btype;
   $$.code = $3.code ++ TAC.generateFuncCall $$.addr (E.getAddr $1.ident $$.env) (length $3.attr) $3.listAddr;
 
-  $$.modifiedState = TAC.incrementTemp $3.modifiedState;
+  $$.modifiedState = $3.modifiedState;
   $3.state = $$.state;
 }
   | '(' RExp ')'  
