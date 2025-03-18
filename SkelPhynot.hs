@@ -62,7 +62,15 @@ transStm x = case x of
 
 transParam :: AbsPhynot.Param -> Result
 transParam x = case x of
-  AbsPhynot.Parameter basictype ident -> failure x
+  AbsPhynot.Parameter modality basictype ident -> failure x
+
+transModality :: AbsPhynot.Modality -> Result
+transModality x = case x of
+  AbsPhynot.Modality1 -> failure x
+  AbsPhynot.Modality_ref -> failure x
+  AbsPhynot.Modality_res -> failure x
+  AbsPhynot.Modality_valres -> failure x
+  AbsPhynot.Modality_const -> failure x
 
 transDim :: AbsPhynot.Dim -> Result
 transDim x = case x of

@@ -18,13 +18,14 @@ import LexPhynot
 
 }
 
-%name pProgram Program
-%name pListStm ListStm
 %name pBasicType BasicType
 %name pBoolean Boolean
+%name pProgram Program
+%name pListStm ListStm
 %name pStm Stm
 %name pParam Param
 %name pListParam ListParam
+%name pModality Modality
 %name pDim Dim
 %name pListDim ListDim
 %name pArr Arr
@@ -81,10 +82,13 @@ import LexPhynot
   'not'      { PT _ (TS _ 36) }
   'or'       { PT _ (TS _ 37) }
   'pass'     { PT _ (TS _ 38) }
-  'return'   { PT _ (TS _ 39) }
-  'while'    { PT _ (TS _ 40) }
-  '{'        { PT _ (TS _ 41) }
-  '}'        { PT _ (TS _ 42) }
+  'ref'      { PT _ (TS _ 39) }
+  'res'      { PT _ (TS _ 40) }
+  'return'   { PT _ (TS _ 41) }
+  'valres'   { PT _ (TS _ 42) }
+  'while'    { PT _ (TS _ 43) }
+  '{'        { PT _ (TS _ 44) }
+  '}'        { PT _ (TS _ 45) }
   L_Ident    { PT _ (TV _)   }
   L_charac   { PT _ (TC _)   }
   L_doubl    { PT _ (TD _)   }
@@ -674,16 +678,37 @@ ListParam: {- empty -}
   $$.paramTypes = $1.btype : $3.paramTypes;
 }
 
-Param : BasicType Ident 
+Param : Modality BasicType Ident 
 {  
-  $$.attr = Abs.Parameter $1.attr $2.attr; 
+  $$.attr = Abs.Parameter $1.attr $2.attr $3.attr; 
 
-  $$.modifiedEnv = E.insertVar $2.ident (posLineCol $$.pos) $1.btype (TAC.generateAddr $$.btype ($2.ident ++ "@" ++ show (fst (posLineCol $2.pos)))) $$.env;
-  $$.pos = $2.pos;
+  $$.modifiedEnv = E.insertVar $3.ident (posLineCol $$.pos) $2.btype (TAC.generateAddr $$.btype ($3.ident ++ "@" ++ show (fst (posLineCol $3.pos)))) $$.env;
+  $$.pos = $3.pos;
 
-  $$.err = Err.mkParamErrs $2.ident $$.funcName $$.env (posLineCol $$.pos);
+  $$.err = Err.mkParamErrs $3.ident $$.funcName $$.env (posLineCol $$.pos);
 
-  $$.btype = $1.btype;
+  $$.btype = $2.btype;
+}
+
+Modality : {- empty -} 
+{ 
+  $$.attr = Abs.Modality1; 
+}
+  | 'ref' 
+{ 
+  $$.attr = Abs.Modality_ref;
+}
+  | 'res' 
+{ 
+  $$.attr = Abs.Modality_res;
+}
+  | 'valres' 
+{ 
+  $$.attr = Abs.Modality_valres; 
+}
+  | 'const' 
+{ 
+  $$.attr = Abs.Modality_const;
 }
 
 -----------

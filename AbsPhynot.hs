@@ -48,7 +48,15 @@ data Stm
     | Pass
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
-data Param = Parameter BasicType Ident
+data Param = Parameter Modality BasicType Ident
+  deriving (C.Eq, C.Ord, C.Show, C.Read)
+
+data Modality
+    = Modality1
+    | Modality_ref
+    | Modality_res
+    | Modality_valres
+    | Modality_const
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
 data Dim = ArrayDimension RExp

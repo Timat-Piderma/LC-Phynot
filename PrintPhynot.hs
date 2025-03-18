@@ -187,12 +187,20 @@ instance Print AbsPhynot.Stm where
 
 instance Print AbsPhynot.Param where
   prt i = \case
-    AbsPhynot.Parameter basictype id_ -> prPrec i 0 (concatD [prt 0 basictype, prt 0 id_])
+    AbsPhynot.Parameter modality basictype id_ -> prPrec i 0 (concatD [prt 0 modality, prt 0 basictype, prt 0 id_])
 
 instance Print [AbsPhynot.Param] where
   prt _ [] = concatD []
   prt _ [x] = concatD [prt 0 x]
   prt _ (x:xs) = concatD [prt 0 x, doc (showString ","), prt 0 xs]
+
+instance Print AbsPhynot.Modality where
+  prt i = \case
+    AbsPhynot.Modality1 -> prPrec i 0 (concatD [])
+    AbsPhynot.Modality_ref -> prPrec i 0 (concatD [doc (showString "ref")])
+    AbsPhynot.Modality_res -> prPrec i 0 (concatD [doc (showString "res")])
+    AbsPhynot.Modality_valres -> prPrec i 0 (concatD [doc (showString "valres")])
+    AbsPhynot.Modality_const -> prPrec i 0 (concatD [doc (showString "const")])
 
 instance Print AbsPhynot.Dim where
   prt i = \case
