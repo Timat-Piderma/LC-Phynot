@@ -182,8 +182,8 @@ generateArray' a 0 size vals c = []
 generateArray' a x size vals  c = TacInstruction (IndexedAssignment a (generateLit (TS.Base TS.INT) (IntVal (toInteger (c * size)))) (head vals))
     : generateArray' a (x-1) size (tail vals) (c+1)
 
-generateFuncDef :: Address -> [(String, (Int, Int), TS.Type)] -> TAC
-generateFuncDef f d = TacInstruction (FunctionDef (f : map (\(s, (x, y), t) -> generateAddr t (s++"@"++show x)) d))
+generateFuncDef :: Address -> [(String, TS.Type)] -> Int -> TAC
+generateFuncDef f d pos = TacInstruction (FunctionDef (f : map (\(s, t) -> generateAddr t (s++"@"++show pos)) d))
 
 generateFuncCall :: Address -> Address -> Int -> [Address] -> [TAC]
 generateFuncCall t p n d = map (TacInstruction . FunctionParam) d ++ [TacInstruction (TAC.FunctionCall t p n)]

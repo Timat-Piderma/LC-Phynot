@@ -111,6 +111,7 @@ import LexPhynot
 
 %attribute funcName { String }
 %attribute paramTypes { [(Abs.Modality, TS.Type)] }
+%attribute paramNames { [String] }
 %attribute modality { Abs.Modality }
 
 %attribute addr { TAC.Address }
@@ -443,7 +444,7 @@ Stm: BasicType Ident
   $$.err = $5.err ++ (Err.mkFuncDeclErrs $2.btype $$.env $3.ident $5.paramTypes (posLineCol ($3.pos))) ++ (Err.prettyFuncErr $8.err $3.ident);
 
   $$.addr = (TAC.generateAddr $2.btype ($3.ident ++ "@" ++ show (fst (posLineCol $3.pos))));
-  $$.code = [TAC.generateFuncDef $$.addr (E.getAllEntitiesInfo $5.modifiedEnv $3.ident)] ++ $8.code ++ [TAC.TacInstruction (TAC.EndFunction)];
+  $$.code = [TAC.generateFuncDef $$.addr (zip $5.paramNames (map snd $5.paramTypes)) (fst (posLineCol ($3.pos)))] ++ $8.code ++ [TAC.TacInstruction (TAC.EndFunction)];
 
   $$.modifiedState = $8.modifiedState;
   $8.state = $$.state;
@@ -464,7 +465,7 @@ Stm: BasicType Ident
   $$.err = $5.err ++ (Err.mkFuncDeclErrs (TS.Base TS.NONE) $$.env $3.ident $5.paramTypes (posLineCol ($3.pos))) ++ (Err.prettyFuncErr $8.err $3.ident);
 
   $$.addr = (TAC.generateAddr (TS.Base TS.NONE) ($3.ident ++ "@" ++ show (fst (posLineCol $3.pos))));
-  $$.code = [TAC.generateFuncDef $$.addr (E.getAllEntitiesInfo $5.modifiedEnv $3.ident)] ++ $8.code ++ [TAC.TacInstruction (TAC.EndFunction)];
+  $$.code = [TAC.generateFuncDef $$.addr (zip $5.paramNames (map snd $5.paramTypes)) (fst (posLineCol ($3.pos)))] ++ $8.code ++ [TAC.TacInstruction (TAC.EndFunction)];
 
   $$.modifiedState = $8.modifiedState;
   $8.state = $$.state;
@@ -653,6 +654,7 @@ ListParam: {- empty -}
   $$.err = [];
 
   $$.paramTypes = [];
+  $$.paramNames = [];
 }
   | Param 
 {  
@@ -662,7 +664,8 @@ ListParam: {- empty -}
   $1.funcName = $$.funcName;
   $$.err = $1.err;
 
-  $$.paramTypes = $1.paramTypes; 
+  $$.paramTypes = $1.paramTypes;
+  $$.paramNames = $1.paramNames;
 }
   | Param ',' ListParam 
 {  
@@ -677,6 +680,7 @@ ListParam: {- empty -}
   $$.err = $1.err ++ $3.err;
 
   $$.paramTypes = $1.paramTypes ++ $3.paramTypes;
+  $$.paramNames = $1.paramNames ++ $3.paramNames;
 }
 
 Param : Modality BasicType Ident 
@@ -691,6 +695,7 @@ Param : Modality BasicType Ident
   $$.btype = $2.btype;
 
   $$.paramTypes = [($1.attr, $2.btype)];
+  $$.paramNames = [$3.ident];
 }
 
 Modality : {- empty -} 
