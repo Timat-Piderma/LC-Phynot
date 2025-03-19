@@ -1,5 +1,4 @@
 module TypeSystem where
-import GHC.Windows (getErrorMessage)
 
 data BasicType = ERROR String | INT | FLOAT | BOOL | CHAR | STRING | NONE
   deriving (Eq, Show, Read)
