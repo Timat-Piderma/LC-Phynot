@@ -5,6 +5,7 @@ module ErrorsBuilder where
 import Data.List
 import TypeSystem as TS
 import Env as E
+import AbsPhynot
 
 mkAssignmentErrs :: Type -> Type -> (Int, Int) -> (Int, Int) -> [String]
 mkAssignmentErrs (Base (ERROR s1)) (Base (ERROR s2)) _ _ = [s1, s2]
@@ -106,23 +107,23 @@ mkParamErrs parName funcName env pos
 prettyFuncErr :: [String] -> String -> [String]
 prettyFuncErr errs funcName = map (++ " inside function '" ++ funcName ++ "'") errs
 
-mkFuncDeclErrs :: Type -> EnvT -> String -> [Type] -> (Int, Int) -> [String]
+mkFuncDeclErrs :: Type -> EnvT -> String -> [(Modality, Type)] -> (Int, Int) -> [String]
 mkFuncDeclErrs funcType env funcName params pos
     | getVarPos funcName env == (-1,-1) = [mkStringError ("Primitive function '" ++ funcName ++ "' can not be redefined") pos] 
     | containsPrototype funcName env = protoToFuncErrs funcType funcName params env pos
     | containsEntry funcName env = [mkStringError ("Function '" ++ funcName ++ "' already declared at: " ++ show (getVarPos funcName env)) pos] 
     | otherwise = []
 
-protoToFuncErrs :: Type -> String -> [Type] -> EnvT -> (Int, Int) -> [String]
+protoToFuncErrs :: Type -> String -> [(Modality, Type)] -> EnvT -> (Int, Int) -> [String]
 protoToFuncErrs (Base (ERROR s)) _ _ _ _ = [s]
 protoToFuncErrs funcType funcName params env pos
     | getFuncType funcName env == funcType && getFuncParams funcName env == params = []
-    | getFuncType funcName env /= funcType && getFuncParams funcName env /= params = [mkStringError ("Error: function '" ++ funcName ++ "' has different return type: '" ++ typeToString (getFuncType funcName env) ++ "' and parameters: '" ++ intercalate ", " (map typeToString (getFuncParams funcName env)) ++ "' than prototype") pos]
+    | getFuncType funcName env /= funcType && getFuncParams funcName env /= params = [mkStringError ("Error: function '" ++ funcName ++ "' has different return type: '" ++ typeToString (getFuncType funcName env) ++ "' and parameters: '" ++ intercalate ", " (map (\(mod, typ) -> show mod ++ ": " ++ typeToString typ) (getFuncParams funcName env)) ++ "' than prototype") pos]
     | getFuncType funcName env /= funcType = [mkStringError ("Error: function '" ++ funcName ++ "' has different return type: '" ++ typeToString (getFuncType funcName env) ++ "' than prototype") pos]
-    | getFuncParams funcName env /= params = [mkStringError ("Error: function '" ++ funcName ++ "' has different parameters: '" ++ intercalate ", " (map typeToString (getFuncParams funcName env)) ++ "' than prototype") pos]
+    | getFuncParams funcName env /= params = [mkStringError ("Error: function '" ++ funcName ++ "' has different parameters: '" ++ intercalate ", " (map (\(mod, typ) -> show mod ++ ": " ++ typeToString typ) (getFuncParams funcName env))++ "' than prototype") pos]
     | otherwise = []
 
-mkPrototypeErrs :: Type -> EnvT -> String -> [Type] -> (Int, Int) -> [String]
+mkPrototypeErrs :: Type -> EnvT -> String -> [(Modality, Type)] -> (Int, Int) -> [String]
 mkPrototypeErrs funcType env funcName params pos
     | containsEntry funcName env = [mkStringError ("Prototype function '" ++ funcName ++ "' already declared at: " ++ show (getVarPos funcName env)) pos] 
     | otherwise = []
@@ -134,24 +135,30 @@ mkReturnErrs env retType pos
     | containsEntry "return" env = [mkStringError ("Error: the return value " ++ typeToString retType ++" is not " ++ typeToString (getVarType "return" env)) pos]
     | otherwise = [ mkStringError "Error: return statement outside function" pos]
 
-mkFuncCallErrs :: String -> [Type] -> EnvT -> (Int, Int) -> [String]
+mkFuncCallErrs :: String -> [(Modality, Type)] -> EnvT -> (Int, Int) -> [String]
 mkFuncCallErrs funcName params env pos
-    | funcName == "writeInt" && length params == 1 && (mathtype (head params) == Base INT) = []
-    | funcName == "writeFloat" && length params == 1 && (mathtype (head params) == Base FLOAT) = []
-    | funcName == "writeChar" && length params == 1 && (mathtype (head params) == Base CHAR) = []
-    | funcName == "writeString" && length params == 1 && (head params == Base STRING) = []
+    | funcName == "writeInt" && length params == 1 && (mathtype (snd (head params)) == Base INT) = []
+    | funcName == "writeFloat" && length params == 1 && (mathtype (snd (head params)) == Base FLOAT) = []
+    | funcName == "writeChar" && length params == 1 && (mathtype (snd (head params)) == Base CHAR) = []
+    | funcName == "writeString" && length params == 1 && (snd (head params) == Base STRING) = []
     | containsEntry funcName env && (params == getFuncParams funcName env) = []
     | containsEntry funcName env && (length params /=  length (getFuncParams funcName env)) = [mkStringError ("Error: function '" ++ funcName ++ "' expects " ++ show (length (getFuncParams funcName env)) ++ " parameters, found: " ++ show (length params)) pos]
     | containsEntry funcName env = mkFuncCallParamErrs funcName params (getFuncParams funcName env) pos
     | otherwise = []
 
-mkFuncCallParamErrs :: String -> [Type] -> [Type] -> (Int, Int) -> [String]
+mkFuncCallParamErrs :: String -> [(Modality, Type)] -> [(Modality, Type)] -> (Int, Int) -> [String]
 mkFuncCallParamErrs _ [] [] _= []
-mkFuncCallParamErrs funcName (x:xs) (y:ys) pos
-    | x == y    = mkFuncCallParamErrs funcName xs ys pos
-    | otherwise = mkStringError ("Error: can't match " ++ typeToString x ++ " with expected type " ++ typeToString y ++ " in function '" ++ funcName ++ "' call") pos : mkFuncCallParamErrs funcName xs ys pos
+mkFuncCallParamErrs funcName ((xi, xj):xs) ((yi, yj):ys) pos
+    | yi == Modality_ref && (xi == Modality1 || xi == Modality_const) = 
+        mkStringError ("Error: parameter can not be passed as reference in function '" ++ funcName ++ "' call") pos : mkFuncCallParamErrs funcName xs ys pos
+    | yi == Modality_res && (xi == Modality1 || xi == Modality_const) = 
+        mkStringError ("Error: parameter can not be passed as result in function '" ++ funcName ++ "' call") pos : mkFuncCallParamErrs funcName xs ys pos
+    | yi == Modality_valres && (xi == Modality1 || xi == Modality_const) = 
+        mkStringError ("Error: parameter can not be passed as value-result in function '" ++ funcName ++ "' call") pos : mkFuncCallParamErrs funcName xs ys pos
+    | xj == yj = mkFuncCallParamErrs funcName xs ys pos
+    | otherwise = mkStringError ("Error: can't match " ++ typeToString xj ++ " with expected type " ++ typeToString yj ++ " in function '" ++ funcName ++ "' call") pos : mkFuncCallParamErrs funcName xs ys pos
 
-mkProcedureCallErrs :: String -> [Type] -> EnvT -> (Int, Int) -> [String]
+mkProcedureCallErrs :: String -> [(Modality, Type)] -> EnvT -> (Int, Int) -> [String]
 mkProcedureCallErrs procName params env pos
     | containsEntry procName env && (params == getFuncParams procName env) = []
     | containsEntry procName env && (length params /=  length (getFuncParams procName env)) = [mkStringError ("Error: function '" ++ procName ++ "' expects " ++ show (length (getFuncParams procName env)) ++ " parameters, found: " ++ show (length params)) pos]

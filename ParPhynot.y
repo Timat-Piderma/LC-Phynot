@@ -110,7 +110,8 @@ import LexPhynot
 %attribute arraylen { Int }
 
 %attribute funcName { String }
-%attribute paramTypes { [TS.Type] }
+%attribute paramTypes { [(Abs.Modality, TS.Type)] }
+%attribute modality { Abs.Modality }
 
 %attribute addr { TAC.Address }
 %attribute listAddr { [TAC.Address] }
@@ -274,7 +275,7 @@ ListStm : Stm ';'
 Stm: BasicType Ident 
 { 
   $$.attr = Abs.VarDeclaration $1.attr $2.attr;
-  $$.modifiedEnv = E.insertVar $2.ident (posLineCol $$.pos) $$.btype $$.addr $$.env;
+  $$.modifiedEnv = E.insertVar $2.ident (Abs.Modality_ref) (posLineCol $$.pos) $$.btype $$.addr $$.env;
   $$.err = Err.mkDeclErrs $$.env $2.ident (posLineCol $$.pos); 
   $$.ident = $2.ident;
   $$.pos = $2.pos;
@@ -288,7 +289,7 @@ Stm: BasicType Ident
   | BasicType Ident '=' RExp 
 { 
   $$.attr = Abs.VarDeclarationInit $1.attr $2.attr $4.attr;
-  $$.modifiedEnv = E.insertVar $2.ident (posLineCol $$.pos) $$.btype $$.addr $$.env;
+  $$.modifiedEnv = E.insertVar $2.ident (Abs.Modality_ref) (posLineCol $$.pos) $$.btype $$.addr $$.env;
   $$.err = Err.mkDeclInitErrs $$.btype $4.btype $$.env $2.ident (posLineCol $$.pos) ++ $4.err; 
   $$.ident = $2.ident;
   $$.pos = $2.pos;
@@ -345,7 +346,7 @@ Stm: BasicType Ident
   | BasicType '*' Ident 
 {  
   $$.attr = Abs.PointerDeclaration $1.attr $3.attr;
-  $$.modifiedEnv = E.insertVar $3.ident (posLineCol $$.pos) $$.btype $$.addr $$.env;
+  $$.modifiedEnv = E.insertVar $3.ident (Abs.Modality_ref) (posLineCol $$.pos) $$.btype $$.addr $$.env;
   $$.err = Err.mkDeclErrs $$.env $3.ident (posLineCol $$.pos); 
   $$.ident = $3.ident;
   $$.pos = $3.pos;
@@ -359,7 +360,7 @@ Stm: BasicType Ident
   | BasicType '*' Ident '=' RExp 
 {  
   $$.attr = Abs.PointerDeclarationInit $1.attr $3.attr $5.attr;
-  $$.modifiedEnv = E.insertVar $3.ident (posLineCol $$.pos) $$.btype $$.addr $$.env;
+  $$.modifiedEnv = E.insertVar $3.ident (Abs.Modality_ref) (posLineCol $$.pos) $$.btype $$.addr $$.env;
   $$.err = (Err.mkPointerDeclInitErrs $$.btype $5.btype $$.env $3.ident (posLineCol $$.pos)) ++ $5.err;
   $$.ident = $3.ident;
   $$.pos = $3.pos;
@@ -400,7 +401,7 @@ Stm: BasicType Ident
   $$.attr = Abs.FunctionPrototype $1.attr $2.attr $4.attr; 
 
   $$.modifiedEnv = E.insertPrototype $2.ident (posLineCol ($2.pos)) $1.btype $4.paramTypes $$.addr $$.env;
-  $4.env = E.insertVar "return" (posLineCol ($2.pos)) ($$.btype) $$.addr $$.env;
+  $4.env = E.insertVar "return" (Abs.Modality_res) (posLineCol ($2.pos)) ($$.btype) $$.addr $$.env;
 
   $4.funcName = $2.ident;
 
@@ -432,7 +433,7 @@ Stm: BasicType Ident
 
   $$.modifiedEnv = E.insertFunc $3.ident (posLineCol $3.pos) $2.btype $5.paramTypes $$.addr $$.env;
   $8.env = $5.modifiedEnv;
-  $5.env = E.insertFunc $3.ident (posLineCol $$.pos) $2.btype $5.paramTypes $$.addr (E.insertVar "return" (posLineCol ($3.pos)) ($$.btype) $$.addr $$.env);
+  $5.env = E.insertFunc $3.ident (posLineCol $$.pos) $2.btype $5.paramTypes $$.addr (E.insertVar "return" (Abs.Modality_res) (posLineCol ($3.pos)) ($$.btype) $$.addr $$.env);
 
   $$.pos = $3.pos;
 
@@ -453,7 +454,7 @@ Stm: BasicType Ident
 
   $$.modifiedEnv = E.insertFunc $3.ident (posLineCol $3.pos) (TS.Base TS.NONE) $5.paramTypes $$.addr $$.env;
   $8.env = $5.modifiedEnv;
-  $5.env = E.insertFunc $3.ident (posLineCol $$.pos) (TS.Base TS.NONE) $5.paramTypes $$.addr (E.insertVar "return" (posLineCol ($3.pos)) ($$.btype) $$.addr $$.env);
+  $5.env = E.insertFunc $3.ident (posLineCol $$.pos) (TS.Base TS.NONE) $5.paramTypes $$.addr (E.insertVar "return" (Abs.Modality_res) (posLineCol ($3.pos)) ($$.btype) $$.addr $$.env);
 
   $$.pos = $3.pos;
 
@@ -589,7 +590,7 @@ Stm: BasicType Ident
 {   
   $$.attr = Abs.WhileDo $2.attr $4.attr; 
   $2.env = $$.env;
-  $4.env = E.insertVar "continue" (posLineCol (tokenPosn $1)) (TS.Base TS.BOOL) $$.addr (E.insertVar("break") (posLineCol (tokenPosn $1)) (TS.Base TS.BOOL) $$.addr $$.env);
+  $4.env = E.insertVar "continue" (Abs.Modality_res) (posLineCol (tokenPosn $1)) (TS.Base TS.BOOL) $$.addr (E.insertVar "break" (Abs.Modality_res) (posLineCol (tokenPosn $1)) (TS.Base TS.BOOL) $$.addr $$.env);
   $$.modifiedEnv = $$.env;
   $$.err = Err.mkWhileErrs $2.btype (posLineCol (tokenPosn $1)) ++ (Err.prettySequenceErr "while" $4.err) ++ $2.err; 
 
@@ -661,7 +662,7 @@ ListParam: {- empty -}
   $1.funcName = $$.funcName;
   $$.err = $1.err;
 
-  $$.paramTypes = [$1.btype]; 
+  $$.paramTypes = $1.paramTypes; 
 }
   | Param ',' ListParam 
 {  
@@ -675,19 +676,21 @@ ListParam: {- empty -}
 
   $$.err = $1.err ++ $3.err;
 
-  $$.paramTypes = $1.btype : $3.paramTypes;
+  $$.paramTypes = $1.paramTypes ++ $3.paramTypes;
 }
 
 Param : Modality BasicType Ident 
 {  
   $$.attr = Abs.Parameter $1.attr $2.attr $3.attr; 
 
-  $$.modifiedEnv = E.insertVar $3.ident (posLineCol $$.pos) $2.btype (TAC.generateAddr $$.btype ($3.ident ++ "@" ++ show (fst (posLineCol $3.pos)))) $$.env;
+  $$.modifiedEnv = E.insertVar $3.ident $1.attr (posLineCol $$.pos) $2.btype (TAC.generateAddr $$.btype ($3.ident ++ "@" ++ show (fst (posLineCol $3.pos)))) $$.env;
   $$.pos = $3.pos;
 
   $$.err = Err.mkParamErrs $3.ident $$.funcName $$.env (posLineCol $$.pos);
 
   $$.btype = $2.btype;
+
+  $$.paramTypes = [($1.attr, $2.btype)];
 }
 
 Modality : {- empty -} 
@@ -898,6 +901,7 @@ RExp : '[' Arr ']'
 { 
   $$.attr = Abs.ArrayStructure $2.attr;
   $2.env = $$.env;
+  $$.modality = Abs.Modality1;
 
   $$.btype = (TS.ARRAY $2.btype);
 
@@ -921,6 +925,7 @@ RExp : '[' Arr ']'
   $$.btype = TS.Base TS.BOOL;
   $1.env = $$.env;  
   $3.env = $$.env;
+  $$.modality = Abs.Modality1;
 
   $$.pos = (tokenPosn $2);
 
@@ -938,6 +943,7 @@ RExp : '[' Arr ']'
   $$.btype = TS.Base TS.BOOL;
   $1.env = $$.env;  
   $3.env = $$.env;
+  $$.modality = Abs.Modality1;
 
   $$.pos = (tokenPosn $2);
 
@@ -953,7 +959,8 @@ RExp : '[' Arr ']'
   $$.attr = Abs.Not $2.attr;
   $$.err =  (Err.mkNotErrs $2.btype (posLineCol $$.pos)) ++ $2.err;
   $$.btype = TS.Base TS.BOOL;
-  $2.env = $$.env; 
+  $2.env = $$.env;
+  $$.modality = Abs.Modality1;
 
   $$.pos = (tokenPosn $1); 
 
@@ -969,6 +976,7 @@ RExp : '[' Arr ']'
   $$.err = $1.err;
   $$.btype = $1.btype;
   $1.env = $$.env;
+  $$.modality = $1.modality;
 
   $$.ident = $1.ident;
 
@@ -988,6 +996,7 @@ RExp1 : RExp1 '==' RExp2
   $$.btype = TS.Base TS.BOOL; 
   $1.env = $$.env;
   $3.env = $$.env;
+  $$.modality = Abs.Modality1;
 
   $$.pos = (tokenPosn $2);
 
@@ -1005,6 +1014,7 @@ RExp1 : RExp1 '==' RExp2
   $$.btype = TS.Base TS.BOOL; 
   $1.env = $$.env;
   $3.env = $$.env;
+  $$.modality = Abs.Modality1;
 
   $$.pos = (tokenPosn $2);
 
@@ -1022,6 +1032,7 @@ RExp1 : RExp1 '==' RExp2
   $$.btype = TS.Base TS.BOOL; 
   $1.env = $$.env;
   $3.env = $$.env;
+  $$.modality = Abs.Modality1;
 
   $$.pos = (tokenPosn $2);
 
@@ -1039,6 +1050,7 @@ RExp1 : RExp1 '==' RExp2
   $$.btype = TS.Base TS.BOOL; 
   $1.env = $$.env;
   $3.env = $$.env;
+  $$.modality = Abs.Modality1;
 
   $$.pos = (tokenPosn $2);
 
@@ -1056,6 +1068,7 @@ RExp1 : RExp1 '==' RExp2
   $$.btype = TS.Base TS.BOOL; 
   $1.env = $$.env;
   $3.env = $$.env;
+  $$.modality = Abs.Modality1;
 
   $$.pos = (tokenPosn $2);
 
@@ -1073,6 +1086,7 @@ RExp1 : RExp1 '==' RExp2
   $$.btype = TS.Base TS.BOOL; 
   $1.env = $$.env;
   $3.env = $$.env;
+  $$.modality = Abs.Modality1;
 
   $$.pos = (tokenPosn $2);
   
@@ -1089,6 +1103,7 @@ RExp1 : RExp1 '==' RExp2
   $$.err = $1.err;
   $$.btype = $1.btype;
   $1.env = $$.env;
+  $$.modality = $1.modality;
 
   $$.ident = $1.ident;
   $$.pos = $1.pos;
@@ -1109,6 +1124,7 @@ RExp2 : RExp2 '+' RExp3
             else TS.sup (TS.mathtype $1.btype) (TS.mathtype $3.btype);
   $1.env = $$.env;
   $3.env = $$.env;
+  $$.modality = Abs.Modality1;
 
   $$.pos = (tokenPosn $2);
 
@@ -1128,6 +1144,7 @@ RExp2 : RExp2 '+' RExp3
             else TS.sup (TS.mathtype $1.btype) (TS.mathtype $3.btype);
   $1.env = $$.env;
   $3.env = $$.env;
+  $$.modality = Abs.Modality1;
 
   $$.pos = (tokenPosn $2);
 
@@ -1144,6 +1161,7 @@ RExp2 : RExp2 '+' RExp3
   $$.err = $1.err;
   $$.btype = $1.btype;
   $1.env = $$.env;
+  $$.modality = $1.modality;
 
   $$.ident = $1.ident;
   $$.pos = $1.pos;
@@ -1164,6 +1182,7 @@ RExp3 : RExp3 '*' RExp4
             else TS.sup (TS.mathtype $1.btype) (TS.mathtype $3.btype);
   $1.env = $$.env;
   $3.env = $$.env;
+  $$.modality = Abs.Modality1;
 
   $$.pos = (tokenPosn $2);
 
@@ -1183,6 +1202,7 @@ RExp3 : RExp3 '*' RExp4
             else TS.sup (TS.mathtype $1.btype) (TS.mathtype $3.btype);
   $1.env = $$.env;
   $3.env = $$.env;
+  $$.modality = Abs.Modality1;
 
   $$.pos = (tokenPosn $2);
 
@@ -1202,6 +1222,7 @@ RExp3 : RExp3 '*' RExp4
             else TS.sup (TS.mathtype $1.btype) (TS.mathtype $3.btype);
   $1.env = $$.env;
   $3.env = $$.env;
+  $$.modality = Abs.Modality1;
 
   $$.pos = (tokenPosn $2);
 
@@ -1218,6 +1239,7 @@ RExp3 : RExp3 '*' RExp4
   $$.err = $1.err;
   $$.btype = $1.btype;
   $1.env = $$.env;
+  $$.modality = $1.modality;
 
   $$.ident = $1.ident;
   $$.pos = $1.pos;
@@ -1238,6 +1260,7 @@ RExp4 : RExp4 '^' RExp5
             else TS.sup (TS.mathtype $1.btype) (TS.mathtype $3.btype);
   $1.env = $$.env;
   $3.env = $$.env;
+  $$.modality = Abs.Modality1;
 
   $$.pos = (tokenPosn $2);
 
@@ -1254,6 +1277,7 @@ RExp4 : RExp4 '^' RExp5
   $$.err = $1.err;
   $$.btype = $1.btype;
   $1.env = $$.env;
+  $$.modality = $1.modality;
 
   $$.ident = $1.ident;
   $$.pos = $1.pos;
@@ -1274,6 +1298,7 @@ RExp5 : '&' RExp6
   $$.btype = if TS.isERROR $2.btype
             then $2.btype
             else (TS.ADDRESS $2.btype);
+  $$.modality = Abs.Modality_ref;
             
   $$.pos = $2.pos;
 
@@ -1292,6 +1317,7 @@ RExp5 : '&' RExp6
   $$.btype = if TS.isERROR (TS.getDereferencedType $2.btype)
             then Err.mkError ("Dereference operation require a pointer value, found: " ++ TS.typeToString $2.btype) (posLineCol $$.pos)
             else TS.getDereferencedType $2.btype;
+  $$.modality = Abs.Modality1;
 
   $$.pos = $2.pos;
 
@@ -1308,6 +1334,7 @@ RExp5 : '&' RExp6
 
   $$.err = $2.err;
   $$.btype = TS.mathtype $2.btype;
+  $$.modality = Abs.Modality1;
 
   $$.pos = $2.pos; 
 
@@ -1323,6 +1350,7 @@ RExp5 : '&' RExp6
   $$.err = $1.err;
   $$.btype = $1.btype;
   $1.env = $$.env;
+  $$.modality = $1.modality;
 
   $$.ident = $1.ident;
   $$.pos = $1.pos;
@@ -1339,6 +1367,7 @@ RExp6 : Integer
   $$.attr = Abs.IntValue $1.attr; 
   $$.err = $1.err;
   $$.btype = $1.btype;
+  $$.modality = Abs.Modality1;
 
   $$.ident = $1.ident;
   $$.pos = $1.pos;
@@ -1353,6 +1382,7 @@ RExp6 : Integer
   $$.attr = Abs.FloatValue $1.attr;
   $$.err = $1.err;
   $$.btype = $1.btype;
+  $$.modality = Abs.Modality1;
 
   $$.ident = $1.ident;
   $$.pos = $1.pos;
@@ -1366,7 +1396,8 @@ RExp6 : Integer
 {     
   $$.attr = Abs.StringValue $1.attr;
   $$.err = $1.err;
-  $$.btype = $1.btype; 
+  $$.btype = $1.btype;
+  $$.modality = Abs.Modality1;
 
   $$.ident = $1.ident;
   $$.pos = $1.pos;
@@ -1381,6 +1412,7 @@ RExp6 : Integer
   $$.attr = Abs.CharValue $1.attr;
   $$.err = $1.err;
   $$.btype = $1.btype;
+  $$.modality = Abs.Modality1;
 
   $$.ident = $1.ident;
   $$.pos = $1.pos;
@@ -1395,6 +1427,7 @@ RExp6 : Integer
   $$.attr = Abs.BooleanValue $1.attr;
   $$.err = $1.err;
   $$.btype = $1.btype;
+  $$.modality = Abs.Modality1;
 
   $$.ident = $1.ident;
   $$.pos = $1.pos;
@@ -1410,6 +1443,7 @@ RExp6 : Integer
 { 
   $$.attr = Abs.VarValue $1.attr;
   $$.err = $1.err;
+  $$.modality = Abs.Modality_ref;
 
   $$.btype = if TS.isERROR (E.getVarType $1.ident $$.env)
             then Err.mkError (TS.getErrorMessage (E.getVarType $1.ident $$.env)) (posLineCol $$.pos)
@@ -1427,6 +1461,7 @@ RExp6 : Integer
   $$.attr = Abs.ArrayIndexValue $1.attr $2.attr; 
   $$.ident = $1.ident;
   $2.env = $$.env;
+  $$.modality = Abs.Modality_ref;
 
   $$.btype = if TS.isERROR (E.getArrayType $1.ident $$.env) 
             then Err.mkError (TS.getErrorMessage (E.getArrayType $1.ident $$.env)) (posLineCol $1.pos)
@@ -1452,6 +1487,7 @@ RExp6 : Integer
 {  
   $$.attr = Abs.FuncCall $1.attr $3.attr;
   $3.env = $$.env;
+  $$.modality = Abs.Modality1;
 
   $$.btype = (E.getFuncType $1.ident $$.env);
   $$.err = (Err.mkFuncCallErrs $1.ident $3.paramTypes $$.env (posLineCol $1.pos)) ++ $3.err;
@@ -1470,6 +1506,7 @@ RExp6 : Integer
   $$.err = $2.err;
   $$.btype = $2.btype;
   $2.env = $$.env;
+  $$.modality = $2.modality;
 
   $$.pos = $2.pos;
 
@@ -1497,7 +1534,7 @@ ListRExp : {- empty -}
   $1.env = $$.env;
 
   $$.err = $1.err;
-  $$.paramTypes = [$1.btype]; 
+  $$.paramTypes = [($1.modality, $1.btype)]; 
 
   $$.addr = $1.addr;
   $$.listAddr = [$1.addr];
@@ -1513,7 +1550,7 @@ ListRExp : {- empty -}
   $3.env = $$.env;
 
   $$.err = $1.err ++ $3.err;
-  $$.paramTypes = $1.btype : $3.paramTypes;
+  $$.paramTypes = [($1.modality, $1.btype)] ++ $3.paramTypes;
 
   $$.addr = $1.addr;
   $$.listAddr = $1.addr : $3.listAddr;
