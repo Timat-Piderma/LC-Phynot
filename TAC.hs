@@ -157,6 +157,7 @@ mkArrayIndex tsize index arrsize tot = mkArrayIndex tsize (tail index) (tail arr
 
 generateArrayEmpty :: Address -> [Int] -> TS.Type -> [TAC]
 generateArrayEmpty a x t  = case t of
+    (TS.ARRAY t) -> generateArrayEmpty a x t
     (TS.Base TS.INT) -> generateArrayEmpty' a (product x) (TS.getTypeSize t) t (IntVal 0) 0
     (TS.Base TS.FLOAT) -> generateArrayEmpty' a (product x) (TS.getTypeSize t) t (DoubleVal 0) 0
     (TS.Base TS.BOOL) -> generateArrayEmpty' a (product x) (TS.getTypeSize t) t (BoolVal False) 0
@@ -175,6 +176,7 @@ generateArray a x t vals = case t of
     (TS.Base TS.BOOL) -> generateArray' a (product x) (TS.getTypeSize t) vals 0
     (TS.Base TS.CHAR) -> generateArray' a (product x) (TS.getTypeSize t) vals 0
     (TS.Base TS.STRING) -> generateArray' a (product x) (TS.getTypeSize t) vals 0
+    (TS.ARRAY t) -> generateArray a x t vals
 
 generateArray' :: Address -> Int -> Int -> [Address] -> Int -> [TAC]
 generateArray' a 0 size vals c = []

@@ -139,6 +139,20 @@ instance Print Double where
 
 instance Print AbsPhynot.Ident where
   prt _ (AbsPhynot.Ident i) = doc $ showString i
+instance Print AbsPhynot.Type where
+  prt i = \case
+    AbsPhynot.TypeBasicType basictype -> prPrec i 0 (concatD [prt 0 basictype])
+    AbsPhynot.TypeArrayType arraytype -> prPrec i 0 (concatD [prt 0 arraytype])
+    AbsPhynot.TypePointerType pointertype -> prPrec i 0 (concatD [prt 0 pointertype])
+
+instance Print AbsPhynot.ArrayType where
+  prt i = \case
+    AbsPhynot.ArrayType1 rexp type_ -> prPrec i 0 (concatD [doc (showString "["), prt 0 rexp, doc (showString "]"), prt 0 type_])
+
+instance Print AbsPhynot.PointerType where
+  prt i = \case
+    AbsPhynot.PointerType1 type_ -> prPrec i 0 (concatD [doc (showString "&"), prt 0 type_])
+
 instance Print AbsPhynot.BasicType where
   prt i = \case
     AbsPhynot.BasicType_int -> prPrec i 0 (concatD [doc (showString "int")])
@@ -163,16 +177,12 @@ instance Print [AbsPhynot.Stm] where
 
 instance Print AbsPhynot.Stm where
   prt i = \case
-    AbsPhynot.VarDeclaration basictype id_ -> prPrec i 0 (concatD [prt 0 basictype, prt 0 id_])
-    AbsPhynot.VarDeclarationInit basictype id_ rexp -> prPrec i 0 (concatD [prt 0 basictype, prt 0 id_, doc (showString "="), prt 0 rexp])
-    AbsPhynot.ArrayDeclaration basictype id_ dims -> prPrec i 0 (concatD [prt 0 basictype, prt 0 id_, prt 0 dims])
-    AbsPhynot.ArrayDeclarationInit basictype id_ dims rexp -> prPrec i 0 (concatD [prt 0 basictype, prt 0 id_, prt 0 dims, doc (showString "="), prt 0 rexp])
-    AbsPhynot.PointerDeclaration basictype id_ -> prPrec i 0 (concatD [prt 0 basictype, doc (showString "*"), prt 0 id_])
-    AbsPhynot.PointerDeclarationInit basictype id_ rexp -> prPrec i 0 (concatD [prt 0 basictype, doc (showString "*"), prt 0 id_, doc (showString "="), prt 0 rexp])
-    AbsPhynot.ConstantDeclaration basictype id_ rexp -> prPrec i 0 (concatD [doc (showString "const"), prt 0 basictype, prt 0 id_, doc (showString "="), prt 0 rexp])
-    AbsPhynot.FunctionPrototype basictype id_ params -> prPrec i 0 (concatD [prt 0 basictype, prt 0 id_, doc (showString "("), prt 0 params, doc (showString ")")])
+    AbsPhynot.VarDeclaration type_ id_ -> prPrec i 0 (concatD [prt 0 type_, prt 0 id_])
+    AbsPhynot.VarDeclarationInit type_ id_ rexp -> prPrec i 0 (concatD [prt 0 type_, prt 0 id_, doc (showString "="), prt 0 rexp])
+    AbsPhynot.ConstantDeclaration type_ id_ rexp -> prPrec i 0 (concatD [doc (showString "const"), prt 0 type_, prt 0 id_, doc (showString "="), prt 0 rexp])
+    AbsPhynot.FunctionPrototype type_ id_ params -> prPrec i 0 (concatD [prt 0 type_, prt 0 id_, doc (showString "("), prt 0 params, doc (showString ")")])
     AbsPhynot.ProcedurePrototype id_ params -> prPrec i 0 (concatD [doc (showString "None"), prt 0 id_, doc (showString "("), prt 0 params, doc (showString ")")])
-    AbsPhynot.FunctionDeclaration basictype id_ params stms -> prPrec i 0 (concatD [doc (showString "def"), prt 0 basictype, prt 0 id_, doc (showString "("), prt 0 params, doc (showString ")"), doc (showString "{"), prt 0 stms, doc (showString "}")])
+    AbsPhynot.FunctionDeclaration type_ id_ params stms -> prPrec i 0 (concatD [doc (showString "def"), prt 0 type_, prt 0 id_, doc (showString "("), prt 0 params, doc (showString ")"), doc (showString "{"), prt 0 stms, doc (showString "}")])
     AbsPhynot.ProcedureDeclaration id_ params stms -> prPrec i 0 (concatD [doc (showString "def"), doc (showString "None"), prt 0 id_, doc (showString "("), prt 0 params, doc (showString ")"), doc (showString "{"), prt 0 stms, doc (showString "}")])
     AbsPhynot.ProcedureCall id_ rexps -> prPrec i 0 (concatD [prt 0 id_, doc (showString "("), prt 0 rexps, doc (showString ")")])
     AbsPhynot.Return rexp -> prPrec i 0 (concatD [doc (showString "return"), prt 0 rexp])
@@ -187,7 +197,7 @@ instance Print AbsPhynot.Stm where
 
 instance Print AbsPhynot.Param where
   prt i = \case
-    AbsPhynot.Parameter modality basictype id_ -> prPrec i 0 (concatD [prt 0 modality, prt 0 basictype, prt 0 id_])
+    AbsPhynot.Parameter modality type_ id_ -> prPrec i 0 (concatD [prt 0 modality, prt 0 type_, prt 0 id_])
 
 instance Print [AbsPhynot.Param] where
   prt _ [] = concatD []
@@ -228,6 +238,7 @@ instance Print AbsPhynot.LExp where
   prt i = \case
     AbsPhynot.LIdent id_ -> prPrec i 0 (concatD [prt 0 id_])
     AbsPhynot.LArray id_ dims -> prPrec i 0 (concatD [prt 0 id_, prt 0 dims])
+    AbsPhynot.LPointer id_ -> prPrec i 0 (concatD [doc (showString "*"), prt 0 id_])
 
 instance Print AbsPhynot.RExp where
   prt i = \case

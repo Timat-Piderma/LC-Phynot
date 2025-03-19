@@ -10,6 +10,18 @@ import Prelude (Char, Double, Integer, String)
 import qualified Prelude as C (Eq, Ord, Show, Read)
 import qualified Data.String
 
+data Type
+    = TypeBasicType BasicType
+    | TypeArrayType ArrayType
+    | TypePointerType PointerType
+  deriving (C.Eq, C.Ord, C.Show, C.Read)
+
+data ArrayType = ArrayType1 RExp Type
+  deriving (C.Eq, C.Ord, C.Show, C.Read)
+
+data PointerType = PointerType1 Type
+  deriving (C.Eq, C.Ord, C.Show, C.Read)
+
 data BasicType
     = BasicType_int
     | BasicType_float
@@ -25,16 +37,12 @@ data Program = ProgramStart [Stm]
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
 data Stm
-    = VarDeclaration BasicType Ident
-    | VarDeclarationInit BasicType Ident RExp
-    | ArrayDeclaration BasicType Ident [Dim]
-    | ArrayDeclarationInit BasicType Ident [Dim] RExp
-    | PointerDeclaration BasicType Ident
-    | PointerDeclarationInit BasicType Ident RExp
-    | ConstantDeclaration BasicType Ident RExp
-    | FunctionPrototype BasicType Ident [Param]
+    = VarDeclaration Type Ident
+    | VarDeclarationInit Type Ident RExp
+    | ConstantDeclaration Type Ident RExp
+    | FunctionPrototype Type Ident [Param]
     | ProcedurePrototype Ident [Param]
-    | FunctionDeclaration BasicType Ident [Param] [Stm]
+    | FunctionDeclaration Type Ident [Param] [Stm]
     | ProcedureDeclaration Ident [Param] [Stm]
     | ProcedureCall Ident [RExp]
     | Return RExp
@@ -48,7 +56,7 @@ data Stm
     | Pass
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
-data Param = Parameter Modality BasicType Ident
+data Param = Parameter Modality Type Ident
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
 data Modality
@@ -68,7 +76,7 @@ data Arr = ArrayValues [ArrEntry]
 data ArrEntry = ArrayEntry RExp
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
-data LExp = LIdent Ident | LArray Ident [Dim]
+data LExp = LIdent Ident | LArray Ident [Dim] | LPointer Ident
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
 data RExp

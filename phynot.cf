@@ -1,9 +1,13 @@
 comment "#";
 comment "/#" "#/";
 
-------------------
--- Basic Types  --
-------------------
+-----------
+-- Types --
+-----------
+
+rules Type                      ::= BasicType | ArrayType | PointerType;
+rules ArrayType                 ::= "[" RExp "]" Type;
+rules PointerType               ::= "&" Type;
 
 rules BasicType                 ::= "int" | "float" | "char" | "String" | "bool";
 rules Boolean                   ::= "True" | "False";
@@ -19,21 +23,17 @@ terminator nonempty Stm ";";
 -- Declarations --
 ------------------
 
-VarDeclaration.                 Stm ::= BasicType Ident;   
-VarDeclarationInit.             Stm ::= BasicType Ident "=" RExp;
-ArrayDeclaration.               Stm ::= BasicType Ident [Dim];
-ArrayDeclarationInit.           Stm ::= BasicType Ident [Dim] "=" RExp; 
-PointerDeclaration.             Stm ::= BasicType "*" Ident;
-PointerDeclarationInit.         Stm ::= BasicType "*" Ident "=" RExp;
-ConstantDeclaration.            Stm ::= "const" BasicType Ident "=" RExp;
+VarDeclaration.                 Stm ::= Type Ident;   
+VarDeclarationInit.             Stm ::= Type Ident "=" RExp;
+ConstantDeclaration.            Stm ::= "const" Type Ident "=" RExp;
 
 ---------------
 -- Functions --
 ---------------
 
-FunctionPrototype.              Stm ::= BasicType Ident "(" [Param] ")";
+FunctionPrototype.              Stm ::= Type Ident "(" [Param] ")";
 ProcedurePrototype.             Stm ::= "None" Ident "(" [Param] ")";
-FunctionDeclaration.            Stm ::= "def" BasicType Ident "(" [Param] ")" "{" [Stm] "}";
+FunctionDeclaration.            Stm ::= "def" Type Ident "(" [Param] ")" "{" [Stm] "}";
 ProcedureDeclaration.           Stm ::= "def" "None" Ident "(" [Param] ")" "{" [Stm] "}";
 ProcedureCall.                  Stm ::= Ident "(" [RExp] ")";
 Return.                         Stm ::= "return" RExp;
@@ -61,11 +61,11 @@ Pass.                           Stm ::= "pass";
 -- Function Parameters --
 -------------------------
 
-Parameter.                      Param ::= Modality BasicType Ident;
+Parameter.                      Param ::= Modality Type Ident;
 separator Param ",";
 
 -- No modality means passing by value
-rules Modality                  ::= {-empty-} | "ref" | "res" | "valres" | "const" ;
+rules Modality                  ::= {-empty-} | "ref" | "res" | "valres" | "const";
 
 ----------------------
 -- Array Dimensions --
@@ -84,6 +84,7 @@ separator nonempty ArrEntry ",";
 
 LIdent.                         LExp ::= Ident;
 LArray.                         LExp ::= Ident [Dim];
+LPointer.                       LExp ::= "*" Ident;
 
 -----------------------
 -- Right Expressions --

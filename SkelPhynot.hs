@@ -19,6 +19,20 @@ transIdent :: AbsPhynot.Ident -> Result
 transIdent x = case x of
   AbsPhynot.Ident string -> failure x
 
+transType :: AbsPhynot.Type -> Result
+transType x = case x of
+  AbsPhynot.TypeBasicType basictype -> failure x
+  AbsPhynot.TypeArrayType arraytype -> failure x
+  AbsPhynot.TypePointerType pointertype -> failure x
+
+transArrayType :: AbsPhynot.ArrayType -> Result
+transArrayType x = case x of
+  AbsPhynot.ArrayType1 rexp type_ -> failure x
+
+transPointerType :: AbsPhynot.PointerType -> Result
+transPointerType x = case x of
+  AbsPhynot.PointerType1 type_ -> failure x
+
 transBasicType :: AbsPhynot.BasicType -> Result
 transBasicType x = case x of
   AbsPhynot.BasicType_int -> failure x
@@ -38,16 +52,12 @@ transProgram x = case x of
 
 transStm :: AbsPhynot.Stm -> Result
 transStm x = case x of
-  AbsPhynot.VarDeclaration basictype ident -> failure x
-  AbsPhynot.VarDeclarationInit basictype ident rexp -> failure x
-  AbsPhynot.ArrayDeclaration basictype ident dims -> failure x
-  AbsPhynot.ArrayDeclarationInit basictype ident dims rexp -> failure x
-  AbsPhynot.PointerDeclaration basictype ident -> failure x
-  AbsPhynot.PointerDeclarationInit basictype ident rexp -> failure x
-  AbsPhynot.ConstantDeclaration basictype ident rexp -> failure x
-  AbsPhynot.FunctionPrototype basictype ident params -> failure x
+  AbsPhynot.VarDeclaration type_ ident -> failure x
+  AbsPhynot.VarDeclarationInit type_ ident rexp -> failure x
+  AbsPhynot.ConstantDeclaration type_ ident rexp -> failure x
+  AbsPhynot.FunctionPrototype type_ ident params -> failure x
   AbsPhynot.ProcedurePrototype ident params -> failure x
-  AbsPhynot.FunctionDeclaration basictype ident params stms -> failure x
+  AbsPhynot.FunctionDeclaration type_ ident params stms -> failure x
   AbsPhynot.ProcedureDeclaration ident params stms -> failure x
   AbsPhynot.ProcedureCall ident rexps -> failure x
   AbsPhynot.Return rexp -> failure x
@@ -62,7 +72,7 @@ transStm x = case x of
 
 transParam :: AbsPhynot.Param -> Result
 transParam x = case x of
-  AbsPhynot.Parameter modality basictype ident -> failure x
+  AbsPhynot.Parameter modality type_ ident -> failure x
 
 transModality :: AbsPhynot.Modality -> Result
 transModality x = case x of
@@ -88,6 +98,7 @@ transLExp :: AbsPhynot.LExp -> Result
 transLExp x = case x of
   AbsPhynot.LIdent ident -> failure x
   AbsPhynot.LArray ident dims -> failure x
+  AbsPhynot.LPointer ident -> failure x
 
 transRExp :: AbsPhynot.RExp -> Result
 transRExp x = case x of
