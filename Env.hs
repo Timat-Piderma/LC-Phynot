@@ -56,15 +56,6 @@ emptyEnv = Map.insert "writeInt" (mkFunc "writeInt" (-1, -1) (Base NONE) [(Modal
     Map.insert "readString" (mkFunc "readString" (-1, -1) (Base STRING) [] (ProgVar (ProgVariable "readString") StringType)) Map.empty
     )))))))
 
-getAllEntitiesInfo :: EnvT -> String -> [(String, (Int, Int), Type)]
-getAllEntitiesInfo env funcName = 
-    [(Env.id e, pos e, btype e) | e <- Map.elems env, 
-        not (isFunction e) && Env.id e /= "return"]
-  where
-    isFunction (Function _ _ _ _ _) = True
-    isFunction (Prototype _ _ _ _ _) = True
-    isFunction _ = False
-
 mkVar :: String -> Modality -> (Int, Int) -> Type -> Address -> EnvEntity
 mkVar varName mod varPos varType addr = Variable varName mod varPos varType addr
 
