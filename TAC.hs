@@ -35,8 +35,7 @@ data TACInstruction = BinaryOperation TACBasicType Address Address Address Typed
                     | ConditionalJump Address Label                                         -- if r goto label
                     | IndexedAssignment Address Address Address                             -- id[r1] = r2
                     | IndexedCopyAssignment Address Address Address                         -- r1 = id[r2]
-                    | FunctionDef [Address]                                                 -- def r1 (r2, r3, ...) {
-                    | EndFunction
+                    | FunctionDef Address Int                                               -- def r1 n
                     | Return Address                                                        -- return r
                     | ReturnVoid                                                            -- return
                     | FunctionCall Address Address Int                                      -- r = fcall fun / n
@@ -182,9 +181,6 @@ generateArray' a 0 size vals c = []
 generateArray' a x size vals  c = TacInstruction (IndexedAssignment a (generateLit (TS.Base TS.INT) (IntVal (toInteger (c * size)))) (head vals))
     : generateArray' a (x-1) size (tail vals) (c+1)
 
-generateFuncDef :: Address -> [(String, TS.Type)] -> Int -> TAC
-generateFuncDef f d pos = TacInstruction (FunctionDef (f : map (\(s, t) -> generateAddr t (s++"@"++show pos)) d))
-
 generateFuncCall :: Address -> Address -> Int -> [Address] -> [TAC]
 generateFuncCall t p n d = map (TacInstruction . FunctionParam) d ++ [TacInstruction (TAC.FunctionCall t p n)]
 
@@ -209,7 +205,6 @@ newtemp (k, l) t = case t of
     TS.ADDRESS _ -> Temporary ("t" ++ show k) MemoryAddressType
     TS.POINTER _ -> Temporary ("t" ++ show k) MemoryAddressType
     _ -> Temporary ("t" ++ show k) MemoryAddressType
-
 
 newLabel :: State -> Label
 newLabel (k, l) = Label ("L" ++ show l)
@@ -288,7 +283,7 @@ printTypedAddr (Temporary s t) = tacTypeToString t ++ "_" ++ s
 
 printTAC :: [TAC] -> String
 printTAC [] = ""
-printTAC (LabelledInstruction (Label l) i : xs) = l ++ ":" ++ printTAC (TacInstruction i : xs)
+printTAC (LabelledInstruction (Label l) i : xs) = l ++ ": " ++ printTAC (TacInstruction i : xs)
 printTAC (TacInstruction (BinaryOperation t a1 a2 a3 op) : xs) = "\t" ++ printAddr a1 ++ " = " ++ printTypedAddr a2 ++ " " ++ printBinaryOp op ++ " " ++ printTypedAddr a3 ++ "\n" ++ printTAC xs
 printTAC (TacInstruction (UnaryOperation a1 a2 op) : xs) = "\t" ++ printAddr a1 ++ " = " ++ printUnaryOp op ++ " " ++ printTypedAddr a2 ++ "\n" ++ printTAC xs
 printTAC (TacInstruction (NullaryOperation a1 a2) : xs) = "\t" ++ printAddr a1 ++ " = " ++ printTypedAddr a2 ++ "\n" ++ printTAC xs
@@ -296,8 +291,7 @@ printTAC (TacInstruction (UnconditionalJump (Label l)) : xs) = "\tgoto " ++ l ++
 printTAC (TacInstruction (ConditionalJump a1 (Label l)) : xs) = "\tifFalse " ++ printAddr a1 ++ " goto " ++ l ++ "\n" ++ printTAC xs
 printTAC (TacInstruction (IndexedAssignment a1 a2 a3) : xs) = "\t" ++ printAddr a1 ++ "[" ++ printAddr a2 ++ "] = " ++ printTypedAddr a3 ++ "\n" ++ printTAC xs
 printTAC (TacInstruction (IndexedCopyAssignment a1 a2 a3) : xs) = "\t" ++ printAddr a1 ++ " = " ++ printTypedAddr a2 ++ "[" ++ printAddr a3 ++ "]\n" ++ printTAC xs
-printTAC (TacInstruction (FunctionDef (f:addrs)) : xs) = "def " ++ printTypedAddr f ++ " (" ++ unwords (map printTypedAddr addrs)  ++ ") {\n"++ printTAC xs
-printTAC (TacInstruction EndFunction : xs) = "}\n" ++ printTAC xs
+printTAC (TacInstruction (FunctionDef f n) : xs) = printTypedAddr f ++ " / " ++ show n ++ "\n" ++ printTAC xs
 printTAC (TacInstruction (TAC.Return a) : xs) = "\treturn " ++ printTypedAddr a ++ "\n" ++ printTAC xs
 printTAC (TacInstruction ReturnVoid : xs) = "\treturn_none\n" ++ printTAC xs
 printTAC (TacInstruction (FunctionCall a f n) : xs) = "\t" ++ printAddr a ++ " = fcall " ++ printTypedAddr f ++ " / " ++ show n ++ "\n" ++ printTAC xs

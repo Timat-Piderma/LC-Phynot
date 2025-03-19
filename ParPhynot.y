@@ -444,7 +444,8 @@ Stm: BasicType Ident
   $$.err = $5.err ++ (Err.mkFuncDeclErrs $2.btype $$.env $3.ident $5.paramTypes (posLineCol ($3.pos))) ++ (Err.prettyFuncErr $8.err $3.ident);
 
   $$.addr = (TAC.generateAddr $2.btype ($3.ident ++ "@" ++ show (fst (posLineCol $3.pos))));
-  $$.code = [TAC.generateFuncDef $$.addr (zip $5.paramNames (map snd $5.paramTypes)) (fst (posLineCol ($3.pos)))] ++ $8.code ++ [TAC.TacInstruction (TAC.EndFunction)];
+  $$.code = [(TAC.LabelledInstruction (TAC.Label "BEGINFUNC") (TAC.FunctionDef $$.addr (length $5.attr)))]
+    ++ $8.code ++ [(TAC.LabelledInstruction (TAC.Label "ENDFUNC") TAC.NoOperation)];
 
   $$.modifiedState = $8.modifiedState;
   $8.state = $$.state;
@@ -465,7 +466,8 @@ Stm: BasicType Ident
   $$.err = $5.err ++ (Err.mkFuncDeclErrs (TS.Base TS.NONE) $$.env $3.ident $5.paramTypes (posLineCol ($3.pos))) ++ (Err.prettyFuncErr $8.err $3.ident);
 
   $$.addr = (TAC.generateAddr (TS.Base TS.NONE) ($3.ident ++ "@" ++ show (fst (posLineCol $3.pos))));
-  $$.code = [TAC.generateFuncDef $$.addr (zip $5.paramNames (map snd $5.paramTypes)) (fst (posLineCol ($3.pos)))] ++ $8.code ++ [TAC.TacInstruction (TAC.EndFunction)];
+  $$.code = [(TAC.LabelledInstruction (TAC.Label "BEGINFUNC") (TAC.FunctionDef $$.addr (length $5.attr)))]
+    ++ $8.code ++ [(TAC.LabelledInstruction (TAC.Label "ENDFUNC") TAC.NoOperation)];
 
   $$.modifiedState = $8.modifiedState;
   $8.state = $$.state;
