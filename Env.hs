@@ -12,30 +12,38 @@ data EnvEntity =
     id :: String,
     modality :: Modality,
     pos :: (Int, Int),
-    btype :: Type,
+    btype :: TS.Type,
     addr :: Address
+    }
+    | Constant {
+    id :: String,
+    modality :: Modality,
+    pos :: (Int, Int),
+    btype :: TS.Type,
+    addr :: Address,
+    value :: String
     }
     | Array {
     id :: String,
     modality :: Modality,
     pos :: (Int, Int),
-    btype :: Type,
+    btype :: TS.Type,
     arrLength :: [Int],
     addr :: Address
     }
     | Function {
     id :: String,
     pos :: (Int, Int),
-    btype :: Type,
-    params :: [(Modality, Type)],
+    btype :: TS.Type,
+    params :: [(Modality, TS.Type)],
     addr :: Address
     }
     | Prototype 
     {
     id :: String,
     pos :: (Int, Int),
-    btype :: Type,
-    params :: [(Modality, Type)],
+    btype :: TS.Type,
+    params :: [(Modality, TS.Type)],
     addr :: Address
     }
     deriving (Show)
@@ -51,34 +59,39 @@ emptyEnv = Map.insert "writeInt" (mkFunc "writeInt" (-1, -1) (Base NONE) [(Modal
     Map.insert "readString" (mkFunc "readString" (-1, -1) (Base STRING) [] (ProgVar (ProgVariable "readString") StringType)) Map.empty
     )))))))
 
-mkVar :: String -> Modality -> (Int, Int) -> Type -> Address -> EnvEntity
+mkVar :: String -> Modality -> (Int, Int) -> TS.Type -> Address -> EnvEntity
 mkVar varName mod varPos varType addr = Variable varName mod varPos varType addr
 
-mkArray :: String -> Modality -> (Int, Int) -> Type -> [Int] -> Address -> EnvEntity
+mkArray :: String -> Modality -> (Int, Int) -> TS.Type -> [Int] -> Address -> EnvEntity
 mkArray varName mod varPos varType arrLength addr = Array varName mod varPos varType arrLength addr
 
-mkFunc :: String -> (Int, Int) -> Type -> [(Modality, Type)] -> Address -> EnvEntity
+mkFunc :: String -> (Int, Int) -> TS.Type -> [(Modality, TS.Type)] -> Address -> EnvEntity
 mkFunc funcName funcPos funcType funcParams addr = Env.Function funcName funcPos funcType funcParams addr
 
 -- inserts only if not already in the environment
-insertVar :: String -> Modality -> (Int, Int) -> Type -> Address -> EnvT -> EnvT
+insertVar :: String -> Modality -> (Int, Int) -> TS.Type -> Address -> EnvT -> EnvT
 insertVar varName mod varPos varType addr env= if containsEntry varName env
     then env
     else Map.insert varName (mkVar varName mod varPos varType addr) env 
 
-insertArray :: String -> Modality -> (Int, Int) -> Type -> [Int] -> Address -> EnvT -> EnvT
+insertConst :: String -> Modality -> (Int, Int) -> TS.Type -> Address -> String -> EnvT -> EnvT
+insertConst varName mod varPos varType addr value env = if containsEntry varName env
+    then env
+    else Map.insert varName (Constant varName mod varPos varType addr value) env
+
+insertArray :: String -> Modality -> (Int, Int) -> TS.Type -> [Int] -> Address -> EnvT -> EnvT
 insertArray varName mod varPos varType arrLength addr env = if containsEntry varName env
     then env
     else Map.insert varName (mkArray varName mod varPos varType arrLength addr) env
 
-insertFunc :: String -> (Int, Int) -> Type -> [(Modality, Type)] -> Address -> EnvT -> EnvT
+insertFunc :: String -> (Int, Int) -> TS.Type -> [(Modality, TS.Type)] -> Address -> EnvT -> EnvT
 insertFunc funcName funcPos funcType funcParams addr env = if containsEntry funcName env
     then if containsPrototype funcName env
         then Map.insert funcName (mkFunc funcName funcPos funcType funcParams addr) env
         else env
     else Map.insert funcName (mkFunc funcName funcPos funcType funcParams addr) env
 
-insertPrototype :: String -> (Int, Int) -> Type -> [(Modality, Type)] -> Address -> EnvT -> EnvT
+insertPrototype :: String -> (Int, Int) -> TS.Type -> [(Modality, TS.Type)] -> Address -> EnvT -> EnvT
 insertPrototype funcName pos funcType funcParams addr env = if containsPrototype funcName env
     then env
     else Map.insert funcName (Prototype funcName pos funcType funcParams addr) env
@@ -105,12 +118,17 @@ getVarPos varName env = case Map.lookup varName env of
     Just entry  -> pos entry
     Nothing     -> (0,0)
 
-getVarType :: String -> EnvT -> Type
+getVarType :: String -> EnvT -> TS.Type
 getVarType varName env = case Map.lookup varName env of
     Just entry  -> btype entry
     Nothing     -> Base (ERROR ("Variable '" ++ varName ++ "' not declared"))
 
-getArrayType :: String -> EnvT -> Type
+getConstValue :: String -> EnvT -> String
+getConstValue varName env = case Map.lookup varName env of
+    Just entry  -> value entry
+    Nothing     -> error ("Constant '" ++ varName ++ "' not declared")
+
+getArrayType :: String -> EnvT -> TS.Type
 getArrayType varName env = case Map.lookup varName env of
     Just entry -> case btype entry of
         ARRAY t -> ARRAY t
@@ -131,12 +149,12 @@ getArrayLength varName env = case Map.lookup varName env of
         _       -> []
     Nothing     -> []
 
-getFuncType :: String -> EnvT -> Type 
+getFuncType :: String -> EnvT -> TS.Type 
 getFuncType funcName env = case Map.lookup funcName env of
     Just entry -> btype entry
     Nothing     -> Base (ERROR ("Function '" ++ funcName ++ "' not declared"))
 
-getFuncParams :: String -> EnvT -> [(Modality, Type)]
+getFuncParams :: String -> EnvT -> [(Modality, TS.Type)]
 getFuncParams funcName env = case Map.lookup funcName env of
     Just entry -> params entry
     Nothing     -> [(Modality1, Base (ERROR ("Function '" ++ funcName ++ "' not declared")))]
