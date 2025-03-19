@@ -7,13 +7,14 @@ import TypeSystem as TS
 import Env as E
 import AbsPhynot
 
-mkAssignmentErrs :: Type -> Type -> (Int, Int) -> (Int, Int) -> [String]
-mkAssignmentErrs (Base (ERROR s1)) (Base (ERROR s2)) _ _ = [s1, s2]
-mkAssignmentErrs (Base (ERROR s)) _ _ _ = [s]
-mkAssignmentErrs _ (Base (ERROR s)) _ _ = [s]
-mkAssignmentErrs varType assType varPos assPos
+mkAssignmentErrs :: Modality -> String -> Type -> Type -> (Int, Int) -> (Int, Int) -> [String]
+mkAssignmentErrs Modality_const varName _ _ varPos _ = [mkStringError  ("Error: constant '" ++ varName ++ "' can not be modified") varPos]
+mkAssignmentErrs _ _ (Base (ERROR s1)) (Base (ERROR s2)) _ _ = [s1, s2]
+mkAssignmentErrs _ _ (Base (ERROR s)) _ _ _ = [s]
+mkAssignmentErrs _ _ _ (Base (ERROR s)) _ _ = [s]
+mkAssignmentErrs _ varName varType assType varPos assPos
     | sup varType assType == varType = []
-    | otherwise = [ mkStringError  ("Type mismatch: can't assign " ++ typeToString assType ++ " value to " ++ typeToString varType ++ " variable") varPos]
+    | otherwise = [mkStringError  ("Type mismatch: can't assign " ++ typeToString assType ++ " value to variable " ++ varName ++ " of type " ++ typeToString varType ) varPos]
 
 mkArrayLenErrs :: String -> [Int] -> [Int] -> (Int, Int) -> [String]
 mkArrayLenErrs _ [] [] _ = []
