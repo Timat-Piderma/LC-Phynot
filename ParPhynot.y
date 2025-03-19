@@ -467,7 +467,7 @@ Stm: BasicType Ident
 
   $$.addr = (TAC.generateAddr (TS.Base TS.NONE) ($3.ident ++ "@" ++ show (fst (posLineCol $3.pos))));
   $$.code = [(TAC.LabelledInstruction (TAC.Label "BEGINFUNC") (TAC.FunctionDef $$.addr (length $5.attr)))]
-    ++ $8.code ++ [(TAC.LabelledInstruction (TAC.Label "ENDFUNC") TAC.NoOperation)];
+    ++ $8.code ++ [(TAC.LabelledInstruction (TAC.Label ("ENDFUNC " ++ ($3.ident ++ "@" ++ show (fst (posLineCol $3.pos))))) TAC.NoOperation)];
 
   $$.modifiedState = $8.modifiedState;
   $8.state = $$.state;
