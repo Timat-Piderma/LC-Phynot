@@ -150,6 +150,9 @@ mkFuncCallErrs funcName params env pos
 mkFuncCallParamErrs :: String -> [(Modality, Type)] -> [(Modality, Type)] -> (Int, Int) -> [String]
 mkFuncCallParamErrs _ [] [] _= []
 mkFuncCallParamErrs funcName ((xi, xj):xs) ((yi, yj):ys) pos
+    | any (TS.isERROR . snd) ((xi, xj):xs) = concatMap (\(_, t) -> case t of
+        Base (ERROR s) -> [s ++ " in function '" ++ funcName ++ "' call"]
+        _ -> []) ((xi, xj):xs)
     | yi == Modality_ref && (xi == Modality1 || xi == Modality_const) = 
         mkStringError ("Error: parameter can not be passed as reference in function '" ++ funcName ++ "' call") pos : mkFuncCallParamErrs funcName xs ys pos
     | yi == Modality_res && (xi == Modality1 || xi == Modality_const) = 
