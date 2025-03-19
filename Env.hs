@@ -15,14 +15,9 @@ data EnvEntity =
     btype :: Type,
     addr :: Address
     }
-    |Constant {
-    id :: String,
-    pos :: (Int, Int),
-    btype :: Type,
-    addr :: Address
-    }
     | Array {
     id :: String,
+    modality :: Modality,
     pos :: (Int, Int),
     btype :: Type,
     arrLength :: [Int],
@@ -59,8 +54,8 @@ emptyEnv = Map.insert "writeInt" (mkFunc "writeInt" (-1, -1) (Base NONE) [(Modal
 mkVar :: String -> Modality -> (Int, Int) -> Type -> Address -> EnvEntity
 mkVar varName mod varPos varType addr = Variable varName mod varPos varType addr
 
-mkArray :: String -> (Int, Int) -> Type -> [Int] -> Address -> EnvEntity
-mkArray varName varPos varType arrLength addr = Array varName varPos varType arrLength addr
+mkArray :: String -> Modality -> (Int, Int) -> Type -> [Int] -> Address -> EnvEntity
+mkArray varName mod varPos varType arrLength addr = Array varName mod varPos varType arrLength addr
 
 mkFunc :: String -> (Int, Int) -> Type -> [(Modality, Type)] -> Address -> EnvEntity
 mkFunc funcName funcPos funcType funcParams addr = Env.Function funcName funcPos funcType funcParams addr
@@ -71,15 +66,10 @@ insertVar varName mod varPos varType addr env= if containsEntry varName env
     then env
     else Map.insert varName (mkVar varName mod varPos varType addr) env 
 
-insertConst :: String -> (Int, Int) -> Type -> Address -> EnvT -> EnvT
-insertConst cosName varPos varType addr env = if containsEntry cosName env
+insertArray :: String -> Modality -> (Int, Int) -> Type -> [Int] -> Address -> EnvT -> EnvT
+insertArray varName mod varPos varType arrLength addr env = if containsEntry varName env
     then env
-    else Map.insert cosName (Constant cosName varPos varType addr) env
-
-insertArray :: String -> (Int, Int) -> Type -> [Int] -> Address -> EnvT -> EnvT
-insertArray varName varPos varType arrLength addr env = if containsEntry varName env
-    then env
-    else Map.insert varName (mkArray varName varPos varType arrLength addr) env
+    else Map.insert varName (mkArray varName mod varPos varType arrLength addr) env
 
 insertFunc :: String -> (Int, Int) -> Type -> [(Modality, Type)] -> Address -> EnvT -> EnvT
 insertFunc funcName funcPos funcType funcParams addr env = if containsEntry funcName env
@@ -104,6 +94,11 @@ containsPrototype funcName env =
     case Map.lookup funcName env of
         Just (Prototype _ _ _ _ _)  -> True  
         _                        -> False
+
+getVarMod :: String -> EnvT -> Modality
+getVarMod varName env = case Map.lookup varName env of
+    Just entry  -> modality entry
+    Nothing     -> Modality1
 
 getVarPos :: String -> EnvT -> (Int, Int)
 getVarPos varName env = case Map.lookup varName env of

@@ -306,7 +306,7 @@ Stm: BasicType Ident
   | BasicType Ident ListDim 
 {  
   $$.attr = Abs.ArrayDeclaration $1.attr $2.attr $3.attr;
-  $$.modifiedEnv = E.insertArray $2.ident (posLineCol $$.pos) $$.btype $3.arraydim $$.addr $$.env;
+  $$.modifiedEnv = E.insertArray $2.ident Abs.Modality_ref (posLineCol $$.pos) $$.btype $3.arraydim $$.addr $$.env;
   $$.ident = $2.ident;
   $$.pos = $2.pos;
 
@@ -324,7 +324,7 @@ Stm: BasicType Ident
   | BasicType Ident ListDim '=' RExp 
 { 
   $$.attr = Abs.ArrayDeclarationInit $1.attr $2.attr $3.attr $5.attr; 
-  $$.modifiedEnv = E.insertArray $2.ident (posLineCol $$.pos) $$.btype $3.arraydim $$.addr $$.env;
+  $$.modifiedEnv = E.insertArray $2.ident Abs.Modality_ref (posLineCol $$.pos) $$.btype $3.arraydim $$.addr $$.env;
   $$.ident = $2.ident;
   $$.pos = $2.pos;
 
@@ -377,7 +377,7 @@ Stm: BasicType Ident
   | 'const' BasicType Ident '=' RExp
 {
   $$.attr = Abs.ConstantDeclaration $2.attr $3.attr $5.attr;
-  $$.modifiedEnv = E.insertConst $3.ident (posLineCol $3.pos) $2.btype $$.addr $$.env;
+  $$.modifiedEnv = E.insertVar $3.ident (Abs.Modality_const) (posLineCol $3.pos) $2.btype $$.addr $$.env;
   $5.env = $$.env;
   $$.err = if TAC.isTACLit $5.addr
           then (Err.mkConstDeclErrs $2.btype $5.btype $$.env $3.ident (posLineCol $3.pos)) ++ $5.err
@@ -525,7 +525,7 @@ Stm: BasicType Ident
   $$.modifiedEnv = $$.env;
   $$.err = if TS.isArray $3.btype 
           then Err.mkArrayLenErrs $1.ident (E.getArrayLength $1.ident $$.env) $3.arraydim (posLineCol $$.pos) ++ $1.err ++ $3.err
-          else Err.mkAssignmentErrs $1.btype $3.btype (posLineCol $1.pos) (posLineCol $3.pos) ++ $1.err ++ $3.err;
+          else Err.mkAssignmentErrs $1.modality $1.ident $1.btype $3.btype (posLineCol $1.pos) (posLineCol $3.pos) ++ $1.err ++ $3.err;
   $$.ident = $1.ident;
   $$.pos = $1.pos;
   $$.btype = TS.sup $1.btype $3.btype;
@@ -872,6 +872,7 @@ LExp: Ident
             then Err.mkError (TS.getErrorMessage (E.getVarType $1.ident $$.env)) (posLineCol $1.pos)
             else E.getVarType $1.ident $$.env;
   $$.pos = $1.pos;
+  $$.modality = E.getVarMod $1.ident $$.env;
 
   $$.addr = E.getAddr $1.ident $$.env;
 
@@ -889,6 +890,7 @@ LExp: Ident
               then Err.mkError ("Array " ++ $$.ident ++" has " ++ show(E.getArrayDim $$.ident $$.env) ++ " dimension/s but there are " ++ show (length($2.arraydim)) ++ " indexes") (posLineCol $1.pos)
               else TS.getArrayCurrentType (E.getArrayType $1.ident $$.env) (length($2.arraydim));
   $$.pos = $1.pos;
+  $$.modality = E.getVarMod $1.ident $$.env;
 
   $2.arraytype = (E.getArrayType $1.ident $$.env);
 
