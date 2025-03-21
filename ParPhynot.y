@@ -253,6 +253,11 @@ Type : BasicType
   | PointerType 
 { 
   $$.attr = Abs.TypePointerType $1.attr;
+  $$.btype = $1.btype;
+  $1.env = $$.env;
+  $$.err = $1.err;
+
+  $$.arraydim = $1.arraydim;	
 }
 
 ArrayType : '[' RExp ']' Type 
@@ -273,12 +278,14 @@ ArrayType : '[' RExp ']' Type
   $$.arraydim = $$.arraylen : $4.arraydim;
 
 }
---  $3.arraytype = $1.btype;
---Le informazioni di ListDim $3 devono essere prese dal Type
-
 PointerType : '&' Type 
 { 
-  $$.attr = Abs.PointerType1 $2.attr; 
+  $$.attr = Abs.PointerType1 $2.attr;   
+  $$.btype = TS.POINTER $2.btype;
+  $$.err = $2.err;
+  $2.env = $$.env;
+
+  $$.arraydim = $2.arraydim;
 }
 
 
@@ -378,56 +385,6 @@ Stm: Type Ident
   $$.modifiedState = $4.modifiedState;
   $4.state = $$.state;
 }
-
-
-
---  | BasicType Ident ListDim '=' RExp 
---  $$.modifiedEnv = E.insertArray $2.ident Abs.Modality_ref (posLineCol $$.pos) $$.btype $3.arraydim $$.addr $$.env;
---  $$.err = if TS.isArray $5.btype
---          then Err.mkArrayLenErrs $2.ident $3.arraydim $5.arraydim (posLineCol $$.pos) ++ $5.err
---          else Err.mkArrayDeclInitErrs $$.env $2.ident $$.btype $5.btype (posLineCol $$.pos) ++ $5.err; 
-
---  $3.arraytype = $1.btype;
---  $5.env = $$.env; 
---
-
---  $$.code = $5.code ++ TAC.generateArray $$.addr $3.arraydim $1.btype $5.listAddr;
---
---  $$.modifiedState = $5.modifiedState;
---  $5.state = $$.state;
---}
-  
-  
---  | BasicType '*' Ident 
---{  
---  $$.attr = Abs.PointerDeclaration $1.attr $3.attr;
---  $$.modifiedEnv = E.insertVar $3.ident (Abs.Modality_ref) (posLineCol $$.pos) $$.btype $$.addr $$.env;
---  $$.err = Err.mkDeclErrs $$.env $3.ident (posLineCol $$.pos); 
---  $$.ident = $3.ident;
---  $$.pos = $3.pos;
---  $$.btype = (TS.POINTER $1.btype);
---
---  $$.addr = (TAC.generateAddr $1.btype ($3.ident ++ "@" ++ show (fst (posLineCol $3.pos))));
---  $$.code = [];
---
---  $$.modifiedState = $$.state;
---}
---  | BasicType '*' Ident '=' RExp 
---{  
---  $$.attr = Abs.PointerDeclarationInit $1.attr $3.attr $5.attr;
---  $$.modifiedEnv = E.insertVar $3.ident (Abs.Modality_ref) (posLineCol $$.pos) $$.btype $$.addr $$.env;
---  $$.err = (Err.mkPointerDeclInitErrs $$.btype $5.btype $$.env $3.ident (posLineCol $$.pos)) ++ $5.err;
---  $$.ident = $3.ident;
---  $$.pos = $3.pos;
---  $$.btype = (TS.POINTER $1.btype) ;
---  $5.env = $$.env; 
---
---  $$.addr = (TAC.generateAddr $1.btype ($3.ident ++ "@" ++ show (fst (posLineCol $3.pos))));
---  $$.code = $5.code ++ [TAC.TacInstruction (TAC.NullaryOperation $$.addr $5.addr)];
---
---  $$.modifiedState = $5.modifiedState;
---  $5.state = $$.state;
---}
   | 'const' Type Ident '=' RExp
 {
   $$.attr = Abs.ConstantDeclaration $2.attr $3.attr $5.attr;
@@ -964,29 +921,7 @@ LExp: Ident
 -- Right Expressions --
 -----------------------
 
-RExp : '[' Arr ']' 
-{ 
-  $$.attr = Abs.ArrayStructure $2.attr;
-  $2.env = $$.env;
-  $$.modality = Abs.Modality1;
-
-  $$.btype = if TS.isERROR $2.btype
-            then $2.btype
-            else (TS.ARRAY $2.btype);
-  $$.pos = $2.pos;
-
-  $$.arraylen = length($2.arraydim);
-  $$.arraydim = $2.arraydim;
-
-  $$.err = $2.err;
-
-  $$.listAddr = $2.listAddr;
-  $$.code = $2.code;
-
-  $$.modifiedState = $2.modifiedState;
-  $2.state = $$.state;
-}
-  | RExp 'or' RExp1 
+RExp : RExp 'or' RExp1 
 {   
   $$.attr = Abs.Or $1.attr $3.attr;
   $$.err = (Err.prettyRelErr (Err.mkBoolRelErrs $1.btype $3.btype (posLineCol $1.pos) (posLineCol $3.pos) (posLineCol $$.pos)) "or")  ++ $1.err ++ $3.err;
@@ -1524,6 +1459,28 @@ RExp6 : Integer
   $$.code = [];
 
   $$.modifiedState = $$.state;
+}
+  |'[' Arr ']' 
+{ 
+  $$.attr = Abs.ArrayStructure $2.attr;
+  $2.env = $$.env;
+  $$.modality = Abs.Modality1;
+
+  $$.btype = if TS.isERROR $2.btype
+            then $2.btype
+            else (TS.ARRAY $2.btype);
+  $$.pos = $2.pos;
+
+  $$.arraylen = length($2.arraydim);
+  $$.arraydim = $2.arraydim;
+
+  $$.err = $2.err;
+
+  $$.listAddr = $2.listAddr;
+  $$.code = $2.code;
+
+  $$.modifiedState = $2.modifiedState;
+  $2.state = $$.state;
 }
   | Ident ListDim 
 { 
