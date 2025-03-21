@@ -16,14 +16,22 @@ mkAssignmentErrs _ varName varType assType varPos assPos
     | sup varType assType == varType = []
     | otherwise = [mkStringError  ("Type mismatch: can't assign " ++ typeToString assType ++ " value to variable " ++ varName ++ " of type " ++ typeToString varType ) varPos]
 
-mkArrayLenErrs :: String -> [Int] -> [Int] -> (Int, Int) -> [String]
-mkArrayLenErrs _ [] [] _ = []
+mkArrayAssignmentErrs :: String -> [Int] -> [Int] -> (Int, Int) -> [String]
+mkArrayAssignmentErrs _ [] [] _ = []
+mkArrayAssignmentErrs varName (x:varLength) (y:assLength) pos
+    | length (x:varLength) /= length (y:assLength) = [mkStringError ("Error: can't assign array of length " ++ show (length (y:assLength)) ++ " to array " ++ varName ++ " of length " ++ show (length (x:varLength))) pos]
+    | x == y = mkArrayAssignmentErrs varName varLength assLength pos
+    | otherwise = mkStringError ("Error: can't assign array of length " ++ show y ++ " to array '" ++ varName ++ "' of length " ++ show x) pos : mkArrayAssignmentErrs varName varLength assLength pos
 
-mkArrayLenErrs varName (x:varLength) (y:assLength) pos
-    | length (x:varLength) /= length (y:assLength) = [mkStringError ("Error: can't assign array of length " ++ show y ++ " to array " ++ varName ++ " of length " ++ show x) pos]
-    | x >= y = mkArrayLenErrs varName varLength assLength pos
-    | otherwise = mkStringError ("Error: can't assign array of length " ++ show y ++ " to array " ++ varName ++ " of length " ++ show x) pos : mkArrayLenErrs varName varLength assLength pos
-
+mkArrayErrs :: TS.Type -> TS.Type -> Int -> Int -> (Int, Int) -> [String]
+mkArrayErrs (Base (ERROR s1)) (Base (ERROR s2)) _ _ _ = [s1, s2]
+mkArrayErrs (Base (ERROR s)) _ _ _ _ = [s]
+mkArrayErrs _ (Base (ERROR s)) _ _ _ = [s]
+mkArrayErrs t1 t2 len1 len2 pos
+    | t1 /= t2 = [mkStringError ("Array elements must be of the same type: found '" ++ TS.typeToString t1 ++ "' and " ++ TS.typeToString t2) pos]
+    | TS.isArray t1 && TS.isArray t2 && len1 /= len2 = [mkStringError ("Error: array lengths are not consistent, found " ++ show len1 ++ " and " ++ show len2) pos]
+    | otherwise = []
+   
 mkStringError :: String -> (Int, Int) -> String
 mkStringError s (a, b) = "[" ++ show a ++ ":" ++ show b ++ "] " ++ s
 
