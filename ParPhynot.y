@@ -361,7 +361,7 @@ Stm: Type Ident
                   else E.insertVar $2.ident (Abs.Modality_ref) (posLineCol $$.pos) $$.btype $$.addr $$.env;
   $$.err = if TS.isArray $1.btype
           then if TS.isArray $4.btype
-              then Err.mkArrayLenErrs $2.ident $1.arraydim $4.arraydim (posLineCol $$.pos) ++ $4.err
+              then Err.mkArrayAssignmentErrs $2.ident $1.arraydim $4.arraydim (posLineCol $$.pos) ++ $4.err
               else Err.mkArrayDeclInitErrs $$.env $2.ident $$.btype $4.btype (posLineCol $$.pos) ++ $4.err
           else Err.mkDeclInitErrs $$.btype $4.btype $$.env $2.ident (posLineCol $$.pos) ++ $4.err; 
   $4.env = $$.env;
@@ -578,7 +578,7 @@ Stm: Type Ident
   $$.attr = Abs.Assignment $1.attr $3.attr;
   $$.modifiedEnv = $$.env;
   $$.err = if TS.isArray $3.btype 
-          then Err.mkArrayLenErrs $1.ident (E.getArrayLength $1.ident $$.env) $3.arraydim (posLineCol $$.pos) ++ $1.err ++ $3.err
+          then Err.mkArrayAssignmentErrs $1.ident (E.getArrayLength $1.ident $$.env) $3.arraydim (posLineCol $$.pos) ++ $1.err ++ $3.err
           else Err.mkAssignmentErrs $1.modality $1.ident $1.btype $3.btype (posLineCol $1.pos) (posLineCol $3.pos) ++ $1.err ++ $3.err;
   $$.ident = $1.ident;
   $$.pos = $1.pos;
@@ -849,14 +849,15 @@ ArrEntry : RExp
   $$.attr = Abs.ArrayEntry $1.attr;
   $1.env = $$.env;
 
-  $$.err = if TS.isERROR $1.btype 
-          then TS.getErrorMessage $1.btype : $1.err
+  $$.err = if TS.isERROR $1.btype
+          then (TS.getErrorMessage $1.btype) : $1.err
           else $1.err;
   $$.pos = $1.pos;
 
   $$.arraydim = if TS.isArray $1.btype
                 then $1.arraydim
                 else [];
+  $$.btype = $1.btype;
 
   $$.arraytype = $1.btype;
 
@@ -878,6 +879,7 @@ ListArrEntry: ArrEntry {
   $$.pos = $1.pos;
 
   $$.arraytype = $1.arraytype;
+  $$.btype = $1.btype;
 
   $$.arraydim = $1.arraydim;
 
@@ -893,18 +895,15 @@ ListArrEntry: ArrEntry {
   $1.env = $$.env;
   $3.env = $$.env;
 
-  $$.err = $1.err ++ $3.err;
+  $$.err = if TS.isArray $1.btype && TS.isArray $3.btype
+          then Err.mkArrayErrs $1.btype $3.btype (head $1.arraydim) (head $3.arraydim) (posLineCol $1.pos) ++ $1.err ++ $3.err
+          else Err.mkArrayErrs $1.btype $3.btype 0 0 (posLineCol $1.pos) ++ $1.err ++ $3.err;
+
+  $$.btype = $1.btype;
+              
   $$.pos = $3.pos;
 
-  $$.arraytype = if TS.isERROR $1.arraytype 
-                then $1.arraytype 
-                else if TS.isERROR $3.arraytype 
-                then $3.arraytype 
-                else if $1.arraytype == $3.arraytype 
-                then $1.arraytype 
-                else Err.mkError ("Array elements must be of the same type: found '" ++ TS.typeToString $1.arraytype ++ "' at " ++ 
-                show (posLineCol $1.pos) ++ " and '" ++ TS.typeToString $3.arraytype ++ "' at " ++ show (posLineCol $3.pos))
-                (posLineCol $$.pos);
+  $$.arraytype = $1.btype;
 
   $$.arraydim = zipWith max $1.arraydim $3.arraydim;
 
@@ -971,8 +970,9 @@ RExp : '[' Arr ']'
   $2.env = $$.env;
   $$.modality = Abs.Modality1;
 
-  $$.btype = (TS.ARRAY $2.btype);
-
+  $$.btype = if TS.isERROR $2.btype
+            then $2.btype
+            else (TS.ARRAY $2.btype);
   $$.pos = $2.pos;
 
   $$.arraylen = length($2.arraydim);
