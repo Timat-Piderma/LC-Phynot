@@ -80,8 +80,7 @@ data LExp = LIdent Ident | LArray Ident [Dim] | LPointer Ident
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
 data RExp
-    = ArrayStructure Arr
-    | Or RExp RExp
+    = Or RExp RExp
     | And RExp RExp
     | Not RExp
     | Eq RExp RExp
@@ -105,6 +104,7 @@ data RExp
     | CharValue Char
     | BooleanValue Boolean
     | VarValue Ident
+    | ArrayStructure Arr
     | ArrayIndexValue Ident [Dim]
     | FuncCall Ident [RExp]
   deriving (C.Eq, C.Ord, C.Show, C.Read)

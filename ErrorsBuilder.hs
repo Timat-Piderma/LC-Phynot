@@ -99,15 +99,6 @@ mkNotErrs t pos
     | isBoolean t = []
     | otherwise = [ mkStringError ("'not' expects a boolean parameter, found " ++ typeToString t) pos]
 
-mkPointerDeclInitErrs :: TS.Type -> TS.Type -> EnvT -> String -> (Int, Int) -> [String]
-mkPointerDeclInitErrs pointType derefType env varName pos
-    | isERROR pointType && isERROR derefType = [TS.getErrorMessage pointType, TS.getErrorMessage derefType]
-    | isERROR derefType = [TS.getErrorMessage derefType]
-    | isERROR pointType = [TS.getErrorMessage pointType]
-    | containsEntry varName env = [mkStringError ("Variable '" ++ varName ++ "' already declared at: " ++ show (getVarPos varName env)) pos]
-    | isERROR (TS.sup pointType derefType) = [mkStringError (TS.getErrorMessage (sup pointType derefType)) pos]
-    | otherwise = []
-
 mkParamErrs :: String -> String -> EnvT -> (Int, Int) -> [String]
 mkParamErrs parName funcName env pos
     | containsEntry parName env = [mkStringError("Duplicate paramater '" ++ parName ++ "' in function declaration: '" ++ funcName ++ "'") pos]

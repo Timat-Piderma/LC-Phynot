@@ -102,7 +102,6 @@ transLExp x = case x of
 
 transRExp :: AbsPhynot.RExp -> Result
 transRExp x = case x of
-  AbsPhynot.ArrayStructure arr -> failure x
   AbsPhynot.Or rexp1 rexp2 -> failure x
   AbsPhynot.And rexp1 rexp2 -> failure x
   AbsPhynot.Not rexp -> failure x
@@ -127,5 +126,6 @@ transRExp x = case x of
   AbsPhynot.CharValue char -> failure x
   AbsPhynot.BooleanValue boolean -> failure x
   AbsPhynot.VarValue ident -> failure x
+  AbsPhynot.ArrayStructure arr -> failure x
   AbsPhynot.ArrayIndexValue ident dims -> failure x
   AbsPhynot.FuncCall ident rexps -> failure x
