@@ -1318,13 +1318,15 @@ RExp4 : RExp4 '^' RExp5
 RExp5 : '&' RExp6 
 {     
   $$.attr = Abs.PointerRef $2.attr; 
-  $$.ident = "0";
+  $$.ident = $2.ident;
   $2.env = $$.env;
 
   $$.err = $2.err;
   $$.btype = if TS.isERROR $2.btype
             then $2.btype
-            else (TS.ADDRESS $2.btype);
+            else if (E.containsEntry $2.ident $$.env && not (E.getVarMod $2.ident $$.env == Abs.Modality_const))
+                then (TS.ADDRESS $2.btype)
+                else Err.mkError ("& operator require a reference value, found: '" ++ TS.typeToString $2.btype ++ "'") (posLineCol $$.pos);
   $$.modality = Abs.Modality_ref;
             
   $$.pos = $2.pos;
