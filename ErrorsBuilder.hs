@@ -67,25 +67,20 @@ mkDeclInitErrs varType initType env varName pos
     | sup varType initType == varType = []
     | otherwise = [ mkStringError ("Type mismatch: can't convert " ++ typeToString initType ++ " to " ++ typeToString varType) pos]
 
+mkArrayInitErrs :: TS.Type -> TS.Type -> String -> [Int] -> [Int] -> (Int, Int) -> [String]
+mkArrayInitErrs (Base (ERROR s1)) (Base (ERROR s2)) _ _ _ _ = [s1, s2]
+mkArrayInitErrs (Base (ERROR s)) _ _ _ _ _ = [s]
+mkArrayInitErrs _ (Base (ERROR s)) _ _ _ _ = [s]
+mkArrayInitErrs varType initType varName varLength initLength pos
+    | varType /= initType = [mkStringError ("Can not assign '" ++ TS.typeToString varType ++ "' to '" ++ TS.typeToString initType ++ "'") pos]
+    | otherwise = mkArrayAssignmentErrs varName varLength initLength pos
+
+
 mkConstDeclErrs :: TS.Type -> TS.Type -> EnvT -> String -> (Int, Int) -> [String]
 mkConstDeclErrs cosType initType env cosName pos
     | containsEntry cosName env = [mkStringError ("Costant value '" ++ cosName ++ "' already declared at: " ++ show (getVarPos cosName env)) pos]
     | sup cosType initType == cosType = []
     | otherwise = [ mkStringError ("Type mismatch: can't convert " ++ typeToString initType ++ " to " ++ typeToString cosType) pos]
-
-mkArrayDeclErrs :: EnvT -> String -> (Int, Int) -> [String]
-mkArrayDeclErrs env varName pos
-    | containsEntry varName env = [mkStringError ("Variable '" ++ varName ++ "' already declared at: " ++ show (getVarPos varName env)) pos]
-    | otherwise = [] 
-
-mkArrayDeclInitErrs :: EnvT -> String -> TS.Type -> TS.Type -> (Int, Int) -> [String]
-mkArrayDeclInitErrs _ _ (Base (ERROR s1)) (Base (ERROR s2)) _ = [s1, s2]
-mkArrayDeclInitErrs _ _ (Base (ERROR s)) _ _ = [s]
-mkArrayDeclInitErrs _ _ _ (Base (ERROR s)) _ = [s]
-mkArrayDeclInitErrs env varName arrType valType  pos
-    | containsEntry varName env = [mkStringError ("Variable '" ++ varName ++ "' already declared at: " ++ show (getVarPos varName env)) pos]
-    | isERROR (TS.sup arrType valType) = [mkStringError (TS.getErrorMessage (sup arrType valType)) pos]
-    | otherwise = []
 
 mkArrayIndexErrs :: TS.Type -> (Int, Int) -> [String]
 mkArrayIndexErrs (Base (ERROR s)) _ = [s]
