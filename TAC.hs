@@ -145,6 +145,7 @@ generateLit bt val = case (bt, val) of
     (TS.Base TS.BOOL, BoolVal b) -> TacLit (BoolLit b) BooleanType
     (TS.Base TS.CHAR, CharVal c) -> TacLit (CharLit c) CharType
     (TS.Base TS.STRING, StringVal s) -> TacLit (StringLit s) StringType
+    (TS.POINTER _, IntVal i) -> TacLit (IntLit i) MemoryAddressType
     _ -> error "Type and value do not match"
 
 isTACLit :: Address -> Bool
@@ -163,6 +164,7 @@ generateArrayEmpty a x t  = case t of
     (TS.Base TS.BOOL) -> generateArrayEmpty' a (product x) (TS.getTypeSize t) t (BoolVal False) 0
     (TS.Base TS.CHAR) -> generateArrayEmpty' a (product x) (TS.getTypeSize t) t (CharVal '0') 0
     (TS.Base TS.STRING) -> generateArrayEmpty' a (product x) (TS.getTypeSize t) t (StringVal "") 0
+    (TS.POINTER _) -> generateArrayEmpty' a (product x) (TS.getTypeSize t) t (IntVal 0) 0
 
 generateArrayEmpty' :: Address -> Int -> Int -> TS.Type -> Value -> Int -> [TAC]
 generateArrayEmpty' a 0 size t val c = []
@@ -176,6 +178,7 @@ generateArray a x t vals = case t of
     (TS.Base TS.BOOL) -> generateArray' a (product x) (TS.getTypeSize t) vals 0
     (TS.Base TS.CHAR) -> generateArray' a (product x) (TS.getTypeSize t) vals 0
     (TS.Base TS.STRING) -> generateArray' a (product x) (TS.getTypeSize t) vals 0
+    (TS.POINTER _) -> generateArray' a (product x) (TS.getTypeSize t) vals 0
     (TS.ARRAY t) -> generateArray a x t vals
 
 generateArray' :: Address -> Int -> Int -> [Address] -> Int -> [TAC]
