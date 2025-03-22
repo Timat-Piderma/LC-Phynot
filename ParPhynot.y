@@ -257,7 +257,7 @@ Type : BasicType
   $1.env = $$.env;
   $$.err = $1.err;
 
-  $$.arraydim = $1.arraydim;	
+  $$.arraydim = [];	
 }
 
 ArrayType : '[' RExp ']' Type 
@@ -345,9 +345,7 @@ Stm: Type Ident
   $$.modifiedEnv = if TS.isArray $1.btype 
                   then E.insertArray $2.ident Abs.Modality_ref (posLineCol $$.pos) $$.btype $1.arraydim $$.addr $$.env
                   else E.insertVar $2.ident (Abs.Modality_ref) (posLineCol $$.pos) $$.btype $$.addr $$.env;
-  $$.err = if TS.isArray $1.btype 
-          then Err.mkArrayDeclErrs $$.env $2.ident (posLineCol $$.pos) ++ $1.err
-          else Err.mkDeclErrs $$.env $2.ident (posLineCol $$.pos); 
+  $$.err = Err.mkDeclErrs $$.env $2.ident (posLineCol $$.pos) ++ $1.err; 
   $1.env = $$.env;
   $$.ident = $2.ident;
   $$.pos = $2.pos;
@@ -365,11 +363,9 @@ Stm: Type Ident
   $$.attr = Abs.VarDeclarationInit $1.attr $2.attr $4.attr;
   $$.modifiedEnv = if TS.isArray $1.btype 
                   then E.insertArray $2.ident Abs.Modality_ref (posLineCol $$.pos) $$.btype $1.arraydim $$.addr $$.env
-                  else E.insertVar $2.ident (Abs.Modality_ref) (posLineCol $$.pos) $$.btype $$.addr $$.env;
-  $$.err = if TS.isArray $1.btype
-          then if TS.isArray $4.btype
-              then Err.mkArrayAssignmentErrs $2.ident $1.arraydim $4.arraydim (posLineCol $$.pos) ++ $4.err
-              else Err.mkArrayDeclInitErrs $$.env $2.ident $$.btype $4.btype (posLineCol $$.pos) ++ $4.err
+                  else E.insertVar $2.ident Abs.Modality_ref (posLineCol $$.pos) $$.btype $$.addr $$.env;
+  $$.err = if TS.isArray $4.btype
+          then Err.mkArrayInitErrs $$.btype $4.btype $2.ident $1.arraydim $4.arraydim (posLineCol $2.pos) ++ $4.err
           else Err.mkDeclInitErrs $$.btype $4.btype $$.env $2.ident (posLineCol $$.pos) ++ $4.err; 
   $4.env = $$.env;
   $1.env = $$.env;
@@ -981,6 +977,9 @@ RExp : RExp 'or' RExp1
   $1.env = $$.env;
   $$.modality = $1.modality;
 
+  $$.arraydim = $1.arraydim;
+  $$.listAddr = $1.listAddr;
+
   $$.ident = $1.ident;
 
   $$.pos = $1.pos;
@@ -1107,6 +1106,8 @@ RExp1 : RExp1 '==' RExp2
   $$.btype = $1.btype;
   $1.env = $$.env;
   $$.modality = $1.modality;
+  $$.arraydim = $1.arraydim;
+  $$.listAddr = $1.listAddr;
 
   $$.ident = $1.ident;
   $$.pos = $1.pos;
@@ -1165,6 +1166,8 @@ RExp2 : RExp2 '+' RExp3
   $$.btype = $1.btype;
   $1.env = $$.env;
   $$.modality = $1.modality;
+  $$.arraydim = $1.arraydim;
+  $$.listAddr = $1.listAddr;
 
   $$.ident = $1.ident;
   $$.pos = $1.pos;
@@ -1243,6 +1246,8 @@ RExp3 : RExp3 '*' RExp4
   $$.btype = $1.btype;
   $1.env = $$.env;
   $$.modality = $1.modality;
+  $$.arraydim = $1.arraydim;
+  $$.listAddr = $1.listAddr;
 
   $$.ident = $1.ident;
   $$.pos = $1.pos;
@@ -1281,6 +1286,8 @@ RExp4 : RExp4 '^' RExp5
   $$.btype = $1.btype;
   $1.env = $$.env;
   $$.modality = $1.modality;
+  $$.arraydim = $1.arraydim;
+  $$.listAddr = $1.listAddr;
 
   $$.ident = $1.ident;
   $$.pos = $1.pos;
@@ -1354,6 +1361,8 @@ RExp5 : '&' RExp6
   $$.btype = $1.btype;
   $1.env = $$.env;
   $$.modality = $1.modality;
+  $$.arraydim = $1.arraydim;
+  $$.listAddr = $1.listAddr;
 
   $$.ident = $1.ident;
   $$.pos = $1.pos;
@@ -1523,7 +1532,7 @@ RExp6 : Integer
   $$.addr = TAC.newtemp $$.state $$.btype;
   $$.code = $3.code ++ TAC.generateFuncCall $$.addr (E.getAddr $1.ident $$.env) (length $3.attr) $3.listAddr;
 
-  $$.modifiedState = $3.modifiedState;
+  $$.modifiedState = TAC.incrementTemp $3.modifiedState;
   $3.state = $$.state;
 }
   | '(' RExp ')'  
