@@ -921,6 +921,7 @@ LExp: Ident
 RExp : RExp 'or' RExp1 
 {   
   $$.attr = Abs.Or $1.attr $3.attr;
+  $$.ident = "0";
   $$.err = (Err.prettyRelErr (Err.mkBoolRelErrs $1.btype $3.btype (posLineCol $1.pos) (posLineCol $3.pos) (posLineCol $$.pos)) "or")  ++ $1.err ++ $3.err;
   $$.btype = TS.Base TS.BOOL;
   $1.env = $$.env;  
@@ -939,6 +940,7 @@ RExp : RExp 'or' RExp1
   | RExp 'and' RExp1 
 {   
   $$.attr = Abs.And $1.attr $3.attr;
+  $$.ident = "0";
   $$.err = (Err.prettyRelErr (Err.mkBoolRelErrs $1.btype $3.btype (posLineCol $1.pos) (posLineCol $3.pos) (posLineCol $$.pos)) "and")  ++ $1.err ++ $3.err;
   $$.btype = TS.Base TS.BOOL;
   $1.env = $$.env;  
@@ -957,6 +959,7 @@ RExp : RExp 'or' RExp1
   | 'not' RExp1 
 {  
   $$.attr = Abs.Not $2.attr;
+  $$.ident = "0";
   $$.err =  (Err.mkNotErrs $2.btype (posLineCol $$.pos)) ++ $2.err;
   $$.btype = TS.Base TS.BOOL;
   $2.env = $$.env;
@@ -995,6 +998,7 @@ RExp : RExp 'or' RExp1
 RExp1 : RExp1 '==' RExp2 
 {  
   $$.attr = Abs.Eq $1.attr $3.attr;
+  $$.ident = "0";
   $$.err = (Err.prettyRelErr (Err.mkRelErrs $1.btype $3.btype (posLineCol $1.pos) (posLineCol $3.pos) (posLineCol $$.pos)) "==")  ++ $1.err ++ $3.err;
   $$.btype = TS.Base TS.BOOL; 
   $1.env = $$.env;
@@ -1013,6 +1017,7 @@ RExp1 : RExp1 '==' RExp2
   | RExp1 '!=' RExp2 
 {    
   $$.attr = Abs.Neq $1.attr $3.attr;
+  $$.ident = "0";
   $$.err = (Err.prettyRelErr (Err.mkRelErrs $1.btype $3.btype (posLineCol $1.pos) (posLineCol $3.pos) (posLineCol $$.pos)) "!=")  ++ $1.err ++ $3.err;
   $$.btype = TS.Base TS.BOOL; 
   $1.env = $$.env;
@@ -1031,6 +1036,7 @@ RExp1 : RExp1 '==' RExp2
   | RExp1 '<' RExp2 
 {    
   $$.attr = Abs.Lt $1.attr $3.attr;
+  $$.ident = "0";
   $$.err = (Err.prettyRelErr (Err.mkRelErrs $1.btype $3.btype (posLineCol $1.pos) (posLineCol $3.pos) (posLineCol $$.pos)) "<")  ++ $1.err ++ $3.err;
   $$.btype = TS.Base TS.BOOL; 
   $1.env = $$.env;
@@ -1049,6 +1055,7 @@ RExp1 : RExp1 '==' RExp2
   | RExp1 '>' RExp2 
 {     
   $$.attr = Abs.Gt $1.attr $3.attr;
+  $$.ident = "0";
   $$.err = (Err.prettyRelErr (Err.mkRelErrs $1.btype $3.btype (posLineCol $1.pos) (posLineCol $3.pos) (posLineCol $$.pos)) ">")  ++ $1.err ++ $3.err;
   $$.btype = TS.Base TS.BOOL; 
   $1.env = $$.env;
@@ -1067,6 +1074,7 @@ RExp1 : RExp1 '==' RExp2
   | RExp1 '<=' RExp2 
 {    
   $$.attr = Abs.Le $1.attr $3.attr;
+  $$.ident = "0";
   $$.err = (Err.prettyRelErr (Err.mkRelErrs $1.btype $3.btype (posLineCol $1.pos) (posLineCol $3.pos) (posLineCol $$.pos)) "<=")  ++ $1.err ++ $3.err;
   $$.btype = TS.Base TS.BOOL; 
   $1.env = $$.env;
@@ -1085,6 +1093,7 @@ RExp1 : RExp1 '==' RExp2
   | RExp1 '>=' RExp2 
 {      
   $$.attr = Abs.Ge $1.attr $3.attr;
+  $$.ident = "0";
   $$.err = (Err.prettyRelErr (Err.mkRelErrs $1.btype $3.btype (posLineCol $1.pos) (posLineCol $3.pos) (posLineCol $$.pos)) ">=")  ++ $1.err ++ $3.err;
   $$.btype = TS.Base TS.BOOL; 
   $1.env = $$.env;
@@ -1144,6 +1153,7 @@ RExp2 : RExp2 '+' RExp3
   | RExp2 '-' RExp3 
 {   
   $$.attr = Abs.Sub $1.attr $3.attr;
+  $$.ident = "0";
   $$.err = $1.err ++ $3.err;
   $$.btype = if TS.isERROR (TS.sup (TS.mathtype $1.btype) (TS.mathtype $3.btype))
             then TS.Base  (TS.ERROR (head(Err.mkBinOppErrs  $1.btype $3.btype (posLineCol $1.pos) (posLineCol $3.pos) (posLineCol $$.pos) "-")))
@@ -1184,6 +1194,7 @@ RExp2 : RExp2 '+' RExp3
 RExp3 : RExp3 '*' RExp4 
 {
   $$.attr = Abs.Mul $1.attr $3.attr;
+  $$.ident = "0";
   $$.err = $1.err ++ $3.err;
   $$.btype = if TS.isERROR (TS.sup (TS.mathtype $1.btype) (TS.mathtype $3.btype))
             then TS.Base  (TS.ERROR (head(Err.mkBinOppErrs  $1.btype $3.btype (posLineCol $1.pos) (posLineCol $3.pos) (posLineCol $$.pos) "*")))
@@ -1204,6 +1215,7 @@ RExp3 : RExp3 '*' RExp4
   | RExp3 '/' RExp4 
 { 
   $$.attr = Abs.Div $1.attr $3.attr;
+  $$.ident = "0";
   $$.err = $1.err ++ $3.err;
   $$.btype = if TS.isERROR (TS.sup (TS.mathtype $1.btype) (TS.mathtype $3.btype))
             then TS.Base  (TS.ERROR (head(Err.mkBinOppErrs  $1.btype $3.btype (posLineCol $1.pos) (posLineCol $3.pos) (posLineCol $$.pos) "/")))
@@ -1224,6 +1236,7 @@ RExp3 : RExp3 '*' RExp4
   | RExp3 '%' RExp4 
 {    
   $$.attr = Abs.Mod $1.attr $3.attr;
+  $$.ident = "0";
   $$.err = $1.err ++ $3.err;
   $$.btype = if TS.isERROR (TS.sup (TS.mathtype $1.btype) (TS.mathtype $3.btype))
             then TS.Base  (TS.ERROR (head(Err.mkBinOppErrs  $1.btype $3.btype (posLineCol $1.pos) (posLineCol $3.pos) (posLineCol $$.pos) "%")))
@@ -1264,6 +1277,7 @@ RExp3 : RExp3 '*' RExp4
 RExp4 : RExp4 '^' RExp5 
 { 
   $$.attr = Abs.Pow $1.attr $3.attr;
+  $$.ident = "0";
   $$.err = $1.err ++ $3.err;
   $$.btype = if TS.isERROR (TS.sup (TS.mathtype $1.btype) (TS.mathtype $3.btype))
             then TS.Base  (TS.ERROR (head(Err.mkBinOppErrs  $1.btype $3.btype (posLineCol $1.pos) (posLineCol $3.pos) (posLineCol $$.pos) "^")))
@@ -1304,6 +1318,7 @@ RExp4 : RExp4 '^' RExp5
 RExp5 : '&' RExp6 
 {     
   $$.attr = Abs.PointerRef $2.attr; 
+  $$.ident = "0";
   $2.env = $$.env;
 
   $$.err = $2.err;
@@ -1323,6 +1338,7 @@ RExp5 : '&' RExp6
   | '*' RExp6 
 { 
   $$.attr = Abs.DereferenceVal $2.attr;
+  $$.ident = "0";
   $2.env = $$.env;
 
   $$.err = $2.err;
@@ -1342,6 +1358,7 @@ RExp5 : '&' RExp6
   | '-' RExp6 
 { 
   $$.attr = Abs.Neg $2.attr; 
+  $$.ident = "0";
   $2.env = $$.env;
 
   $$.err = $2.err;
@@ -1474,6 +1491,7 @@ RExp6 : Integer
   |'[' Arr ']' 
 { 
   $$.attr = Abs.ArrayStructure $2.attr;
+  $$.ident = "0";
   $2.env = $$.env;
   $$.modality = Abs.Modality1;
 
@@ -1523,6 +1541,7 @@ RExp6 : Integer
   | Ident '(' ListRExp ')' 
 {  
   $$.attr = Abs.FuncCall $1.attr $3.attr;
+  $$.ident = "0";
   $3.env = $$.env;
   $$.modality = Abs.Modality1;
 
@@ -1540,6 +1559,7 @@ RExp6 : Integer
   | '(' RExp ')'  
 { 
   $$.attr =  $2.attr;
+  $$.ident = $2.ident;
   $$.err = $2.err;
   $$.btype = $2.btype;
   $2.env = $$.env;
