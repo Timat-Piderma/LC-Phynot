@@ -2,6 +2,7 @@
 {-# HLINT ignore "Eta reduce" #-}
 module ErrorsBuilder where
 
+import Text.Read
 import Data.List
 import TypeSystem as TS
 import Env as E
@@ -31,6 +32,13 @@ mkArrayErrs t1 t2 len1 len2 pos
     | t1 /= t2 = [mkStringError ("Array elements must be of the same type: found '" ++ TS.typeToString t1 ++ "' and " ++ TS.typeToString t2) pos]
     | TS.isArray t1 && TS.isArray t2 && len1 /= len2 = [mkStringError ("Error: array lengths are not consistent, found " ++ show len1 ++ " and " ++ show len2) pos]
     | otherwise = []
+
+mkArrayIndexErrs :: String -> (Int, Int) -> [String]
+mkArrayIndexErrs s pos = case t of
+    Nothing -> [mkStringError "Array index must be an integer literal or costant" pos]
+    Just 0 -> [mkStringError "Error: Array index must be a integer literal greater than 0" pos]
+    Just x -> []
+    where t = readMaybe s :: Maybe Int
    
 mkStringError :: String -> (Int, Int) -> String
 mkStringError s (a, b) = "[" ++ show a ++ ":" ++ show b ++ "] " ++ s
@@ -82,9 +90,9 @@ mkConstDeclErrs cosType initType env cosName pos
     | sup cosType initType == cosType = []
     | otherwise = [ mkStringError ("Type mismatch: can't convert " ++ typeToString initType ++ " to " ++ typeToString cosType) pos]
 
-mkArrayIndexErrs :: TS.Type -> (Int, Int) -> [String]
-mkArrayIndexErrs (Base (ERROR s)) _ = [s]
-mkArrayIndexErrs t pos
+mkArrayAccessErrs :: TS.Type -> (Int, Int) -> [String]
+mkArrayAccessErrs (Base (ERROR s)) _ = [s]
+mkArrayAccessErrs t pos
     | isInt t = []
     | otherwise = [ mkStringError ("Array index must be an integer, found: " ++ typeToString t) pos]
 

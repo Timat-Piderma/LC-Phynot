@@ -264,10 +264,11 @@ ArrayType : '[' RExp ']' Type
 { 
   $$.attr = Abs.ArrayType1 $2.attr $4.attr; 
   $$.btype = TS.ARRAY $4.btype;
-  $$.err = $2.err ++ $4.err;
+  $$.err = if E.getVarMod $2.ident $$.env == Abs.Modality_const
+          then (Err.mkArrayIndexErrs (E.getConstValue $2.ident $$.env) (posLineCol $2.pos)) ++ $2.err ++ $4.err
+          else (Err.mkArrayIndexErrs $2.ident (posLineCol $2.pos)) ++ $2.err ++ $4.err;
   $2.env = $$.env;
   $4.env = $$.env;
-
 
   $$.arraylen = if E.getVarMod $2.ident $$.env == Abs.Modality_const
               then read (E.getConstValue $2.ident $$.env) :: Int
@@ -365,8 +366,8 @@ Stm: Type Ident
                   then E.insertArray $2.ident Abs.Modality_ref (posLineCol $$.pos) $$.btype $1.arraydim $$.addr $$.env
                   else E.insertVar $2.ident Abs.Modality_ref (posLineCol $$.pos) $$.btype $$.addr $$.env;
   $$.err = if TS.isArray $4.btype
-          then Err.mkArrayInitErrs $$.btype $4.btype $2.ident $1.arraydim $4.arraydim (posLineCol $2.pos) ++ $4.err
-          else Err.mkDeclInitErrs $$.btype $4.btype $$.env $2.ident (posLineCol $$.pos) ++ $4.err; 
+          then $1.err ++ Err.mkArrayInitErrs $$.btype $4.btype $2.ident $1.arraydim $4.arraydim (posLineCol $2.pos) ++ $4.err
+          else $1.err ++ Err.mkDeclInitErrs $$.btype $4.btype $$.env $2.ident (posLineCol $$.pos) ++ $4.err; 
   $4.env = $$.env;
   $1.env = $$.env;
   $$.ident = $2.ident;
@@ -737,7 +738,7 @@ Dim : '[' RExp ']'
   $$.attr = Abs.ArrayDimension $2.attr; 
   $2.env = $$.env;
 
-  $$.err = Err.mkArrayIndexErrs $2.btype (posLineCol $2.pos) ++ $2.err;
+  $$.err = Err.mkArrayAccessErrs $2.btype (posLineCol $2.pos) ++ $2.err;
   $$.arraylen = if TS.isInt $2.btype 
               then read $2.ident :: Int 
               else 0;
@@ -1122,6 +1123,7 @@ RExp1 : RExp1 '==' RExp2
 RExp2 : RExp2 '+' RExp3 
 {  
   $$.attr = Abs.Add $1.attr $3.attr;
+  $$.ident = "0";
   $$.err = $1.err ++ $3.err;
   $$.btype = if TS.isERROR (TS.sup (TS.mathtype $1.btype) (TS.mathtype $3.btype))
             then TS.Base  (TS.ERROR (head(Err.mkBinOppErrs  $1.btype $3.btype (posLineCol $1.pos) (posLineCol $3.pos) (posLineCol $$.pos) "+")))
